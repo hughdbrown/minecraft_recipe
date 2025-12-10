@@ -1,0 +1,27 @@
+# Description
+Create a terminal program that wraps a python script. The application prompts for arguments to the python script.
+
+# Stack
+Rust with ratatui for UI.
+
+# Python script to wrap
+minecraft_recipe.py
+Described in @ai/*.prd
+
+# Arguments to prompt for
+- Directory to work in
+- Name of input .txt file to convert to JSON. If only one .txt file is present, default to this.
+- Whether to put result into a .mcaddon file and which .mcaddon file to put into.
+
+# UI elements
+- Directory selector
+- File selector within directory
+- On/off button for using .mcaddon or not
+- If button is on, file selector with currently selected .mcaddon file 
+- Go button to invoke the python script
+
+# Operation
+- user optionally selects new directory (or uses current directory)
+- user selects .txt file to convert to JSON
+- user optionally selects .mcaddon file
+- user presses Go button and program shells out to python script to executre

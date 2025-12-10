@@ -1,0 +1,8 @@
+myname:oil_refinery_station
+A-A
+ABA
+ACA
+A = minecraft:iron_ingot
+B = myname:oil_barrel 
+C = minecraft:coal
+1

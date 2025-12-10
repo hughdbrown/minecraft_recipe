@@ -1,0 +1,14 @@
+# Cross-compilation configuration for Windows targets
+
+[target.x86_64-pc-windows-gnu]
+linker = "x86_64-w64-mingw32-gcc"
+ar = "x86_64-w64-mingw32-ar"
+
+[target.x86_64-pc-windows-msvc]
+# For MSVC target, you'll need to have the Windows SDK installed
+# This typically requires building on Windows or using xwin
+
+# Build settings
+[build]
+# Uncomment to set a default target for cross-compilation
+# target = "x86_64-pc-windows-gnu"

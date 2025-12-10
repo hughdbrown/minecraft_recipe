@@ -1,0 +1,75 @@
+# Description of program
+This PRD describes a program that creates recipes for Minecraft Bedrock edition.
+
+## Input/Output Specifications
+- **Input**: File path provided as command-line argument
+- **Output**: JSON file in same directory as input, with `.json` extension replacing input extension
+  - Example: `recipe.txt` → `recipe.json` in same directory
+- **Pattern Format**: 3x3 crafting table pattern only
+- **Error Handling**: Exit with clear error message and non-zero exit code on validation errors
+
+The input is text in this format:
+```
+
+```
+
+The output of this program is a suitable JSON file.
+
+# Example text input
+```
+myname:oil_refinery_station
+A-A
+ABA
+ACA
+A = minecraft:iron_ingot
+B = myname:oil_barrel 
+C = minecraft:coal
+1
+```
+The file format has four parts:
+1. Line 1 describes the result identifier in the JSON (format: `namespace:item_name`)
+2. Lines 2-4 are the 3x3 crafting table pattern (exactly 3 lines, each with 3 characters)
+3. The lines beginning with letters are substitutions for symbols in the crafting table pattern (format: `SYMBOL = namespace:item_name`)
+   - The special symbol `-` always means a space in the output pattern
+4. The last line is the count of the result (integer)
+
+# Program language
+Create the program in python.
+
+## Implementation Requirements
+- Use `click` library for command-line argument parsing
+- Include `uv` script header for execution (shebang with inline script metadata)
+- Make the script executable with `chmod +x`
+
+# Example JSON output
+```
+{
+  "format_version": "1.20.0",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "example:iron_pickaxe"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "III",
+      " S ",
+      " S "
+    ],
+    "key": {
+      "I": {
+        "item": "minecraft:iron_ingot"
+      },
+      "S": {
+        "item": "minecraft:stick"
+      }
+    },
+    "result": {
+      "item": "minecraft:iron_pickaxe",
+      "count": 1
+    }
+  }
+}
+``` 
+
