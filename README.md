@@ -1,5 +1,7 @@
 # Minecraft Bedrock Recipe Generator
 
+**Navigation:** [Overview](#overview) | [Components](#components) | [Quick Start](#quick-start) | [Recipe Format](#recipe-format) | [Output](#output) | [Documentation](#documentation)
+
 A tool for converting text-based recipe definitions into JSON format for Minecraft Bedrock edition, with optional packaging into .mcaddon files.
 
 ## Overview
