@@ -6,7 +6,7 @@ A tool for converting text-based recipe definitions into JSON format for Minecra
 
 ## Overview
 
-This project provides both command-line and interactive terminal UI tools to simplify the creation of crafting recipes for Minecraft Bedrock edition. Write recipes in a simple text format and convert them to the JSON format required by Minecraft.
+This project provides command-line, terminal UI, and web-based tools to simplify the creation of crafting recipes for Minecraft Bedrock edition. Write recipes in a simple text format and convert them to the JSON format required by Minecraft.
 
 ## Components
 
@@ -29,6 +29,14 @@ Cross-platform terminal UI built with Rust, providing the same functionality as 
 
 See [README-RUST-UI.md](README-RUST-UI.md) for detailed Rust documentation.
 
+### Web Interface (`minecraft_recipe.html`)
+Browser-based user interface with tabbed design. No installation required - just open the HTML file in any modern web browser.
+
+**Platform**: Any (Chrome, Firefox, Safari, Edge)
+**Requirements**: Modern web browser with JavaScript enabled
+
+See [README-WEB.md](README-WEB.md) for detailed web interface documentation.
+
 ## Quick Start
 
 ### Command-line Usage
@@ -43,12 +51,16 @@ python3 minecraft_recipe.py recipe.txt --mcaddon base.mcaddon
 
 ### Interactive UI
 
-Python (macOS/Linux):
+**Web (all platforms - easiest):**
+
+Simply double-click `minecraft_recipe.html` or open it in your browser.
+
+**Python (macOS/Linux):**
 ```bash
 python3 minecraft_recipe_ui.py
 ```
 
-Rust (all platforms):
+**Rust (all platforms):**
 ```bash
 cargo run --release
 ```
@@ -93,6 +105,7 @@ The tools generate:
 
 ## Documentation
 
+- [Web Interface Documentation](README-WEB.md) - Browser-based UI, no installation required
 - [Python UI Documentation](README-PYTHON-UI.md) - Python implementation details, command-line usage, and troubleshooting
 - [Rust UI Documentation](README-RUST-UI.md) - Rust implementation details, building, and cross-compilation
 

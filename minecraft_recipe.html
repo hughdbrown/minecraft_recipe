@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Bedrock Recipe Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #bdc3c7;
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            background: #34495e;
+            border-bottom: 2px solid #2c3e50;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px 20px;
+            text-align: center;
+            color: #bdc3c7;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            background: none;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .tab:hover {
+            background: #2c3e50;
+            color: white;
+        }
+
+        .tab.active {
+            background: white;
+            color: #2c3e50;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 40px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed #bdc3c7;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        input[type="file"]:hover {
+            border-color: #667eea;
+            background: #f8f9fa;
+        }
+
+        .file-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: #ecf0f1;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #34495e;
+            display: none;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        button.convert-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button.convert-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button.convert-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .result {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 6px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .result-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+
+        .result-message {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #0d47a1;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .checkbox-group {
+            margin-bottom: 25px;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .checkbox-wrapper:hover {
+            background: #e9ecef;
+        }
+
+        .checkbox-wrapper input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .checkbox-wrapper label {
+            margin: 0;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .optional-section {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+
+        .optional-section.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Minecraft Bedrock Recipe Generator</h1>
+            <p>Convert recipe text files to JSON format for Minecraft Bedrock edition</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab(0)">JSON Only</button>
+            <button class="tab" onclick="switchTab(1)">JSON + McAddon</button>
+        </div>
+
+        <!-- Tab 1: JSON Only -->
+        <div class="tab-content active" id="tab1">
+            <div class="info-box">
+                <strong>Tab 1: Convert Recipe to JSON</strong>
+                Select a .txt recipe file to convert it to JSON format. The JSON file will be downloaded to your Downloads folder.
+            </div>
+
+            <div class="form-group">
+                <label for="txtFile1">Select Recipe File (.txt)</label>
+                <input type="file" id="txtFile1" accept=".txt" onchange="handleFileSelect(1)">
+                <div class="file-info" id="fileInfo1"></div>
+            </div>
+
+            <button class="convert-btn" id="convertBtn1" onclick="convertToJson()" disabled>
+                Convert to JSON
+            </button>
+
+            <div class="result" id="result1"></div>
+        </div>
+
+        <!-- Tab 2: JSON + McAddon -->
+        <div class="tab-content" id="tab2">
+            <div class="info-box">
+                <strong>Tab 2: Convert Recipe and Create McAddon</strong>
+                Select a .txt recipe file and a base .mcaddon file. The recipe will be converted to JSON and injected into the .mcaddon package.
+            </div>
+
+            <div class="form-group">
+                <label for="txtFile2">Select Recipe File (.txt)</label>
+                <input type="file" id="txtFile2" accept=".txt" onchange="handleFileSelect(2)">
+                <div class="file-info" id="fileInfo2"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="mcaddonFile">Select Base McAddon File (.mcaddon)</label>
+                <input type="file" id="mcaddonFile" accept=".mcaddon" onchange="handleMcAddonSelect()">
+                <div class="file-info" id="mcaddonInfo"></div>
+            </div>
+
+            <button class="convert-btn" id="convertBtn2" onclick="convertAndInject()" disabled>
+                Convert & Create McAddon
+            </button>
+
+            <div class="result" id="result2"></div>
+        </div>
+    </div>
+
+    <script>
+        // Recipe Parser Class (JavaScript port of Python RecipeParser)
+        class RecipeParser {
+            constructor(content) {
+                this.lines = content.trim().split('\n').map(line => line.replace(/\r$/, ''));
+                this.resultIdentifier = null;
+                this.pattern = [];
+                this.substitutions = {};
+                this.count = null;
+            }
+
+            parse() {
+                if (this.lines.length < 5) {
+                    throw new Error(`Recipe file must have at least 5 lines (found ${this.lines.length})`);
+                }
+
+                // Line 1: result identifier
+                this.resultIdentifier = this.lines[0].trim();
+                if (!this.isValidIdentifier(this.resultIdentifier)) {
+                    throw new Error(`Invalid result identifier: ${this.resultIdentifier}`);
+                }
+
+                // Lines 2-4: pattern
+                this.pattern = this.lines.slice(1, 4);
+                for (let i = 0; i < this.pattern.length; i++) {
+                    if (this.pattern[i].length !== 3) {
+                        throw new Error(`Line ${i + 2} pattern must be exactly 3 characters (found ${this.pattern[i].length})`);
+                    }
+                }
+
+                // Parse substitutions and count
+                this.parseSubstitutionsAndCount();
+
+                // Validate all pattern symbols have substitutions
+                this.validatePatternSymbols();
+            }
+
+            parseSubstitutionsAndCount() {
+                const substitutionLines = this.lines.slice(4);
+
+                if (substitutionLines.length === 0) {
+                    throw new Error('Missing substitution lines and count');
+                }
+
+                // Last line should be count
+                const lastLine = substitutionLines[substitutionLines.length - 1].trim();
+                this.count = parseInt(lastLine, 10);
+                if (isNaN(this.count) || this.count <= 0) {
+                    throw new Error(`Last line must be a valid positive integer count: ${lastLine}`);
+                }
+
+                // Parse substitutions
+                for (let i = 0; i < substitutionLines.length - 1; i++) {
+                    const line = substitutionLines[i].trim();
+                    if (!line) continue;
+
+                    const parts = line.split('=');
+                    if (parts.length !== 2) {
+                        throw new Error(`Line ${i + 5}: Invalid substitution format (expected 'SYMBOL = namespace:item')`);
+                    }
+
+                    const symbol = parts[0].trim();
+                    const item = parts[1].trim();
+
+                    if (symbol.length !== 1) {
+                        throw new Error(`Line ${i + 5}: Symbol must be a single character (found '${symbol}')`);
+                    }
+
+                    if (!this.isValidIdentifier(item)) {
+                        throw new Error(`Line ${i + 5}: Invalid item identifier: ${item}`);
+                    }
+
+                    if (this.substitutions.hasOwnProperty(symbol)) {
+                        throw new Error(`Line ${i + 5}: Duplicate symbol '${symbol}'`);
+                    }
+
+                    this.substitutions[symbol] = item;
+                }
+            }
+
+            validatePatternSymbols() {
+                const patternSymbols = new Set();
+                for (const line of this.pattern) {
+                    for (const char of line) {
+                        if (char !== '-') {
+                            patternSymbols.add(char);
+                        }
+                    }
+                }
+
+                const missing = [];
+                for (const symbol of patternSymbols) {
+                    if (!this.substitutions.hasOwnProperty(symbol)) {
+                        missing.push(symbol);
+                    }
+                }
+
+                if (missing.length > 0) {
+                    throw new Error(`Pattern symbols without substitutions: ${missing.sort().join(', ')}`);
+                }
+            }
+
+            isValidIdentifier(identifier) {
+                if (!identifier.includes(':')) return false;
+                const parts = identifier.split(':');
+                return parts.length === 2 && parts[0].trim() && parts[1].trim();
+            }
+
+            toJson() {
+                // Convert pattern, replacing '-' with space
+                const jsonPattern = this.pattern.map(line => line.replace(/-/g, ' '));
+
+                // Build key dictionary
+                const key = {};
+                for (const [symbol, item] of Object.entries(this.substitutions)) {
+                    key[symbol] = { item: item };
+                }
+
+                return {
+                    format_version: "1.20.0",
+                    "minecraft:recipe_shaped": {
+                        description: {
+                            identifier: this.resultIdentifier
+                        },
+                        tags: ["crafting_table"],
+                        pattern: jsonPattern,
+                        key: key,
+                        result: {
+                            item: this.resultIdentifier,
+                            count: this.count
+                        }
+                    }
+                };
+            }
+        }
+
+        // Global state
+        let currentTab = 0;
+        let txtFile1 = null;
+        let txtFile2 = null;
+        let mcaddonFile = null;
+
+        // Tab switching
+        function switchTab(tabIndex) {
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach((tab, index) => {
+                if (index === tabIndex) {
+                    tab.classList.add('active');
+                    contents[index].classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                    contents[index].classList.remove('active');
+                }
+            });
+
+            currentTab = tabIndex;
+            clearResults();
+        }
+
+        // File selection handlers
+        function handleFileSelect(tabNum) {
+            const fileInput = document.getElementById(`txtFile${tabNum}`);
+            const fileInfo = document.getElementById(`fileInfo${tabNum}`);
+            const convertBtn = document.getElementById(`convertBtn${tabNum}`);
+
+            const file = fileInput.files[0];
+            if (file) {
+                if (tabNum === 1) {
+                    txtFile1 = file;
+                } else {
+                    txtFile2 = file;
+                }
+
+                fileInfo.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
+                fileInfo.classList.add('show');
+
+                // Enable button based on tab requirements
+                if (tabNum === 1) {
+                    convertBtn.disabled = false;
+                } else {
+                    convertBtn.disabled = !mcaddonFile;
+                }
+            }
+        }
+
+        function handleMcAddonSelect() {
+            const fileInput = document.getElementById('mcaddonFile');
+            const fileInfo = document.getElementById('mcaddonInfo');
+            const convertBtn = document.getElementById('convertBtn2');
+
+            const file = fileInput.files[0];
+            if (file) {
+                mcaddonFile = file;
+                fileInfo.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
+                fileInfo.classList.add('show');
+
+                // Enable button if txt file is also selected
+                convertBtn.disabled = !txtFile2;
+            }
+        }
+
+        // Convert to JSON only (Tab 1)
+        async function convertToJson() {
+            if (!txtFile1) {
+                showResult(1, 'error', 'No file selected', 'Please select a recipe file first.');
+                return;
+            }
+
+            try {
+                const content = await readFileAsText(txtFile1);
+                const parser = new RecipeParser(content);
+                parser.parse();
+                const recipeJson = parser.toJson();
+
+                // Create JSON string
+                const jsonString = JSON.stringify(recipeJson, null, 2);
+
+                // Download JSON file
+                const fileName = txtFile1.name.replace(/\.txt$/i, '.json');
+                downloadFile(jsonString, fileName, 'application/json');
+
+                showResult(1, 'success', 'Success!', `JSON file "${fileName}" has been downloaded.`);
+            } catch (error) {
+                showResult(1, 'error', 'Error', error.message);
+            }
+        }
+
+        // Convert and inject into McAddon (Tab 2)
+        async function convertAndInject() {
+            if (!txtFile2 || !mcaddonFile) {
+                showResult(2, 'error', 'Missing files', 'Please select both recipe and McAddon files.');
+                return;
+            }
+
+            try {
+                // Parse recipe
+                const content = await readFileAsText(txtFile2);
+                const parser = new RecipeParser(content);
+                parser.parse();
+                const recipeJson = parser.toJson();
+
+                // Read the base mcaddon file
+                const mcaddonData = await readFileAsArrayBuffer(mcaddonFile);
+                const zip = await JSZip.loadAsync(mcaddonData);
+
+                // Find behavior pack directory
+                let behaviorPack = null;
+                for (const [path, zipEntry] of Object.entries(zip.files)) {
+                    if (zipEntry.dir && path.includes('manifest.json') === false) continue;
+
+                    const manifestPath = path.endsWith('/') ? path + 'manifest.json' : path;
+                    if (zip.files[manifestPath]) {
+                        try {
+                            const manifestContent = await zip.files[manifestPath].async('string');
+                            const manifest = JSON.parse(manifestContent);
+
+                            // Check if this is a behavior pack
+                            if (manifest.modules) {
+                                for (const module of manifest.modules) {
+                                    if (module.type === 'data') {
+                                        behaviorPack = path.endsWith('/') ? path.slice(0, -1) : path.substring(0, path.lastIndexOf('/'));
+                                        if (behaviorPack === '') behaviorPack = '.';
+                                        break;
+                                    }
+                                }
+                            }
+                        } catch (e) {
+                            // Not a valid manifest, continue
+                        }
+                    }
+                    if (behaviorPack) break;
+                }
+
+                if (!behaviorPack) {
+                    throw new Error('Could not find behavior pack in McAddon file');
+                }
+
+                // Create recipes directory path
+                const recipesPath = behaviorPack === '.' ? 'recipes/' : `${behaviorPack}/recipes/`;
+
+                // Add recipe to zip
+                const recipeFileName = txtFile2.name.replace(/\.txt$/i, '.json');
+                const recipeFilePath = recipesPath + recipeFileName;
+
+                zip.file(recipeFilePath, JSON.stringify(recipeJson, null, 2));
+
+                // Generate new zip
+                const newZipBlob = await zip.generateAsync({ type: 'blob' });
+
+                // Generate output filename with incrementing number
+                const baseName = mcaddonFile.name.replace(/\.mcaddon$/i, '');
+                const outputFileName = `${baseName}_web.mcaddon`;
+
+                // Download the new mcaddon
+                downloadBlob(newZipBlob, outputFileName);
+
+                showResult(2, 'success', 'Success!',
+                    `Created "${outputFileName}" with recipe "${recipeFileName}" included.`);
+            } catch (error) {
+                showResult(2, 'error', 'Error', error.message);
+            }
+        }
+
+        // Utility functions
+        function readFileAsText(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(new Error('Failed to read file'));
+                reader.readAsText(file);
+            });
+        }
+
+        function readFileAsArrayBuffer(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(new Error('Failed to read file'));
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        function downloadFile(content, fileName, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            downloadBlob(blob, fileName);
+        }
+
+        function downloadBlob(blob, fileName) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function showResult(tabNum, type, title, message) {
+            const result = document.getElementById(`result${tabNum}`);
+            result.className = `result ${type} show`;
+            result.innerHTML = `
+                <div class="result-title">${title}</div>
+                <div class="result-message">${message}</div>
+            `;
+        }
+
+        function clearResults() {
+            document.getElementById('result1').classList.remove('show');
+            document.getElementById('result2').classList.remove('show');
+        }
+    </script>
+</body>
+</html>
