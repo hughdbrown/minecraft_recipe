@@ -2,11 +2,14 @@
 
 **Navigation:** [Overview](#overview) | [Components](#components) | [Quick Start](#quick-start) | [Recipe Format](#recipe-format) | [Output](#output) | [Documentation](#documentation)
 
-A tool for converting text-based recipe definitions into JSON format for Minecraft Bedrock edition, with optional packaging into .mcaddon files.
+A comprehensive toolkit for Minecraft Bedrock edition development: convert text-based recipe definitions to JSON format, package them into .mcaddon files, and edit any JSON files within .mcaddon packages using an intuitive web-based file explorer.
 
 ## Overview
 
-This project provides command-line, terminal UI, and web-based tools to simplify the creation of crafting recipes for Minecraft Bedrock edition. Write recipes in a simple text format and convert them to the JSON format required by Minecraft.
+This project provides command-line, terminal UI, and web-based tools for Minecraft Bedrock edition development:
+- **Recipe Generation**: Convert text-based recipe definitions to JSON format
+- **MCADDON Editing**: Edit JSON files inside .mcaddon packages with a hierarchical file explorer (web interface only)
+- **Package Creation**: Automatically create .mcaddon addon packages with recipes included
 
 ## Components
 
@@ -30,7 +33,11 @@ Cross-platform terminal UI built with Rust, providing the same functionality as 
 See [README-RUST-UI.md](README-RUST-UI.md) for detailed Rust documentation.
 
 ### Web Interface (`minecraft_recipe.html`)
-Browser-based user interface with tabbed design. No installation required - just open the HTML file in any modern web browser.
+Browser-based user interface with two main tools:
+1. **Recipe Maker** - Convert recipe text files to JSON and create .mcaddon packages
+2. **MCADDON Editor** - Edit any JSON file inside existing .mcaddon packages with hierarchical file explorer
+
+No installation required - just open the HTML file in any modern web browser.
 
 **Platform**: Any (Chrome, Firefox, Safari, Edge)
 **Requirements**: Modern web browser with JavaScript enabled

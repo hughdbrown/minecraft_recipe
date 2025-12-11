@@ -4,15 +4,29 @@ A browser-based user interface for the Minecraft Bedrock Recipe Generator. No in
 
 ## Overview
 
-This web interface provides a convenient way to convert Minecraft recipe text files to JSON format directly in your browser. All processing happens client-side using JavaScript - no server or Python installation needed.
+This web interface provides two main tools:
+1. **Recipe Maker** - Convert recipe text files to JSON format and create .mcaddon packages
+2. **MCADDON Editor** - Edit JSON files inside existing .mcaddon packages
+
+All processing happens client-side using JavaScript - no server or Python installation needed.
 
 ## Features
 
-- **Tab 1: JSON Only** - Convert recipe .txt files to JSON format
-- **Tab 2: JSON + McAddon** - Convert recipe .txt files and inject into .mcaddon packages
+### Recipe Maker
+- **JSON Only** - Convert recipe .txt files to JSON format
+- **JSON + McAddon** - Convert recipe .txt files and inject into .mcaddon packages
+
+### MCADDON Editor
+- **Browse MCADDON files** - Load and explore any .mcaddon package
+- **Hierarchical file explorer** - Navigate JSON files with collapsible folder structure
+- **Edit any JSON file** - Modify manifests, recipes, items, blocks, or any JSON in the package
+- **JSON validation** - Automatic validation and formatting
+- **Save modifications** - Download edited .mcaddon with changes applied
+
+### General
 - **Pure client-side** - All processing happens in your browser (JavaScript)
 - **No installation** - Just open the HTML file
-- **Modern UI** - Clean, responsive interface with drag-and-drop support
+- **Modern UI** - Clean, responsive interface with intuitive navigation
 
 ## Requirements
 
@@ -68,12 +82,95 @@ Alternatively, right-click the file and select "Open with" → your preferred br
 
 The output .mcaddon filename will have `_web` appended to distinguish it from the original.
 
+## Using the MCADDON Editor
+
+The MCADDON Editor allows you to edit any JSON file inside an existing .mcaddon package. Access it by clicking "**Edit MCADDON Files**" in the left navigation panel.
+
+### Workflow
+
+The editor uses a 3-step workflow that automatically advances as you complete each step:
+
+#### Step 1: Select MCADDON File
+
+1. Click "**Edit MCADDON Files**" in the left navigation
+2. Click "Select MCADDON File (.mcaddon)" and choose your file
+3. The interface will extract and count all JSON files in the package
+4. Automatically advances to Step 2
+
+**What happens:**
+- The .mcaddon package (ZIP archive) is loaded and parsed
+- All JSON files are discovered (manifests, recipes, items, blocks, etc.)
+- File count is displayed (e.g., "Found 15 JSON file(s) in the package")
+
+#### Step 2: Choose JSON File
+
+1. Browse the hierarchical file tree
+2. Click folders to expand/collapse them
+3. Click any JSON file to edit it
+4. Automatically advances to Step 3
+
+**File Explorer Features:**
+- **Hierarchical tree structure** - Files organized by directory
+- **Collapsible folders** - All folders start collapsed
+- **Expand/collapse icons** - ▶ when collapsed, rotates to ▼ when expanded
+- **File count badges** - Shows total JSON files in each folder (e.g., "behavior_pack (10 files)")
+- **20px indentation** - Each nested level indented for visual clarity
+- **File sizes** - Each JSON file shows its size
+- **Sorted alphabetically** - Folders and files are sorted for easy navigation
+
+**Example structure:**
+```
+▶ behavior_pack (10 files)
+▶ resource_pack (5 files)
+```
+
+When expanded:
+```
+▼ behavior_pack (10 files)
+  ▼ recipes (8 files)
+    recipe1.json    2.1 KB
+    recipe2.json    1.8 KB
+  ▶ items (2 files)
+```
+
+#### Step 3: Edit JSON
+
+1. View and edit the JSON content in the text editor
+2. Use "**Format JSON**" to auto-format and validate
+3. Click "**Save & Download MCADDON**" to save changes
+4. Use "**← Back to File List**" to edit another file
+
+**Editor Features:**
+- **Monospace font** - Easy-to-read code formatting
+- **Current file path** - Header shows which file you're editing
+- **Format JSON button** - Validates JSON syntax and applies proper indentation
+- **Validation errors** - Real-time error messages for invalid JSON
+- **Save & Download** - Creates modified .mcaddon and downloads immediately
+- **Back button** - Return to file list to edit more files
+
+**Save Behavior:**
+- Each save validates the JSON (prevents corruption)
+- Modified file is named `[original]_edited.mcaddon`
+- The downloaded file contains all your edits
+- You can edit one JSON file at a time
+- After saving, you can go back and edit another file
+
+**Example workflow:**
+1. Load `MyAddon.mcaddon`
+2. Edit `behavior_pack/manifest.json` → Save → Downloads `MyAddon_edited.mcaddon`
+3. Want to edit more? Load the edited version and repeat
+
 ## File Downloads
 
 All generated files are downloaded to your browser's default Downloads folder:
 
+### Recipe Maker Downloads
 - **JSON files**: Same name as input .txt file with `.json` extension
-- **McAddon files**: Original name with `_web` suffix before the extension
+- **McAddon files** (from recipe conversion): Original name with `_web` suffix before the extension
+
+### MCADDON Editor Downloads
+- **Edited McAddon files**: Original name with `_edited` suffix before the extension
+  - Example: `MyAddon.mcaddon` → `MyAddon_edited.mcaddon`
 
 Your browser may prompt you to choose a save location depending on your settings.
 
@@ -111,25 +208,63 @@ See the main [README.md](README.md) for detailed format specifications.
 ### Technology Stack
 
 - **HTML5** - Structure and file handling
-- **CSS3** - Modern, responsive styling
-- **JavaScript (ES6+)** - Recipe parsing and file processing
+- **CSS3** - Modern, responsive styling with flexbox layout
+- **JavaScript (ES6+)** - Recipe parsing, file processing, and tree structure management
 - **JSZip** - ZIP file manipulation for .mcaddon files (loaded from CDN)
+
+### User Interface Architecture
+
+The interface uses a two-screen layout:
+- **Left navigation panel** - Vertical sidebar with two buttons (Recipe Maker / Edit MCADDON Files)
+- **Main content area** - Contains the active screen
+  - **Screen 1: Recipe Maker** - Original two-tab interface (JSON Only / JSON + McAddon)
+  - **Screen 2: MCADDON Editor** - Three-step workflow for editing .mcaddon files
 
 ### Processing Flow
 
-**Tab 1 (JSON Only):**
+**Recipe Maker - Tab 1 (JSON Only):**
 1. User selects .txt file → JavaScript FileReader API reads the file
 2. RecipeParser (JavaScript port of Python version) validates and parses the recipe
 3. JSON object is generated following Minecraft Bedrock format
 4. JSON is converted to string and downloaded via Blob API
 
-**Tab 2 (JSON + McAddon):**
+**Recipe Maker - Tab 2 (JSON + McAddon):**
 1. User selects .txt file and .mcaddon file
 2. Recipe is parsed (same as Tab 1)
 3. JSZip library extracts the .mcaddon (ZIP) contents
 4. Behavior pack is located by finding manifest.json with type "data"
 5. Recipe JSON is added to the `recipes/` directory in the behavior pack
 6. Modified .mcaddon is regenerated and downloaded
+
+**MCADDON Editor Workflow:**
+
+**Step 1 - File Selection:**
+1. User selects .mcaddon file → FileReader API reads as ArrayBuffer
+2. JSZip loads and parses the ZIP archive
+3. All files are scanned; JSON files (*.json) are extracted and cached
+4. Files are sorted by path for consistent ordering
+5. Count of JSON files is displayed
+6. Interface automatically advances to Step 2
+
+**Step 2 - File Explorer:**
+1. File paths are parsed into a hierarchical tree structure
+2. Tree is built recursively (folders can contain subfolders and files)
+3. Each folder tracks its children and displays file count recursively
+4. DOM elements are created with expand/collapse functionality
+5. User clicks folder → toggle expand/collapse with CSS transitions
+6. User clicks file → loads into editor and advances to Step 3
+
+**Step 3 - JSON Editor:**
+1. Selected file content is loaded into textarea
+2. User can edit freely or click "Format JSON" to validate and pretty-print
+3. JSON validation uses `JSON.parse()` to catch syntax errors
+4. On save:
+   - Validates JSON (blocks save if invalid)
+   - Updates the file in the JSZip object
+   - Generates new ZIP blob
+   - Triggers download with `_edited` suffix
+   - Updates cached file content for potential further edits
+5. User can return to Step 2 to edit more files
 
 ### Privacy & Security
 
@@ -183,6 +318,38 @@ See the main [README.md](README.md) for detailed format specifications.
 - Check the recipe text file format matches the specification
 - Review the error message for specific details
 
+### MCADDON Editor Issues
+
+**Problem**: "No JSON files found in the MCADDON package"
+
+**Solution**:
+- Verify the .mcaddon file actually contains JSON files
+- Check that the file is a valid ZIP archive
+- Try opening the .mcaddon with a ZIP utility to inspect its contents
+
+**Problem**: "Invalid JSON" error when saving
+
+**Solution**:
+- Click "Format JSON" to identify syntax errors
+- Check for missing commas, brackets, or quotes
+- Compare with original JSON structure
+- Copy to external JSON validator if needed
+
+**Problem**: Folders won't expand in file tree
+
+**Solution**:
+- Refresh the page and reload the .mcaddon file
+- Check browser console (F12) for JavaScript errors
+- Ensure JavaScript is enabled
+
+**Problem**: Edited file doesn't download
+
+**Solution**:
+- Check browser's download settings
+- Look for blocked popups or downloads
+- Try a different browser
+- Check available disk space
+
 ### Downloads Go to Wrong Folder
 
 **Problem**: Can't find downloaded files
@@ -229,10 +396,13 @@ To make the interface work without any internet connection:
 | Installation | None | Python 3.7+ | Python 3.7+ | Rust toolchain |
 | Internet required | Initial load only | No | No | No |
 | User interface | Modern web UI | Command line | Terminal TUI | Terminal TUI |
+| Recipe conversion | ✓ | ✓ | ✓ | ✓ |
+| MCADDON editing | ✓ | ✗ | ✗ | ✗ |
+| File explorer | Hierarchical tree | N/A | Directory list | Directory list |
 | File selection | Browser dialog | Command args | File browser | File browser |
 | Output location | Downloads folder | Same as input | Same as input | Same as input |
 | Processing | Client-side JS | Python script | Python script | Compiled binary |
-| Best for | Casual users, no install | Automation, scripts | Interactive CLI | Windows users |
+| Best for | Casual users, MCADDON editing | Automation, scripts | Interactive CLI | Windows users |
 
 ## Browser Developer Console
 
