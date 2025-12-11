@@ -19,13 +19,69 @@
             padding: 20px;
         }
 
-        .container {
-            max-width: 800px;
+        .app-container {
+            max-width: 1200px;
             margin: 0 auto;
             background: white;
             border-radius: 12px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
             overflow: hidden;
+            display: flex;
+            min-height: 80vh;
+        }
+
+        .nav-panel {
+            width: 200px;
+            background: #2c3e50;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+        }
+
+        .nav-button {
+            padding: 15px 20px;
+            background: none;
+            border: none;
+            color: #bdc3c7;
+            text-align: left;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .nav-button:hover {
+            background: #34495e;
+            color: white;
+        }
+
+        .nav-button.active {
+            background: #34495e;
+            color: white;
+            border-left-color: #667eea;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
 
         .header {
@@ -261,22 +317,265 @@
         .optional-section.show {
             display: block;
         }
+
+        /* MCADDON Editor Styles */
+        .workflow-tabs {
+            display: flex;
+            background: #ecf0f1;
+            border-bottom: 2px solid #bdc3c7;
+        }
+
+        .workflow-tab {
+            flex: 1;
+            padding: 15px 20px;
+            text-align: center;
+            color: #7f8c8d;
+            background: #ecf0f1;
+            border: none;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: not-allowed;
+            position: relative;
+        }
+
+        .workflow-tab.enabled {
+            cursor: pointer;
+            color: #2c3e50;
+        }
+
+        .workflow-tab.enabled:hover {
+            background: #d5dbdb;
+        }
+
+        .workflow-tab.active {
+            background: white;
+            color: #2c3e50;
+            border-bottom: 3px solid #667eea;
+            cursor: default;
+        }
+
+        .workflow-tab-content {
+            display: none;
+            padding: 40px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .workflow-tab-content.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .json-file-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .tree-item {
+            margin-bottom: 2px;
+        }
+
+        .tree-folder {
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            user-select: none;
+        }
+
+        .tree-folder:hover {
+            background: #e9ecef;
+        }
+
+        .tree-folder-icon {
+            font-size: 12px;
+            width: 12px;
+            transition: transform 0.2s ease;
+            display: inline-block;
+        }
+
+        .tree-folder-icon.expanded {
+            transform: rotate(90deg);
+        }
+
+        .tree-folder-name {
+            font-weight: 500;
+            color: #2c3e50;
+            flex: 1;
+        }
+
+        .tree-folder-count {
+            color: #7f8c8d;
+            font-size: 12px;
+            background: #dee2e6;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .tree-children {
+            display: none;
+            margin-left: 20px;
+        }
+
+        .tree-children.expanded {
+            display: block;
+        }
+
+        .tree-file {
+            padding: 8px 12px;
+            background: #f8f9fa;
+            margin-bottom: 4px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tree-file:hover {
+            background: #e9ecef;
+            border-left-color: #667eea;
+        }
+
+        .tree-file-name {
+            font-weight: 400;
+            color: #2c3e50;
+        }
+
+        .tree-file-size {
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+
+        .json-editor-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            flex: 1;
+        }
+
+        .editor-header {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .editor-header .file-name {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 15px;
+        }
+
+        .editor-header .back-btn {
+            padding: 8px 15px;
+            background: #95a5a6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .editor-header .back-btn:hover {
+            background: #7f8c8d;
+        }
+
+        .json-textarea {
+            flex: 1;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            padding: 15px;
+            border: 2px solid #bdc3c7;
+            border-radius: 6px;
+            resize: none;
+            line-height: 1.5;
+        }
+
+        .json-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .editor-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .editor-actions button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .format-btn {
+            background: #3498db;
+            color: white;
+        }
+
+        .format-btn:hover {
+            background: #2980b9;
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .validation-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Minecraft Bedrock Recipe Generator</h1>
-            <p>Convert recipe text files to JSON format for Minecraft Bedrock edition</p>
+    <div class="app-container">
+        <!-- Left Navigation Panel -->
+        <div class="nav-panel">
+            <button class="nav-button active" onclick="switchScreen(0)">Recipe Maker</button>
+            <button class="nav-button" onclick="switchScreen(1)">Edit MCADDON Files</button>
         </div>
 
-        <div class="tabs">
-            <button class="tab active" onclick="switchTab(0)">JSON Only</button>
-            <button class="tab" onclick="switchTab(1)">JSON + McAddon</button>
-        </div>
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <!-- Screen 1: Recipe Maker -->
+            <div class="screen active" id="screen-recipe">
+                <div class="container">
+                    <div class="header">
+                        <h1>Minecraft Bedrock Recipe Generator</h1>
+                        <p>Convert recipe text files to JSON format for Minecraft Bedrock edition</p>
+                    </div>
 
-        <!-- Tab 1: JSON Only -->
-        <div class="tab-content active" id="tab1">
+                    <div class="tabs">
+                        <button class="tab active" onclick="switchRecipeTab(0)">JSON Only</button>
+                        <button class="tab" onclick="switchRecipeTab(1)">JSON + McAddon</button>
+                    </div>
+
+                    <!-- Tab 1: JSON Only -->
+                    <div class="tab-content active" id="tab1">
             <div class="info-box">
                 <strong>Tab 1: Convert Recipe to JSON</strong>
                 Select a .txt recipe file to convert it to JSON format. The JSON file will be downloaded to your Downloads folder.
@@ -319,6 +618,72 @@
             </button>
 
             <div class="result" id="result2"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screen 2: MCADDON Editor -->
+            <div class="screen" id="screen-mcaddon">
+                <div class="container">
+                    <div class="header">
+                        <h1>MCADDON File Editor</h1>
+                        <p>Edit JSON files inside MCADDON packages</p>
+                    </div>
+
+                    <div class="workflow-tabs">
+                        <button class="workflow-tab active enabled" onclick="switchWorkflowTab(0)">1. Select File</button>
+                        <button class="workflow-tab" id="workflow-tab-1" onclick="switchWorkflowTab(1)">2. Choose JSON</button>
+                        <button class="workflow-tab" id="workflow-tab-2" onclick="switchWorkflowTab(2)">3. Edit JSON</button>
+                    </div>
+
+                    <!-- Workflow Tab 1: File Selection -->
+                    <div class="workflow-tab-content active" id="workflow-content-0">
+                        <div class="info-box">
+                            <strong>Step 1: Select MCADDON File</strong>
+                            Choose a .mcaddon file to edit. Once loaded, you'll see all JSON files contained within it.
+                        </div>
+
+                        <div class="form-group">
+                            <label for="mcaddonEditorFile">Select MCADDON File (.mcaddon)</label>
+                            <input type="file" id="mcaddonEditorFile" accept=".mcaddon" onchange="handleMcAddonEditorSelect()">
+                            <div class="file-info" id="mcaddonEditorInfo"></div>
+                        </div>
+
+                        <div class="result" id="mcaddon-result"></div>
+                    </div>
+
+                    <!-- Workflow Tab 2: JSON File List -->
+                    <div class="workflow-tab-content" id="workflow-content-1">
+                        <div class="info-box">
+                            <strong>Step 2: Select JSON File to Edit</strong>
+                            Click on any JSON file below to edit it.
+                        </div>
+
+                        <div id="json-file-list-container">
+                            <ul class="json-file-list" id="jsonFileList"></ul>
+                        </div>
+                    </div>
+
+                    <!-- Workflow Tab 3: JSON Editor -->
+                    <div class="workflow-tab-content" id="workflow-content-2">
+                        <div class="json-editor-container">
+                            <div class="editor-header">
+                                <span class="file-name" id="currentFileName"></span>
+                                <button class="back-btn" onclick="backToFileList()">← Back to File List</button>
+                            </div>
+
+                            <div id="validationError" class="validation-error" style="display: none;"></div>
+
+                            <textarea class="json-textarea" id="jsonEditor" placeholder="JSON content will appear here..."></textarea>
+
+                            <div class="editor-actions">
+                                <button class="format-btn" onclick="formatJson()">Format JSON</button>
+                                <button class="save-btn" onclick="saveModifiedMcAddon()">Save & Download MCADDON</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -464,8 +829,31 @@
         let txtFile2 = null;
         let mcaddonFile = null;
 
-        // Tab switching
-        function switchTab(tabIndex) {
+        // MCADDON Editor state
+        let editorMcAddonFile = null;
+        let editorZip = null;
+        let jsonFiles = [];
+        let currentEditingFile = null;
+        let currentEditingPath = null;
+
+        // Screen switching
+        function switchScreen(screenIndex) {
+            const navButtons = document.querySelectorAll('.nav-button');
+            const screens = document.querySelectorAll('.screen');
+
+            navButtons.forEach((btn, index) => {
+                if (index === screenIndex) {
+                    btn.classList.add('active');
+                    screens[index].classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                    screens[index].classList.remove('active');
+                }
+            });
+        }
+
+        // Recipe tab switching
+        function switchRecipeTab(tabIndex) {
             const tabs = document.querySelectorAll('.tab');
             const contents = document.querySelectorAll('.tab-content');
 
@@ -481,6 +869,27 @@
 
             currentTab = tabIndex;
             clearResults();
+        }
+
+        // Workflow tab switching
+        function switchWorkflowTab(tabIndex) {
+            const tabs = document.querySelectorAll('.workflow-tab');
+            const contents = document.querySelectorAll('.workflow-tab-content');
+
+            // Check if tab is enabled
+            if (!tabs[tabIndex].classList.contains('enabled')) {
+                return;
+            }
+
+            tabs.forEach((tab, index) => {
+                if (index === tabIndex) {
+                    tab.classList.add('active');
+                    contents[index].classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                    contents[index].classList.remove('active');
+                }
+            });
         }
 
         // File selection handlers
@@ -680,6 +1089,279 @@
         function clearResults() {
             document.getElementById('result1').classList.remove('show');
             document.getElementById('result2').classList.remove('show');
+        }
+
+        // ========== MCADDON EDITOR FUNCTIONS ==========
+
+        async function handleMcAddonEditorSelect() {
+            const fileInput = document.getElementById('mcaddonEditorFile');
+            const fileInfo = document.getElementById('mcaddonEditorInfo');
+            const resultDiv = document.getElementById('mcaddon-result');
+
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            editorMcAddonFile = file;
+            fileInfo.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
+            fileInfo.classList.add('show');
+
+            try {
+                // Load the ZIP file
+                const mcaddonData = await readFileAsArrayBuffer(file);
+                editorZip = await JSZip.loadAsync(mcaddonData);
+
+                // Extract all JSON files
+                jsonFiles = [];
+                for (const [path, zipEntry] of Object.entries(editorZip.files)) {
+                    if (!zipEntry.dir && path.toLowerCase().endsWith('.json')) {
+                        const content = await zipEntry.async('string');
+                        jsonFiles.push({
+                            path: path,
+                            content: content,
+                            size: content.length
+                        });
+                    }
+                }
+
+                if (jsonFiles.length === 0) {
+                    throw new Error('No JSON files found in the MCADDON package.');
+                }
+
+                // Sort files by path
+                jsonFiles.sort((a, b) => a.path.localeCompare(b.path));
+
+                // Show success message
+                resultDiv.className = 'result success show';
+                resultDiv.innerHTML = `
+                    <div class="result-title">Success!</div>
+                    <div class="result-message">Found ${jsonFiles.length} JSON file(s) in the package.</div>
+                `;
+
+                // Enable and switch to tab 2
+                const tab1 = document.getElementById('workflow-tab-1');
+                tab1.classList.add('enabled');
+
+                // Load file list
+                loadJsonFileList();
+
+                // Auto-advance to tab 2
+                setTimeout(() => {
+                    switchWorkflowTab(1);
+                }, 1000);
+
+            } catch (error) {
+                resultDiv.className = 'result error show';
+                resultDiv.innerHTML = `
+                    <div class="result-title">Error</div>
+                    <div class="result-message">${error.message}</div>
+                `;
+            }
+        }
+
+        // Build tree structure from flat file list
+        function buildFileTree() {
+            const root = { type: 'folder', name: '', children: {}, files: [] };
+
+            jsonFiles.forEach((file, index) => {
+                const parts = file.path.split('/');
+                let current = root;
+
+                // Navigate/create folder structure
+                for (let i = 0; i < parts.length - 1; i++) {
+                    const folderName = parts[i];
+                    if (!current.children[folderName]) {
+                        current.children[folderName] = {
+                            type: 'folder',
+                            name: folderName,
+                            children: {},
+                            files: []
+                        };
+                    }
+                    current = current.children[folderName];
+                }
+
+                // Add file to the final folder
+                const fileName = parts[parts.length - 1];
+                current.files.push({
+                    type: 'file',
+                    name: fileName,
+                    index: index,
+                    size: file.size
+                });
+            });
+
+            return root;
+        }
+
+        // Count total JSON files in a folder (recursive)
+        function countFilesInFolder(folder) {
+            let count = folder.files.length;
+            for (const child of Object.values(folder.children)) {
+                count += countFilesInFolder(child);
+            }
+            return count;
+        }
+
+        // Render tree structure
+        function renderTree(folder, container, depth = 0) {
+            // Sort folders and files
+            const folderNames = Object.keys(folder.children).sort();
+
+            // Render folders
+            folderNames.forEach(folderName => {
+                const child = folder.children[folderName];
+                const fileCount = countFilesInFolder(child);
+
+                // Create folder element
+                const folderDiv = document.createElement('div');
+                folderDiv.className = 'tree-item';
+
+                const folderHeader = document.createElement('div');
+                folderHeader.className = 'tree-folder';
+                folderHeader.innerHTML = `
+                    <span class="tree-folder-icon">▶</span>
+                    <span class="tree-folder-name">${folderName}</span>
+                    <span class="tree-folder-count">${fileCount} file${fileCount !== 1 ? 's' : ''}</span>
+                `;
+
+                const childrenContainer = document.createElement('div');
+                childrenContainer.className = 'tree-children';
+
+                // Toggle expand/collapse
+                folderHeader.onclick = () => {
+                    const icon = folderHeader.querySelector('.tree-folder-icon');
+                    const isExpanded = childrenContainer.classList.contains('expanded');
+
+                    if (isExpanded) {
+                        childrenContainer.classList.remove('expanded');
+                        icon.classList.remove('expanded');
+                    } else {
+                        childrenContainer.classList.add('expanded');
+                        icon.classList.add('expanded');
+                    }
+                };
+
+                // Recursively render children
+                renderTree(child, childrenContainer, depth + 1);
+
+                folderDiv.appendChild(folderHeader);
+                folderDiv.appendChild(childrenContainer);
+                container.appendChild(folderDiv);
+            });
+
+            // Render files in this folder
+            folder.files.sort((a, b) => a.name.localeCompare(b.name));
+            folder.files.forEach(file => {
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'tree-file';
+                fileDiv.onclick = () => selectJsonFile(file.index);
+
+                fileDiv.innerHTML = `
+                    <span class="tree-file-name">${file.name}</span>
+                    <span class="tree-file-size">${formatFileSize(file.size)}</span>
+                `;
+
+                container.appendChild(fileDiv);
+            });
+        }
+
+        function loadJsonFileList() {
+            const listContainer = document.getElementById('jsonFileList');
+            listContainer.innerHTML = '';
+
+            // Build and render tree
+            const tree = buildFileTree();
+            renderTree(tree, listContainer);
+        }
+
+        function selectJsonFile(index) {
+            const file = jsonFiles[index];
+            currentEditingFile = file;
+            currentEditingPath = file.path;
+
+            // Load content into editor
+            document.getElementById('currentFileName').textContent = file.path;
+            document.getElementById('jsonEditor').value = file.content;
+            document.getElementById('validationError').style.display = 'none';
+
+            // Enable tab 3
+            const tab2 = document.getElementById('workflow-tab-2');
+            tab2.classList.add('enabled');
+
+            // Switch to editor tab
+            switchWorkflowTab(2);
+        }
+
+        function backToFileList() {
+            switchWorkflowTab(1);
+        }
+
+        function formatJson() {
+            const editor = document.getElementById('jsonEditor');
+            const errorDiv = document.getElementById('validationError');
+
+            try {
+                const parsed = JSON.parse(editor.value);
+                editor.value = JSON.stringify(parsed, null, 2);
+                errorDiv.style.display = 'none';
+            } catch (error) {
+                errorDiv.textContent = `Invalid JSON: ${error.message}`;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        async function saveModifiedMcAddon() {
+            const editor = document.getElementById('jsonEditor');
+            const errorDiv = document.getElementById('validationError');
+
+            // Validate JSON
+            try {
+                JSON.parse(editor.value);
+                errorDiv.style.display = 'none';
+            } catch (error) {
+                errorDiv.textContent = `Cannot save: Invalid JSON - ${error.message}`;
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            try {
+                // Update the file in the ZIP
+                editorZip.file(currentEditingPath, editor.value);
+
+                // Generate new ZIP
+                const newZipBlob = await editorZip.generateAsync({ type: 'blob' });
+
+                // Create filename
+                const baseName = editorMcAddonFile.name.replace(/\.mcaddon$/i, '');
+                const outputFileName = `${baseName}_edited.mcaddon`;
+
+                // Download
+                downloadBlob(newZipBlob, outputFileName);
+
+                // Show success message
+                const resultDiv = document.getElementById('mcaddon-result');
+                resultDiv.className = 'result success show';
+                resultDiv.innerHTML = `
+                    <div class="result-title">Success!</div>
+                    <div class="result-message">Modified MCADDON file "${outputFileName}" has been downloaded.</div>
+                `;
+
+                // Update the current file content in our cache
+                const fileIndex = jsonFiles.findIndex(f => f.path === currentEditingPath);
+                if (fileIndex !== -1) {
+                    jsonFiles[fileIndex].content = editor.value;
+                    jsonFiles[fileIndex].size = editor.value.length;
+                }
+
+                // Go back to file list
+                setTimeout(() => {
+                    backToFileList();
+                }, 1500);
+
+            } catch (error) {
+                errorDiv.textContent = `Error saving: ${error.message}`;
+                errorDiv.style.display = 'block';
+            }
         }
     </script>
 </body>
