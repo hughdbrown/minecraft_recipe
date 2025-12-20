@@ -1692,11 +1692,7 @@
 
         // File selection handlers
         function handleFileSelect(tabNum) {
-            const fileInput = document.getElementById(`txtFile${tabNum}`);
-            const fileInfo = document.getElementById(`fileInfo${tabNum}`);
-            const convertBtn = document.getElementById(`convertBtn${tabNum}`);
-
-            const file = fileInput.files[0];
+            const file = getSelectedFile(`txtFile${tabNum}`);
             if (file) {
                 if (tabNum === 1) {
                     txtFile1 = file;
@@ -1704,31 +1700,25 @@
                     txtFile2 = file;
                 }
 
-                fileInfo.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
-                fileInfo.classList.add('show');
+                updateFileInfo(`fileInfo${tabNum}`, file);
 
                 // Enable button based on tab requirements
                 if (tabNum === 1) {
-                    convertBtn.disabled = false;
+                    enableButton(`convertBtn${tabNum}`, true);
                 } else {
-                    convertBtn.disabled = !mcaddonFile;
+                    enableButton(`convertBtn${tabNum}`, !!mcaddonFile);
                 }
             }
         }
 
         function handleMcAddonSelect() {
-            const fileInput = document.getElementById('mcaddonFile');
-            const fileInfo = document.getElementById('mcaddonInfo');
-            const convertBtn = document.getElementById('convertBtn2');
-
-            const file = fileInput.files[0];
+            const file = getSelectedFile('mcaddonFile');
             if (file) {
                 mcaddonFile = file;
-                fileInfo.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
-                fileInfo.classList.add('show');
+                updateFileInfo('mcaddonInfo', file);
 
                 // Enable button if txt file is also selected
-                convertBtn.disabled = !txtFile2;
+                enableButton('convertBtn2', !!txtFile2);
             }
         }
 
@@ -2035,19 +2025,51 @@
             }
         }
 
+        // ========== FILE SELECTION UTILITIES ==========
+
+        /**
+         * Update file info display
+         * @param {string} infoElementId - The ID of the file info element
+         * @param {File} file - The selected file
+         */
+        function updateFileInfo(infoElementId, file) {
+            const infoElement = document.getElementById(infoElementId);
+            if (infoElement && file) {
+                infoElement.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
+                infoElement.classList.add('show');
+            }
+        }
+
+        /**
+         * Enable or disable a button
+         * @param {string} buttonId - The ID of the button element
+         * @param {boolean} enabled - Whether to enable the button
+         */
+        function enableButton(buttonId, enabled) {
+            const button = document.getElementById(buttonId);
+            if (button) {
+                button.disabled = !enabled;
+            }
+        }
+
+        /**
+         * Get the first selected file from a file input
+         * @param {string} inputId - The ID of the file input element
+         * @returns {File|null} The selected file or null
+         */
+        function getSelectedFile(inputId) {
+            const input = document.getElementById(inputId);
+            return input ? input.files[0] : null;
+        }
+
         // ========== MCADDON EDITOR FUNCTIONS ==========
 
         async function handleMcAddonEditorSelect() {
-            const fileInput = document.getElementById('mcaddonEditorFile');
-            const fileInfo = document.getElementById('mcaddonEditorInfo');
-            const resultDiv = document.getElementById('mcaddon-result');
-
-            const file = fileInput.files[0];
+            const file = getSelectedFile('mcaddonEditorFile');
             if (!file) return;
 
             editorMcAddonFile = file;
-            fileInfo.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
-            fileInfo.classList.add('show');
+            updateFileInfo('mcaddonEditorInfo', file);
 
             try {
                 // Load the ZIP file
@@ -2366,31 +2388,21 @@
          * Handle file selection for combine feature
          */
         function handleCombineFileSelect(type) {
-            const sourceInput = document.getElementById('combineSourceFile');
-            const destInput = document.getElementById('combineDestFile');
-            const sourceInfo = document.getElementById('combineSourceInfo');
-            const destInfo = document.getElementById('combineDestInfo');
-            const combineBtn = document.getElementById('combineBtn');
-            const resultDiv = document.getElementById('combineResult');
-            const downloadBtn = document.getElementById('downloadCombinedBtn');
-
             // Hide previous results
             hideStatus('combineResult');
             toggleDownloadButton('downloadCombinedBtn', false);
 
             if (type === 'source') {
-                const file = sourceInput.files[0];
+                const file = getSelectedFile('combineSourceFile');
                 if (file) {
                     combineSourceFile = file;
-                    sourceInfo.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
-                    sourceInfo.classList.add('show');
+                    updateFileInfo('combineSourceInfo', file);
                 }
             } else {
-                const file = destInput.files[0];
+                const file = getSelectedFile('combineDestFile');
                 if (file) {
                     combineDestFile = file;
-                    destInfo.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
-                    destInfo.classList.add('show');
+                    updateFileInfo('combineDestInfo', file);
                 }
             }
 
@@ -2400,13 +2412,13 @@
                     combineSourceFile.size === combineDestFile.size &&
                     combineSourceFile.lastModified === combineDestFile.lastModified) {
                     // Same file selected
-                    combineBtn.disabled = true;
+                    enableButton('combineBtn', false);
                     showError('combineResult', 'Source and destination cannot be the same file. Please select different files.');
                 } else {
-                    combineBtn.disabled = false;
+                    enableButton('combineBtn', true);
                 }
             } else {
-                combineBtn.disabled = true;
+                enableButton('combineBtn', false);
             }
         }
 
@@ -2673,12 +2685,6 @@
          * Handle file selection for diff feature
          */
         function handleDiffFileSelect(type) {
-            const file1Input = document.getElementById('diffFile1');
-            const file2Input = document.getElementById('diffFile2');
-            const file1Info = document.getElementById('diffFile1Info');
-            const file2Info = document.getElementById('diffFile2Info');
-            const diffBtn = document.getElementById('diffBtn');
-            const resultDiv = document.getElementById('diffResult');
             const diffDisplay = document.getElementById('diffDisplay');
 
             // Hide previous results
@@ -2686,23 +2692,21 @@
             diffDisplay.style.display = 'none';
 
             if (type === 'file1') {
-                const file = file1Input.files[0];
+                const file = getSelectedFile('diffFile1');
                 if (file) {
                     diffFile1 = file;
-                    file1Info.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
-                    file1Info.classList.add('show');
+                    updateFileInfo('diffFile1Info', file);
                 }
             } else {
-                const file = file2Input.files[0];
+                const file = getSelectedFile('diffFile2');
                 if (file) {
                     diffFile2 = file;
-                    file2Info.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
-                    file2Info.classList.add('show');
+                    updateFileInfo('diffFile2Info', file);
                 }
             }
 
             // Enable button if both files are selected
-            diffBtn.disabled = !(diffFile1 && diffFile2);
+            enableButton('diffBtn', !!(diffFile1 && diffFile2));
         }
 
         /**
@@ -2989,16 +2993,11 @@
          * Handle file selection for validation
          */
         async function handleValidateFileSelect() {
-            const fileInput = document.getElementById('validateFile');
-            const fileInfo = document.getElementById('validateFileInfo');
-            const resultsDiv = document.getElementById('validationResults');
-
-            const file = fileInput.files[0];
+            const file = getSelectedFile('validateFile');
             if (!file) return;
 
             validateFile = file;
-            fileInfo.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
-            fileInfo.classList.add('show');
+            updateFileInfo('validateFileInfo', file);
 
             // Automatically start validation
             await validateMcAddonFile();
@@ -3723,15 +3722,11 @@
         }
 
         async function handleBuiltinMcAddonSelect() {
-            const fileInput = document.getElementById('builtinMcAddonFile');
-            const fileInfo = document.getElementById('builtinFileInfo');
-
-            const file = fileInput.files[0];
+            const file = getSelectedFile('builtinMcAddonFile');
             if (!file) return;
 
             builtinMcAddonFile = file;
-            fileInfo.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
-            fileInfo.classList.add('show');
+            updateFileInfo('builtinFileInfo', file);
 
             try {
                 // Load the ZIP file
