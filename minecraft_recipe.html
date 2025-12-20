@@ -549,6 +549,197 @@
             margin-bottom: 15px;
             font-size: 14px;
         }
+
+        /* Diff Display Styles */
+        .diff-section {
+            margin-bottom: 30px;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .diff-section-header {
+            padding: 15px 20px;
+            font-weight: 600;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .diff-section-header.only-in-1 {
+            background: #ffe5e5;
+            color: #c92a2a;
+            border-left: 5px solid #fa5252;
+        }
+
+        .diff-section-header.only-in-2 {
+            background: #e3f7ed;
+            color: #087f5b;
+            border-left: 5px solid #51cf66;
+        }
+
+        .diff-section-header.modified {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 5px solid #ffc107;
+        }
+
+        .diff-section-count {
+            background: rgba(0, 0, 0, 0.1);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+
+        .diff-section-content {
+            display: none;
+            background: white;
+        }
+
+        .diff-section-content.expanded {
+            display: block;
+        }
+
+        .diff-file-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e9ecef;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .diff-file-item:hover {
+            background: #f8f9fa;
+        }
+
+        .diff-file-item:last-child {
+            border-bottom: none;
+        }
+
+        .diff-file-path {
+            font-weight: 500;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .diff-file-preview {
+            font-size: 12px;
+            color: #7f8c8d;
+            font-family: 'Courier New', monospace;
+        }
+
+        .diff-comparison {
+            display: none;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px solid #dee2e6;
+        }
+
+        .diff-comparison.expanded {
+            display: block;
+        }
+
+        .diff-side-by-side {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .diff-side {
+            background: #f8f9fa;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .diff-side-header {
+            background: #34495e;
+            color: white;
+            padding: 10px 15px;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .diff-side-content {
+            padding: 15px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .diff-json-view {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #2c3e50;
+        }
+
+        .diff-summary {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px 20px;
+            border-radius: 4px;
+            margin-bottom: 25px;
+        }
+
+        .diff-summary-title {
+            font-weight: 600;
+            font-size: 16px;
+            color: #0d47a1;
+            margin-bottom: 10px;
+        }
+
+        .diff-summary-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .diff-stat {
+            text-align: center;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+        }
+
+        .diff-stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .diff-stat-value.removed {
+            color: #c92a2a;
+        }
+
+        .diff-stat-value.added {
+            color: #087f5b;
+        }
+
+        .diff-stat-value.modified {
+            color: #856404;
+        }
+
+        .diff-stat-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        .diff-toggle-icon {
+            transition: transform 0.3s ease;
+            display: inline-block;
+        }
+
+        .diff-toggle-icon.expanded {
+            transform: rotate(90deg);
+        }
     </style>
 </head>
 <body>
@@ -558,6 +749,7 @@
             <button class="nav-button active" onclick="switchScreen(0)">Recipe Maker</button>
             <button class="nav-button" onclick="switchScreen(1)">Edit MCADDON Files</button>
             <button class="nav-button" onclick="switchScreen(2)">Combine MCADDON Files</button>
+            <button class="nav-button" onclick="switchScreen(3)">Diff MCADDON Files</button>
         </div>
 
         <!-- Main Content Area -->
@@ -724,6 +916,48 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Screen 4: Diff MCADDON Files -->
+            <div class="screen" id="screen-diff">
+                <div class="container">
+                    <div class="header">
+                        <h1>Diff MCADDON Files</h1>
+                        <p>Compare two MCADDON files to see what changed</p>
+                    </div>
+
+                    <div class="tab-content active" style="display: block;">
+                        <div class="info-box">
+                            <strong>How it works:</strong>
+                            Select two versions of an MCADDON file. The tool will compare all JSON files and show you what's different between them.
+                        </div>
+
+                        <div class="form-group">
+                            <label for="diffFile1">Select First MCADDON File (Version 1)</label>
+                            <input type="file" id="diffFile1" accept=".mcaddon" onchange="handleDiffFileSelect('file1')">
+                            <div class="file-info" id="diffFile1Info"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="diffFile2">Select Second MCADDON File (Version 2)</label>
+                            <input type="file" id="diffFile2" accept=".mcaddon" onchange="handleDiffFileSelect('file2')">
+                            <div class="file-info" id="diffFile2Info"></div>
+                        </div>
+
+                        <button class="convert-btn" id="diffBtn" onclick="diffMcAddonFiles()" disabled>
+                            Compare Files
+                        </button>
+
+                        <div class="result" id="diffResult"></div>
+
+                        <div id="diffDisplay" style="display: none; margin-top: 25px;">
+                            <div id="diffSummary" style="margin-bottom: 20px;"></div>
+                            <div id="diffOnlyInFile1"></div>
+                            <div id="diffOnlyInFile2"></div>
+                            <div id="diffModified"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -880,6 +1114,13 @@
         let combineSourceFile = null;
         let combineDestFile = null;
         let combinedZip = null;
+
+        // Diff MCADDON state
+        let diffFile1 = null;
+        let diffFile2 = null;
+        let diffFile1Zip = null;
+        let diffFile2Zip = null;
+        let diffResults = null;
 
         // Screen switching
         function switchScreen(screenIndex) {
@@ -1776,6 +2017,343 @@
                     <div class="result-message">Failed to download: ${error.message}</div>
                 `;
             }
+        }
+
+        // ========== DIFF MCADDON FUNCTIONS ==========
+
+        /**
+         * Handle file selection for diff feature
+         */
+        function handleDiffFileSelect(type) {
+            const file1Input = document.getElementById('diffFile1');
+            const file2Input = document.getElementById('diffFile2');
+            const file1Info = document.getElementById('diffFile1Info');
+            const file2Info = document.getElementById('diffFile2Info');
+            const diffBtn = document.getElementById('diffBtn');
+            const resultDiv = document.getElementById('diffResult');
+            const diffDisplay = document.getElementById('diffDisplay');
+
+            // Hide previous results
+            resultDiv.classList.remove('show');
+            diffDisplay.style.display = 'none';
+
+            if (type === 'file1') {
+                const file = file1Input.files[0];
+                if (file) {
+                    diffFile1 = file;
+                    file1Info.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
+                    file1Info.classList.add('show');
+                }
+            } else {
+                const file = file2Input.files[0];
+                if (file) {
+                    diffFile2 = file;
+                    file2Info.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
+                    file2Info.classList.add('show');
+                }
+            }
+
+            // Enable button if both files are selected
+            diffBtn.disabled = !(diffFile1 && diffFile2);
+        }
+
+        /**
+         * Extract all JSON files from a ZIP
+         */
+        async function extractJsonFilesFromZip(zip) {
+            const jsonFiles = {};
+
+            for (const [path, entry] of Object.entries(zip.files)) {
+                if (!entry.dir && path.toLowerCase().endsWith('.json')) {
+                    try {
+                        const content = await entry.async('string');
+                        const parsed = JSON.parse(content);
+                        jsonFiles[path] = {
+                            content: content,
+                            parsed: parsed
+                        };
+                    } catch (e) {
+                        // Skip invalid JSON files
+                    }
+                }
+            }
+
+            return jsonFiles;
+        }
+
+        /**
+         * Compare two MCADDON files
+         */
+        async function diffMcAddonFiles() {
+            if (!diffFile1 || !diffFile2) return;
+
+            const resultDiv = document.getElementById('diffResult');
+            const diffDisplay = document.getElementById('diffDisplay');
+
+            try {
+                resultDiv.className = 'result show';
+                resultDiv.innerHTML = `
+                    <div class="result-title">Processing...</div>
+                    <div class="result-message">Loading MCADDON files...</div>
+                `;
+
+                // Load both MCADDON files
+                const file1Data = await readFileAsArrayBuffer(diffFile1);
+                const file2Data = await readFileAsArrayBuffer(diffFile2);
+
+                diffFile1Zip = await JSZip.loadAsync(file1Data);
+                diffFile2Zip = await JSZip.loadAsync(file2Data);
+
+                resultDiv.innerHTML = `
+                    <div class="result-title">Processing...</div>
+                    <div class="result-message">Extracting and comparing JSON files...</div>
+                `;
+
+                // Extract JSON files from both
+                const file1Json = await extractJsonFilesFromZip(diffFile1Zip);
+                const file2Json = await extractJsonFilesFromZip(diffFile2Zip);
+
+                // Compare
+                diffResults = {
+                    onlyInFile1: [],
+                    onlyInFile2: [],
+                    modified: []
+                };
+
+                // Find files only in file1 or modified
+                for (const path in file1Json) {
+                    if (!file2Json[path]) {
+                        diffResults.onlyInFile1.push({
+                            path: path,
+                            content: file1Json[path].content,
+                            parsed: file1Json[path].parsed
+                        });
+                    } else {
+                        // File exists in both - check if different
+                        const content1 = JSON.stringify(file1Json[path].parsed, null, 2);
+                        const content2 = JSON.stringify(file2Json[path].parsed, null, 2);
+
+                        if (content1 !== content2) {
+                            diffResults.modified.push({
+                                path: path,
+                                content1: content1,
+                                content2: content2,
+                                parsed1: file1Json[path].parsed,
+                                parsed2: file2Json[path].parsed
+                            });
+                        }
+                    }
+                }
+
+                // Find files only in file2
+                for (const path in file2Json) {
+                    if (!file1Json[path]) {
+                        diffResults.onlyInFile2.push({
+                            path: path,
+                            content: file2Json[path].content,
+                            parsed: file2Json[path].parsed
+                        });
+                    }
+                }
+
+                // Display results
+                displayDiffResults();
+
+                resultDiv.className = 'result success show';
+                resultDiv.innerHTML = `
+                    <div class="result-title">Comparison Complete!</div>
+                    <div class="result-message">Found ${diffResults.onlyInFile1.length + diffResults.onlyInFile2.length + diffResults.modified.length} difference(s).</div>
+                `;
+
+                diffDisplay.style.display = 'block';
+
+            } catch (error) {
+                resultDiv.className = 'result error show';
+                resultDiv.innerHTML = `
+                    <div class="result-title">Error</div>
+                    <div class="result-message">${error.message}</div>
+                `;
+                diffDisplay.style.display = 'none';
+            }
+        }
+
+        /**
+         * Display diff results in the UI
+         */
+        function displayDiffResults() {
+            const summaryDiv = document.getElementById('diffSummary');
+            const onlyIn1Div = document.getElementById('diffOnlyInFile1');
+            const onlyIn2Div = document.getElementById('diffOnlyInFile2');
+            const modifiedDiv = document.getElementById('diffModified');
+
+            // Summary
+            summaryDiv.innerHTML = `
+                <div class="diff-summary">
+                    <div class="diff-summary-title">Comparison Summary</div>
+                    <div class="diff-summary-stats">
+                        <div class="diff-stat">
+                            <span class="diff-stat-value removed">${diffResults.onlyInFile1.length}</span>
+                            <span class="diff-stat-label">Only in File 1</span>
+                        </div>
+                        <div class="diff-stat">
+                            <span class="diff-stat-value added">${diffResults.onlyInFile2.length}</span>
+                            <span class="diff-stat-label">Only in File 2</span>
+                        </div>
+                        <div class="diff-stat">
+                            <span class="diff-stat-value modified">${diffResults.modified.length}</span>
+                            <span class="diff-stat-label">Modified</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Only in File 1
+            if (diffResults.onlyInFile1.length > 0) {
+                onlyIn1Div.innerHTML = createDiffSection(
+                    'only-in-1',
+                    'Only in File 1 (Removed)',
+                    diffResults.onlyInFile1,
+                    'removed'
+                );
+            } else {
+                onlyIn1Div.innerHTML = '';
+            }
+
+            // Only in File 2
+            if (diffResults.onlyInFile2.length > 0) {
+                onlyIn2Div.innerHTML = createDiffSection(
+                    'only-in-2',
+                    'Only in File 2 (Added)',
+                    diffResults.onlyInFile2,
+                    'added'
+                );
+            } else {
+                onlyIn2Div.innerHTML = '';
+            }
+
+            // Modified
+            if (diffResults.modified.length > 0) {
+                modifiedDiv.innerHTML = createDiffSection(
+                    'modified',
+                    'Modified Files',
+                    diffResults.modified,
+                    'modified'
+                );
+            } else {
+                modifiedDiv.innerHTML = '';
+            }
+        }
+
+        /**
+         * Create a diff section HTML
+         */
+        function createDiffSection(type, title, files, category) {
+            const sectionId = `diff-section-${type}`;
+            const contentId = `diff-content-${type}`;
+
+            let html = `
+                <div class="diff-section">
+                    <div class="diff-section-header ${type}" onclick="toggleDiffSection('${contentId}', '${sectionId}')">
+                        <span><span class="diff-toggle-icon" id="${sectionId}-icon">▶</span> ${title}</span>
+                        <span class="diff-section-count">${files.length} file${files.length !== 1 ? 's' : ''}</span>
+                    </div>
+                    <div class="diff-section-content" id="${contentId}">
+            `;
+
+            files.forEach((file, index) => {
+                const itemId = `diff-item-${type}-${index}`;
+                const comparisonId = `diff-comparison-${type}-${index}`;
+
+                html += `
+                    <div class="diff-file-item" onclick="toggleDiffComparison('${comparisonId}')">
+                        <div class="diff-file-path">${file.path}</div>
+                `;
+
+                if (category === 'modified') {
+                    html += `
+                        <div class="diff-file-preview">Click to view side-by-side comparison</div>
+                        <div class="diff-comparison" id="${comparisonId}">
+                            <div class="diff-side-by-side">
+                                <div class="diff-side">
+                                    <div class="diff-side-header">File 1 (${diffFile1.name})</div>
+                                    <div class="diff-side-content">
+                                        <pre class="diff-json-view">${escapeHtml(file.content1)}</pre>
+                                    </div>
+                                </div>
+                                <div class="diff-side">
+                                    <div class="diff-side-header">File 2 (${diffFile2.name})</div>
+                                    <div class="diff-side-content">
+                                        <pre class="diff-json-view">${escapeHtml(file.content2)}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    const content = JSON.stringify(file.parsed, null, 2);
+                    const fileName = category === 'removed' ? diffFile1.name : diffFile2.name;
+                    html += `
+                        <div class="diff-file-preview">Click to view content</div>
+                        <div class="diff-comparison" id="${comparisonId}">
+                            <div class="diff-side-by-side">
+                                <div class="diff-side" style="grid-column: span 2;">
+                                    <div class="diff-side-header">${fileName}</div>
+                                    <div class="diff-side-content">
+                                        <pre class="diff-json-view">${escapeHtml(content)}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                html += `</div>`;
+            });
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            return html;
+        }
+
+        /**
+         * Toggle diff section expansion
+         */
+        function toggleDiffSection(contentId, sectionId) {
+            const content = document.getElementById(contentId);
+            const icon = document.getElementById(`${sectionId}-icon`);
+
+            if (content.classList.contains('expanded')) {
+                content.classList.remove('expanded');
+                icon.classList.remove('expanded');
+            } else {
+                content.classList.add('expanded');
+                icon.classList.add('expanded');
+            }
+        }
+
+        /**
+         * Toggle diff comparison display
+         */
+        function toggleDiffComparison(comparisonId) {
+            const comparison = document.getElementById(comparisonId);
+
+            if (comparison.classList.contains('expanded')) {
+                comparison.classList.remove('expanded');
+            } else {
+                comparison.classList.add('expanded');
+            }
+        }
+
+        /**
+         * Escape HTML for display
+         */
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
     </script>
 </body>
