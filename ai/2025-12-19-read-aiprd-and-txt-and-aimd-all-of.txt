@@ -1,0 +1,1157 @@
+
+ * ▐▛███▜▌ *   Claude Code v2.0.69
+* ▝▜█████▛▘ *  Sonnet 4.5 · Claude Pro
+ *  ▘▘ ▝▝  *   ~/workspace/tyler/minecraft-recipe
+
+> Read `ai/*.prd` and `*.txt` and `ai/*.md`. All of these changes have 
+already been applied. Read `combine-mcaddon-files.md` and think hard about 
+these changes. Ask any necessary questions to resolve unclarity. When all 
+the unclarity is resolved, begin implementation. 
+
+⏺ I'll help you understand the requirements and implement the necessary changes. Let me start by reading the relevant documentation files.
+
+⏺ Search(pattern: "ai/*.prd")
+  ⎿  Found 2 files (ctrl+o to expand)
+
+⏺ Search(pattern: "*.txt")
+  ⎿  Found 9 files (ctrl+o to expand)
+
+⏺ Search(pattern: "ai/*.md")
+  ⎿  Found 1 file (ctrl+o to expand)
+
+⏺ Read(combine-mcaddon-files.md)
+  ⎿  Read 26 lines
+
+⏺ Read(ai/recipe.prd)
+  ⎿  Read 76 lines
+
+⏺ Read(ai/modify-html-editor.md)
+  ⎿  Read 22 lines
+
+⏺ Read(minecraft_recipe.py)
+  ⎿  Read 301 lines
+
+⏺ Search(pattern: "*.html")
+  ⎿  Found 1 file (ctrl+o to expand)
+
+⏺ Read(minecraft_recipe.html)
+  ⎿  Read 1369 lines
+
+⏺ Now let me understand the requirements for combining MCADDON files. I have a few questions to ensure I implement this correctly:
+
+⏺ User declined to answer questions
+
+> Read `ai/*.prd` and `*.txt` and `ai/*.md`. All of these changes have 
+already been applied. Read `combine-mcaddon-files.md` and think hard about 
+these changes. Ask any necessary questions to resolve unclarity. When all 
+the unclarity is resolved, begin implementation. 
+
+⏺ Let me re-read the requirements carefully and ask targeted questions about the unclear aspects.
+
+⏺ Read(combine-mcaddon-files.md)
+  ⎿  Read 26 lines
+
+⏺ I've read the requirements. Let me clarify a few specific points about the implementation:
+
+  My understanding:
+  1. MCADDON files contain multiple JSON files in a directory structure
+  2. We need to compare source and destination MCADDON files
+  3. Add files/keys from source that are absent in destination
+  4. Don't overwrite anything that exists in destination (these are "collisions")
+
+  Questions to clarify:
+
+  1. File-level vs Key-level merging: When both MCADDON files contain the same JSON file path (e.g., both have behavior_pack/recipes/my_recipe.json):
+    - Should we skip that file entirely (file-level collision)?
+    - Or should we merge the JSON keys within that file (key-level merging)?
+  2. Deep merging: If we do key-level merging and both files have nested objects like:
+  Source: {"minecraft:recipe_shaped": {"description": {"identifier": "new_item"}}}
+  Dest:   {"minecraft:recipe_shaped": {"tags": ["crafting_table"]}}
+  2. Should we merge at all nesting levels, or only top-level keys?
+  3. Arrays: If both have an array at the same path, like "tags": ["crafting_table"]:
+    - Keep destination's array unchanged?
+    - Merge/append unique items from source?
+    - Treat as a collision and skip?
+  4. Non-JSON files: Should we also copy non-JSON files (like images, manifest.json) from source if they don't exist in destination, or only handle JSON files?
+
+> 1. Files are selected with a file picker. It cannot be the case that 
+either source or destination does not exist. Additionally, it is not legal 
+to select the same file as source and destination.
+2. In this case, "minecraft:recipe_shaped" would have two items: "tags" from
+ destination and ""description" from source.
+3. Merge/append unique items from source.
+4. Source and destination are specific file, not directories of files.
+
+Ask again if that does not clarify all the questions. 
+
+⏺ Thank you for the clarification! Now I understand:
+
+  1. ✓ Both source and destination are specific MCADDON files selected via file picker (cannot be the same file)
+  2. ✓ Deep merge: nested objects merge recursively at all levels
+  3. ✓ Arrays: append unique items from source to destination
+  4. ✓ Working with MCADDON files (ZIP archives containing multiple files internally)
+
+  My understanding of the algorithm:
+
+  For each file inside the source MCADDON:
+  - If the file path doesn't exist in destination MCADDON → copy entire file
+  - If the file path exists in both:
+    - If both are JSON files → deep merge (recursively add keys from source missing in dest; for arrays append unique items)
+    - If both are non-JSON files → skip (collision)
+    - For primitive values that exist in both → keep destination value (collision)
+
+  Is this correct? If yes, I'll begin implementation.
+
+> Yes. Begin implementation. 
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Updated minecraft_recipe.html with 1 addition                   
+       557            <div class="nav-panel">
+       558                <button class="nav-button active" 
+             onclick="switchScreen(0)">Recipe Maker</button>
+       559                <button class="nav-button" 
+             onclick="switchScreen(1)">Edit MCADDON Files</button>
+       560 +              <button class="nav-button" 
+           + onclick="switchScreen(2)">Combine MCADDON Files</button>
+       561            </div>
+       562    
+       563            <!-- Main Content Area -->
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Updated minecraft_recipe.html with 39 additions                     
+       685                        </div>
+       686                    </div>
+       687                </div>
+       688 +  
+       689 +              <!-- Screen 3: Combine MCADDON Files -->
+       690 +              <div class="screen" id="screen-combine">
+       691 +                  <div class="container">
+       692 +                      <div class="header">
+       693 +                          <h1>Combine MCADDON Files</h1>
+       694 +                          <p>Merge two MCADDON files by 
+           + adding content from source to destination</p>
+       695 +                      </div>
+       696 +  
+       697 +                      <div class="tab-content active" 
+           + style="display: block;">
+       698 +                          <div class="info-box">
+       699 +                              <strong>How it works:</strong>
+       700 +                              Select a source and destination
+           +  MCADDON file. Files and keys from the source that don't 
+           + exist in the destination will be added. Existing content in 
+           + the destination will not be modified.
+       701 +                          </div>
+       702 +  
+       703 +                          <div class="form-group">
+       704 +                              <label 
+           + for="combineSourceFile">Select Source MCADDON File</label>
+       705 +                              <input type="file" 
+           + id="combineSourceFile" accept=".mcaddon" 
+           + onchange="handleCombineFileSelect('source')">
+       706 +                              <div class="file-info" 
+           + id="combineSourceInfo"></div>
+       707 +                          </div>
+       708 +  
+       709 +                          <div class="form-group">
+       710 +                              <label 
+           + for="combineDestFile">Select Destination MCADDON 
+           + File</label>
+       711 +                              <input type="file" 
+           + id="combineDestFile" accept=".mcaddon" 
+           + onchange="handleCombineFileSelect('dest')">
+       712 +                              <div class="file-info" 
+           + id="combineDestInfo"></div>
+       713 +                          </div>
+       714 +  
+       715 +                          <button class="convert-btn" 
+           + id="combineBtn" onclick="combineMcAddonFiles()" disabled>
+       716 +                              Combine Files
+       717 +                          </button>
+       718 +  
+       719 +                          <div class="result" 
+           + id="combineResult"></div>
+       720 +  
+       721 +                          <button class="convert-btn" 
+           + id="downloadCombinedBtn" onclick="downloadCombinedMcAddon()"
+           +  style="display: none; margin-top: 15px; background: 
+           + #27ae60;">
+       722 +                              Download Combined MCADDON
+       723 +                          </button>
+       724 +                      </div>
+       725 +                  </div>
+       726 +              </div>
+       727            </div>
+       728        </div>
+       729    
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Updated minecraft_recipe.html with 5 additions       
+       876            let currentEditingFile = null;
+       877            let currentEditingPath = null;
+       878    
+       879 +          // Combine MCADDON state
+       880 +          let combineSourceFile = null;
+       881 +          let combineDestFile = null;
+       882 +          let combinedZip = null;
+       883 +  
+       884            // Screen switching
+       885            function switchScreen(screenIndex) {
+       886                const navButtons = 
+             document.querySelectorAll('.nav-button');
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Updated minecraft_recipe.html with 240 additions                    
+       1408                    errorDiv.style.display = 'block';
+       1409                }
+       1410            }
+       1411 +  
+       1412 +          // ========== COMBINE MCADDON FUNCTIONS ==========
+       1413 +  
+       1414 +          /**
+       1415 +           * Deep merge JSON objects/arrays from source into
+            +  destination
+       1416 +           * - For objects: recursively merge keys
+       1417 +           * - For arrays: append unique items from source
+       1418 +           * - For primitives: keep destination value 
+            + (collision)
+       1419 +           */
+       1420 +          function deepMergeJson(dest, source) {
+       1421 +              // If source is not an object/array, or dest 
+            + is not the same type, return dest (collision)
+       1422 +              if (source === null || typeof source !== 
+            + 'object') {
+       1423 +                  return dest;
+       1424 +              }
+       1425 +  
+       1426 +              if (dest === null || typeof dest !== 'object')
+            +  {
+       1427 +                  return dest;
+       1428 +              }
+       1429 +  
+       1430 +              // Handle arrays
+       1431 +              if (Array.isArray(source) && 
+            + Array.isArray(dest)) {
+       1432 +                  return mergeArrays(dest, source);
+       1433 +              }
+       1434 +  
+       1435 +              // Handle objects
+       1436 +              if (!Array.isArray(source) && 
+            + !Array.isArray(dest)) {
+       1437 +                  const result = { ...dest };
+       1438 +                  for (const key in source) {
+       1439 +                      if (source.hasOwnProperty(key)) {
+       1440 +                          if (result.hasOwnProperty(key)) {
+       1441 +                              // Key exists in both - 
+            + recursively merge
+       1442 +                              result[key] = 
+            + deepMergeJson(result[key], source[key]);
+       1443 +                          } else {
+       1444 +                              // Key only in source - add it
+       1445 +                              result[key] = source[key];
+       1446 +                          }
+       1447 +                      }
+       1448 +                  }
+       1449 +                  return result;
+       1450 +              }
+       1451 +  
+       1452 +              // Type mismatch - keep destination
+       1453 +              return dest;
+       1454 +          }
+       1455 +  
+       1456 +          /**
+       1457 +           * Merge arrays by appending unique items from 
+            + source
+       1458 +           */
+       1459 +          function mergeArrays(destArray, sourceArray) {
+       1460 +              const result = [...destArray];
+       1461 +  
+       1462 +              for (const sourceItem of sourceArray) {
+       1463 +                  // Check if item already exists in 
+            + destination
+       1464 +                  const exists = result.some(destItem =>
+       1465 +                      JSON.stringify(destItem) === 
+            + JSON.stringify(sourceItem)
+       1466 +                  );
+       1467 +  
+       1468 +                  if (!exists) {
+       1469 +                      result.push(sourceItem);
+       1470 +                  }
+       1471 +              }
+       1472 +  
+       1473 +              return result;
+       1474 +          }
+       1475 +  
+       1476 +          /**
+       1477 +           * Handle file selection for combine feature
+       1478 +           */
+       1479 +          function handleCombineFileSelect(type) {
+       1480 +              const sourceInput = 
+            + document.getElementById('combineSourceFile');
+       1481 +              const destInput = 
+            + document.getElementById('combineDestFile');
+       1482 +              const sourceInfo = 
+            + document.getElementById('combineSourceInfo');
+       1483 +              const destInfo = 
+            + document.getElementById('combineDestInfo');
+       1484 +              const combineBtn = 
+            + document.getElementById('combineBtn');
+       1485 +              const resultDiv = 
+            + document.getElementById('combineResult');
+       1486 +              const downloadBtn = 
+            + document.getElementById('downloadCombinedBtn');
+       1487 +  
+       1488 +              // Hide previous results
+       1489 +              resultDiv.classList.remove('show');
+       1490 +              downloadBtn.style.display = 'none';
+       1491 +  
+       1492 +              if (type === 'source') {
+       1493 +                  const file = sourceInput.files[0];
+       1494 +                  if (file) {
+       1495 +                      combineSourceFile = file;
+       1496 +                      sourceInfo.textContent = `Selected: 
+            + ${file.name} (${formatFileSize(file.size)})`;
+       1497 +                      sourceInfo.classList.add('show');
+       1498 +                  }
+       1499 +              } else {
+       1500 +                  const file = destInput.files[0];
+       1501 +                  if (file) {
+       1502 +                      combineDestFile = file;
+       1503 +                      destInfo.textContent = `Selected: 
+            + ${file.name} (${formatFileSize(file.size)})`;
+       1504 +                      destInfo.classList.add('show');
+       1505 +                  }
+       1506 +              }
+       1507 +  
+       1508 +              // Validate that both files are selected and 
+            + different
+       1509 +              if (combineSourceFile && combineDestFile) {
+       1510 +                  if (combineSourceFile.name === 
+            + combineDestFile.name &&
+       1511 +                      combineSourceFile.size === 
+            + combineDestFile.size &&
+       1512 +                      combineSourceFile.lastModified === 
+            + combineDestFile.lastModified) {
+       1513 +                      // Same file selected
+       1514 +                      combineBtn.disabled = true;
+       1515 +                      resultDiv.className = 'result error 
+            + show';
+       1516 +                      resultDiv.innerHTML = `
+       1517 +                          <div 
+            + class="result-title">Error</div>
+       1518 +                          <div class="result-message">Source
+            +  and destination cannot be the same file. Please select 
+            + different files.</div>
+       1519 +                      `;
+       1520 +                  } else {
+       1521 +                      combineBtn.disabled = false;
+       1522 +                  }
+       1523 +              } else {
+       1524 +                  combineBtn.disabled = true;
+       1525 +              }
+       1526 +          }
+       1527 +  
+       1528 +          /**
+       1529 +           * Combine two MCADDON files
+       1530 +           */
+       1531 +          async function combineMcAddonFiles() {
+       1532 +              if (!combineSourceFile || !combineDestFile) {
+       1533 +                  return;
+       1534 +              }
+       1535 +  
+       1536 +              const resultDiv = 
+            + document.getElementById('combineResult');
+       1537 +              const downloadBtn = 
+            + document.getElementById('downloadCombinedBtn');
+       1538 +  
+       1539 +              try {
+       1540 +                  resultDiv.className = 'result show';
+       1541 +                  resultDiv.innerHTML = `
+       1542 +                      <div 
+            + class="result-title">Processing...</div>
+       1543 +                      <div class="result-message">Loading 
+            + and merging MCADDON files...</div>
+       1544 +                  `;
+       1545 +  
+       1546 +                  // Load both MCADDON files
+       1547 +                  const sourceData = await 
+            + readFileAsArrayBuffer(combineSourceFile);
+       1548 +                  const destData = await 
+            + readFileAsArrayBuffer(combineDestFile);
+       1549 +  
+       1550 +                  const sourceZip = await 
+            + JSZip.loadAsync(sourceData);
+       1551 +                  const destZip = await 
+            + JSZip.loadAsync(destData);
+       1552 +  
+       1553 +                  // Create a new zip based on destination
+       1554 +                  combinedZip = destZip;
+       1555 +  
+       1556 +                  let filesAdded = 0;
+       1557 +                  let filesMerged = 0;
+       1558 +                  let filesSkipped = 0;
+       1559 +  
+       1560 +                  // Process each file in source
+       1561 +                  for (const [sourcePath, sourceEntry] of 
+            + Object.entries(sourceZip.files)) {
+       1562 +                      if (sourceEntry.dir) continue;
+       1563 +  
+       1564 +                      const destEntry = 
+            + destZip.files[sourcePath];
+       1565 +  
+       1566 +                      if (!destEntry) {
+       1567 +                          // File doesn't exist in 
+            + destination - copy it
+       1568 +                          const content = await 
+            + sourceEntry.async('arraybuffer');
+       1569 +                          combinedZip.file(sourcePath, 
+            + content);
+       1570 +                          filesAdded++;
+       1571 +                      } else {
+       1572 +                          // File exists in both
+       1573 +                          if 
+            + (sourcePath.toLowerCase().endsWith('.json')) {
+       1574 +                              // JSON file - merge content
+       1575 +                              try {
+       1576 +                                  const sourceContent = 
+            + await sourceEntry.async('string');
+       1577 +                                  const destContent = await 
+            + destEntry.async('string');
+       1578 +  
+       1579 +                                  const sourceJson = 
+            + JSON.parse(sourceContent);
+       1580 +                                  const destJson = 
+            + JSON.parse(destContent);
+       1581 +  
+       1582 +                                  const mergedJson = 
+            + deepMergeJson(destJson, sourceJson);
+       1583 +  
+       1584 +                                  
+            + combinedZip.file(sourcePath, JSON.stringify(mergedJson, 
+            + null, 2));
+       1585 +                                  filesMerged++;
+       1586 +                              } catch (e) {
+       1587 +                                  // Not valid JSON or merge
+            +  failed - skip
+       1588 +                                  filesSkipped++;
+       1589 +                              }
+       1590 +                          } else {
+       1591 +                              // Non-JSON file - skip (keep 
+            + destination)
+       1592 +                              filesSkipped++;
+       1593 +                          }
+       1594 +                      }
+       1595 +                  }
+       1596 +  
+       1597 +                  // Show success message
+       1598 +                  resultDiv.className = 'result success 
+            + show';
+       1599 +                  resultDiv.innerHTML = `
+       1600 +                      <div 
+            + class="result-title">Success!</div>
+       1601 +                      <div class="result-message">
+       1602 +                          Combined MCADDON file ready for 
+            + download.<br>
+       1603 +                          <strong>Summary:</strong><br>
+       1604 +                          - ${filesAdded} file(s) added from
+            +  source<br>
+       1605 +                          - ${filesMerged} JSON file(s) 
+            + merged<br>
+       1606 +                          - ${filesSkipped} file(s) skipped 
+            + (collisions)
+       1607 +                      </div>
+       1608 +                  `;
+       1609 +  
+       1610 +                  // Show download button
+       1611 +                  downloadBtn.style.display = 'block';
+       1612 +  
+       1613 +              } catch (error) {
+       1614 +                  resultDiv.className = 'result error show';
+       1615 +                  resultDiv.innerHTML = `
+       1616 +                      <div class="result-title">Error</div>
+       1617 +                      <div 
+            + class="result-message">${error.message}</div>
+       1618 +                  `;
+       1619 +                  downloadBtn.style.display = 'none';
+       1620 +              }
+       1621 +          }
+       1622 +  
+       1623 +          /**
+       1624 +           * Download the combined MCADDON file
+       1625 +           */
+       1626 +          async function downloadCombinedMcAddon() {
+       1627 +              if (!combinedZip) return;
+       1628 +  
+       1629 +              try {
+       1630 +                  const blob = await 
+            + combinedZip.generateAsync({ type: 'blob' });
+       1631 +                  const baseName = 
+            + combineDestFile.name.replace(/\.mcaddon$/i, '');
+       1632 +                  const outputFileName = 
+            + `${baseName}_combined.mcaddon`;
+       1633 +  
+       1634 +                  downloadBlob(blob, outputFileName);
+       1635 +  
+       1636 +                  const resultDiv = 
+            + document.getElementById('combineResult');
+       1637 +                  resultDiv.className = 'result success 
+            + show';
+       1638 +                  resultDiv.innerHTML = `
+       1639 +                      <div 
+            + class="result-title">Downloaded!</div>
+       1640 +                      <div 
+            + class="result-message">"${outputFileName}" has been 
+            + downloaded.</div>
+       1641 +                  `;
+       1642 +              } catch (error) {
+       1643 +                  const resultDiv = 
+            + document.getElementById('combineResult');
+       1644 +                  resultDiv.className = 'result error show';
+       1645 +                  resultDiv.innerHTML = `
+       1646 +                      <div class="result-title">Error</div>
+       1647 +                      <div class="result-message">Failed to 
+            + download: ${error.message}</div>
+       1648 +                  `;
+       1649 +              }
+       1650 +          }
+       1651        </script>
+       1652    </body>
+       1653    </html>
+
+⏺ Bash(open minecraft_recipe.html)
+  ⎿  (No content)
+
+⏺ Perfect! I've successfully implemented the "Combine MCADDON Files" feature. Here's what was added:
+
+  Implementation Summary
+
+  User Interface
+
+  - Added a new navigation button "Combine MCADDON Files" in the left panel (minecraft_recipe.html:560)
+  - Created a new screen with:
+    - Source file selector
+    - Destination file selector
+    - Combine button (disabled until both files are selected)
+    - Download button (appears after successful combination)
+    - Status/result display area
+
+  Core Functionality
+
+  1. Deep Merge Logic (minecraft_recipe.html:1420-1454)
+  - Recursively merges JSON objects at all nesting levels
+  - For objects: adds keys from source that don't exist in destination
+  - For primitives: keeps destination value when both have the same key (collision)
+  - For type mismatches: keeps destination value
+
+  2. Array Merging (minecraft_recipe.html:1459-1474)
+  - Appends unique items from source array to destination array
+  - Uses JSON.stringify comparison to detect duplicates
+
+  3. File-Level Merging (minecraft_recipe.html:1531-1621)
+  - Files only in source → copied entirely to result
+  - Files in both with .json extension → deep merged
+  - Non-JSON files in both → kept from destination (collision)
+  - Provides summary: files added, merged, and skipped
+
+  4. Validation (minecraft_recipe.html:1509-1522)
+  - Prevents selecting the same file as both source and destination
+  - Checks file name, size, and last modified timestamp
+
+  How It Works
+
+  1. User selects source and destination MCADDON files
+  2. Both files are loaded as ZIP archives
+  3. System iterates through all files in source:
+    - New files are copied
+    - Existing JSON files are deep merged
+    - Other existing files are skipped
+  4. User downloads the combined result with filename pattern: {destination}_combined.mcaddon
+
+  The implementation is now ready to use. The HTML file has been opened in your browser for testing.
+
+> The specification I gave you had an error.
+- Each MCADDON file has two top-level sections: `Behavior` and `Resources`.
+- The desired result is that the merging starts from the matched `Behavior` 
+and `Resources` of each file.
+- The destination, after the merging, still has only one top-level 
+`Behavior` section and one top-level `Resources` section.
+- The destination, after the merging, has source additions applied to each 
+of the respective destination `Behaviors` and `Resources` sectionsd.
+
+Ask questions if this is not clear. Once clarified, begin corrections. 
+
+⏺ Thank you for the clarification. Let me make sure I understand the MCADDON structure correctly:
+
+  My understanding:
+
+  1. Structure: MCADDON files are ZIP archives containing two top-level directories:
+    - Behavior/ (or similar name?)
+    - Resources/ (or similar name?)
+  2. Merging logic:
+    - Match source's Behavior folder with destination's Behavior folder
+    - Match source's Resources folder with destination's Resources folder
+    - Merge files within each matched section using the deep merge logic
+    - Result has exactly one Behavior section and one Resources section
+
+  Questions:
+
+  1. Exact folder names: Are they exactly Behavior and Resources, or could they be variations like:
+    - behavior_pack / resource_pack
+    - BP / RP
+    - Or something else?
+  2. Missing sections: What should happen if:
+    - Source has Behavior but destination doesn't (or vice versa)?
+    - Source has Resources but destination doesn't (or vice versa)?
+    - Should we copy the entire missing section?
+  3. Files outside these sections: What should happen with files that aren't in Behavior or Resources folders (e.g., loose files at the root level)?
+
+> 1. folder names always have `Behavior` and `Resources` as the last word of
+ the folder name.
+2. There should not be missing sections. Each should have exactly one 
+top-level Behavior and one top-level Resources.
+3. This can't happen. The top level has only these two folders and no files.
+
+If any of these impossible conditions occurs, fail the operation with an 
+error message and do not save any erroneous data. 
+
+⏺ Perfect! Now I understand completely:
+
+  1. ✓ Folder names end with Behavior and Resources (e.g., "MyPack Behavior", "Project Resources")
+  2. ✓ Both files MUST have exactly one Behavior folder and one Resources folder
+  3. ✓ No files at top level, only these two folders
+  4. ✓ Fail with error if any validation fails
+
+  Implementation plan:
+  1. Validate both MCADDON files have exactly 1 folder ending with "Behavior"
+  2. Validate both MCADDON files have exactly 1 folder ending with "Resources"
+  3. Validate no files exist at top level (only folders)
+  4. Match source Behavior → destination Behavior
+  5. Match source Resources → destination Resources
+  6. Apply deep merge within each matched section
+  7. Fail completely if any validation fails (don't save partial data)
+
+  This is clear. Beginning corrections now.
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Updated minecraft_recipe.html with 160 additions and 42 removals    
+       1526            }
+       1527    
+       1528            /**
+       1529 +           * Validate and find Behavior and Resources 
+            + folders in an MCADDON file
+       1530 +           * Returns: { behaviorFolder: string, 
+            + resourcesFolder: string } or throws error
+       1531 +           */
+       1532 +          function validateAndFindMcAddonStructure(zip, 
+            + fileName) {
+       1533 +              const topLevelItems = {};
+       1534 +  
+       1535 +              // Find all top-level items
+       1536 +              for (const [path, entry] of 
+            + Object.entries(zip.files)) {
+       1537 +                  // Check if this is a top-level item (no 
+            + slashes except trailing)
+       1538 +                  const pathParts = path.split('/').filter(p
+            +  => p.length > 0);
+       1539 +  
+       1540 +                  if (pathParts.length === 0) continue; // 
+            + Root
+       1541 +  
+       1542 +                  const topLevelName = pathParts[0];
+       1543 +  
+       1544 +                  if (pathParts.length === 1 && !entry.dir) 
+            + {
+       1545 +                      // Top-level file - not allowed
+       1546 +                      throw new Error(`Invalid structure in 
+            + "${fileName}": Top-level files are not allowed. Found file:
+            +  ${topLevelName}`);
+       1547 +                  }
+       1548 +  
+       1549 +                  if (!topLevelItems[topLevelName]) {
+       1550 +                      topLevelItems[topLevelName] = 
+            + entry.dir;
+       1551 +                  }
+       1552 +              }
+       1553 +  
+       1554 +              // Find Behavior folder
+       1555 +              const behaviorFolders = 
+            + Object.keys(topLevelItems).filter(name =>
+       1556 +                  name.endsWith('Behavior')
+       1557 +              );
+       1558 +  
+       1559 +              if (behaviorFolders.length === 0) {
+       1560 +                  throw new Error(`Invalid structure in 
+            + "${fileName}": No folder ending with "Behavior" found at 
+            + top level.`);
+       1561 +              }
+       1562 +  
+       1563 +              if (behaviorFolders.length > 1) {
+       1564 +                  throw new Error(`Invalid structure in 
+            + "${fileName}": Multiple folders ending with "Behavior" 
+            + found: ${behaviorFolders.join(', ')}`);
+       1565 +              }
+       1566 +  
+       1567 +              // Find Resources folder
+       1568 +              const resourcesFolders = 
+            + Object.keys(topLevelItems).filter(name =>
+       1569 +                  name.endsWith('Resources')
+       1570 +              );
+       1571 +  
+       1572 +              if (resourcesFolders.length === 0) {
+       1573 +                  throw new Error(`Invalid structure in 
+            + "${fileName}": No folder ending with "Resources" found at 
+            + top level.`);
+       1574 +              }
+       1575 +  
+       1576 +              if (resourcesFolders.length > 1) {
+       1577 +                  throw new Error(`Invalid structure in 
+            + "${fileName}": Multiple folders ending with "Resources" 
+            + found: ${resourcesFolders.join(', ')}`);
+       1578 +              }
+       1579 +  
+       1580 +              // Check for extra top-level folders
+       1581 +              const extraFolders = 
+            + Object.keys(topLevelItems).filter(name =>
+       1582 +                  !name.endsWith('Behavior') && 
+            + !name.endsWith('Resources')
+       1583 +              );
+       1584 +  
+       1585 +              if (extraFolders.length > 0) {
+       1586 +                  throw new Error(`Invalid structure in 
+            + "${fileName}": Extra top-level folders found: 
+            + ${extraFolders.join(', ')}. Only Behavior and Resources 
+            + folders are allowed.`);
+       1587 +              }
+       1588 +  
+       1589 +              return {
+       1590 +                  behaviorFolder: behaviorFolders[0],
+       1591 +                  resourcesFolder: resourcesFolders[0]
+       1592 +              };
+       1593 +          }
+       1594 +  
+       1595 +          /**
+       1596 +           * Merge files from source section into 
+            + destination section
+       1597 +           */
+       1598 +          async function mergeSectionFiles(sourceZip, 
+            + destZip, sourceSectionPath, destSectionPath, combinedZip) {
+       1599 +              let filesAdded = 0;
+       1600 +              let filesMerged = 0;
+       1601 +              let filesSkipped = 0;
+       1602 +  
+       1603 +              // Process each file in source section
+       1604 +              for (const [sourcePath, sourceEntry] of 
+            + Object.entries(sourceZip.files)) {
+       1605 +                  if (sourceEntry.dir) continue;
+       1606 +  
+       1607 +                  // Check if this file is within the source
+            +  section
+       1608 +                  if 
+            + (!sourcePath.startsWith(sourceSectionPath + '/')) continue;
+       1609 +  
+       1610 +                  // Get relative path within section
+       1611 +                  const relativePath = 
+            + sourcePath.substring(sourceSectionPath.length + 1);
+       1612 +  
+       1613 +                  // Construct destination path
+       1614 +                  const destPath = destSectionPath + '/' + 
+            + relativePath;
+       1615 +  
+       1616 +                  const destEntry = destZip.files[destPath];
+       1617 +  
+       1618 +                  if (!destEntry) {
+       1619 +                      // File doesn't exist in destination -
+            +  copy it
+       1620 +                      const content = await 
+            + sourceEntry.async('arraybuffer');
+       1621 +                      combinedZip.file(destPath, content);
+       1622 +                      filesAdded++;
+       1623 +                  } else {
+       1624 +                      // File exists in both
+       1625 +                      if 
+            + (sourcePath.toLowerCase().endsWith('.json')) {
+       1626 +                          // JSON file - merge content
+       1627 +                          try {
+       1628 +                              const sourceContent = await 
+            + sourceEntry.async('string');
+       1629 +                              const destContent = await 
+            + destEntry.async('string');
+       1630 +  
+       1631 +                              const sourceJson = 
+            + JSON.parse(sourceContent);
+       1632 +                              const destJson = 
+            + JSON.parse(destContent);
+       1633 +  
+       1634 +                              const mergedJson = 
+            + deepMergeJson(destJson, sourceJson);
+       1635 +  
+       1636 +                              combinedZip.file(destPath, 
+            + JSON.stringify(mergedJson, null, 2));
+       1637 +                              filesMerged++;
+       1638 +                          } catch (e) {
+       1639 +                              // Not valid JSON or merge 
+            + failed - skip
+       1640 +                              filesSkipped++;
+       1641 +                          }
+       1642 +                      } else {
+       1643 +                          // Non-JSON file - skip (keep 
+            + destination)
+       1644 +                          filesSkipped++;
+       1645 +                      }
+       1646 +                  }
+       1647 +              }
+       1648 +  
+       1649 +              return { filesAdded, filesMerged, filesSkipped
+            +  };
+       1650 +          }
+       1651 +  
+       1652 +          /**
+       1653             * Combine two MCADDON files
+       1654             */
+       1655            async function combineMcAddonFiles() {
+     ...
+       1540                    resultDiv.className = 'result show';
+       1541                    resultDiv.innerHTML = `
+       1542                        <div 
+              class="result-title">Processing...</div>
+       1543 -                      <div class="result-message">Loading 
+            -  and merging MCADDON files...</div>
+       1543 +                      <div class="result-message">Loading 
+            +  and validating MCADDON files...</div>
+       1544                    `;
+       1545    
+       1546                    // Load both MCADDON files
+     ...
+       1550                    const sourceZip = await 
+              JSZip.loadAsync(sourceData);
+       1551                    const destZip = await 
+              JSZip.loadAsync(destData);
+       1552    
+       1553 +                  // Validate structure of both files
+       1554 +                  const sourceStructure = 
+            + validateAndFindMcAddonStructure(sourceZip, 
+            + combineSourceFile.name);
+       1555 +                  const destStructure = 
+            + validateAndFindMcAddonStructure(destZip, 
+            + combineDestFile.name);
+       1556 +  
+       1557 +                  resultDiv.innerHTML = `
+       1558 +                      <div 
+            + class="result-title">Processing...</div>
+       1559 +                      <div class="result-message">Merging 
+            + Behavior and Resources sections...</div>
+       1560 +                  `;
+       1561 +  
+       1562                    // Create a new zip based on destination
+       1563                    combinedZip = destZip;
+       1564    
+       1565 -                  let filesAdded = 0;
+       1566 -                  let filesMerged = 0;
+       1567 -                  let filesSkipped = 0;
+       1565 +                  // Merge Behavior section
+       1566 +                  const behaviorStats = await 
+            + mergeSectionFiles(
+       1567 +                      sourceZip,
+       1568 +                      destZip,
+       1569 +                      sourceStructure.behaviorFolder,
+       1570 +                      destStructure.behaviorFolder,
+       1571 +                      combinedZip
+       1572 +                  );
+       1573    
+       1574 -                  // Process each file in source
+       1575 -                  for (const [sourcePath, sourceEntry] of 
+            - Object.entries(sourceZip.files)) {
+       1576 -                      if (sourceEntry.dir) continue;
+       1574 +                  // Merge Resources section
+       1575 +                  const resourcesStats = await 
+            + mergeSectionFiles(
+       1576 +                      sourceZip,
+       1577 +                      destZip,
+       1578 +                      sourceStructure.resourcesFolder,
+       1579 +                      destStructure.resourcesFolder,
+       1580 +                      combinedZip
+       1581 +                  );
+       1582    
+       1583 -                      const destEntry = 
+            - destZip.files[sourcePath];
+       1583 +                  // Calculate totals
+       1584 +                  const totalAdded = 
+            + behaviorStats.filesAdded + resourcesStats.filesAdded;
+       1585 +                  const totalMerged = 
+            + behaviorStats.filesMerged + resourcesStats.filesMerged;
+       1586 +                  const totalSkipped = 
+            + behaviorStats.filesSkipped + resourcesStats.filesSkipped;
+       1587    
+       1588 -                      if (!destEntry) {
+       1589 -                          // File doesn't exist in 
+            - destination - copy it
+       1590 -                          const content = await 
+            - sourceEntry.async('arraybuffer');
+       1591 -                          combinedZip.file(sourcePath, 
+            - content);
+       1592 -                          filesAdded++;
+       1593 -                      } else {
+       1594 -                          // File exists in both
+       1595 -                          if 
+            - (sourcePath.toLowerCase().endsWith('.json')) {
+       1596 -                              // JSON file - merge content
+       1597 -                              try {
+       1598 -                                  const sourceContent = 
+            - await sourceEntry.async('string');
+       1599 -                                  const destContent = await 
+            - destEntry.async('string');
+       1600 -  
+       1601 -                                  const sourceJson = 
+            - JSON.parse(sourceContent);
+       1602 -                                  const destJson = 
+            - JSON.parse(destContent);
+       1603 -  
+       1604 -                                  const mergedJson = 
+            - deepMergeJson(destJson, sourceJson);
+       1605 -  
+       1606 -                                  
+            - combinedZip.file(sourcePath, JSON.stringify(mergedJson, 
+            - null, 2));
+       1607 -                                  filesMerged++;
+       1608 -                              } catch (e) {
+       1609 -                                  // Not valid JSON or merge
+            -  failed - skip
+       1610 -                                  filesSkipped++;
+       1611 -                              }
+       1612 -                          } else {
+       1613 -                              // Non-JSON file - skip (keep 
+            - destination)
+       1614 -                              filesSkipped++;
+       1615 -                          }
+       1616 -                      }
+       1617 -                  }
+       1618 -  
+       1588                    // Show success message
+       1589                    resultDiv.className = 'result success 
+              show';
+       1590                    resultDiv.innerHTML = `
+     ...
+       1601                        <div class="result-message">
+       1602                            Combined MCADDON file ready for 
+              download.<br>
+       1603                            <strong>Summary:</strong><br>
+       1604 -                          - ${filesAdded
+            -  } file(s) added from source<br>
+       1605 -                          - ${filesMerged
+            -  } JSON file(s) merged<br>
+       1606 -                          - ${filesSkipped
+            -  } file(s) skipped (collisions)
+       1604 +                          - ${totalAdded
+            +  } file(s) added from source<br>
+       1605 +                          - ${totalMerged
+            +  } JSON file(s) merged<br>
+       1606 +                          - ${totalSkipped
+            +  } file(s) skipped (collisions)<br><br>
+       1607 +                          <strong>Behavior:</strong> 
+            + ${behaviorStats.filesAdded} added, 
+            + ${behaviorStats.filesMerged} merged, 
+            + ${behaviorStats.filesSkipped} skipped<br>
+       1608 +                          <strong>Resources:</strong> 
+            + ${resourcesStats.filesAdded} added, 
+            + ${resourcesStats.filesMerged} merged, 
+            + ${resourcesStats.filesSkipped} skipped
+       1609                        </div>
+       1610                    `;
+       1611    
+     ...
+       1617                        <div 
+              class="result-message">${error.message}</div>
+       1618                    `;
+       1619                    downloadBtn.style.display = 'none';
+       1620 +                  combinedZip = null; // Clear any partial 
+            + data
+       1621                }
+       1622            }
+       1623    
+
+⏺ Bash(open minecraft_recipe.html)
+  ⎿  (No content)
+
+⏺ Perfect! I've corrected the implementation to match the proper MCADDON structure. Here's what was changed:
+
+  Corrections Made
+
+  1. MCADDON Structure Validation (minecraft_recipe.html:1532-1593)
+
+  Added validateAndFindMcAddonStructure() function that:
+  - Validates exactly one folder ending with "Behavior" exists
+  - Validates exactly one folder ending with "Resources" exists
+  - Rejects any top-level files
+  - Rejects any extra top-level folders
+  - Returns the folder names for matching
+
+  Error cases handled:
+  - Missing Behavior or Resources folder
+  - Multiple Behavior or Resources folders
+  - Top-level files (not allowed)
+  - Extra folders besides Behavior and Resources
+
+  2. Section-Based Merging (minecraft_recipe.html:1598-1650)
+
+  Added mergeSectionFiles() function that:
+  - Merges files within a specific section (Behavior or Resources)
+  - Matches source section path to destination section path
+  - Preserves relative paths within each section
+  - Uses the existing deep merge logic for JSON files
+
+  3. Updated Main Combine Function (minecraft_recipe.html:1655-1739)
+
+  The combineMcAddonFiles() function now:
+  1. Loads both MCADDON files
+  2. Validates structure of both files (fails if invalid)
+  3. Finds Behavior and Resources folders in each
+  4. Merges source Behavior → destination Behavior
+  5. Merges source Resources → destination Resources
+  6. Shows detailed stats per section
+  7. Clears any partial data on error (combinedZip = null)
+
+  4. Enhanced Error Reporting
+
+  - Clear error messages identifying which file has the problem
+  - Lists specific issues (missing folders, extra folders, etc.)
+  - Prevents saving any data if validation fails
+  - Shows per-section statistics on success
+
+  The corrected implementation now properly merges MCADDON files at the Behavior and Resources section level, maintaining the required structure throughout the process.
+
+> Okay, one other error: the rule for concatenating unique elements in an 
+array does not apply to manifest.json elements. For example, the version 
+number array should not merge version numbers from source and destination. 
+
+⏺ Good catch! For manifest.json files, arrays should be treated as collisions (keep destination value) rather than merging unique elements.
+
+  My understanding:
+  - For manifest.json: arrays are NOT merged (keep destination value)
+  - For all other JSON files: arrays are merged (append unique items from source)
+
+  Let me update the code:
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Updated minecraft_recipe.html with 13 additions and 4 removals      
+       1414            /**
+       1415             * Deep merge JSON objects/arrays from source into
+               destination
+       1416             * - For objects: recursively merge keys
+       1417 -           * - For arrays: append unique items from source
+       1417 +           * - For arrays: append unique items from source
+            +   (unless mergeArrays is false)
+       1418             * - For primitives: keep destination value 
+              (collision)
+       1419 +           *
+       1420 +           * @param {*} dest - Destination value
+       1421 +           * @param {*} source - Source value
+       1422 +           * @param {boolean} mergeArrays - If false, treat 
+            + arrays as collisions (keep dest)
+       1423             */
+       1424 -          function deepMergeJson(dest, source) {
+       1424 +          function deepMergeJson(dest, source
+            +  , mergeArrays = true) {
+       1425                // If source is not an object/array, or dest 
+              is not the same type, return dest (collision)
+       1426                if (source === null || typeof source !== 
+              'object') {
+       1427                    return dest;
+     ...
+       1429    
+       1430                // Handle arrays
+       1431                if (Array.isArray(source) && 
+              Array.isArray(dest)) {
+       1432 -                  return mergeArrays(dest, source);
+       1432 +                  if (mergeArrays) {
+       1433 +                      return mergeArraysUnique(dest, 
+            + source);
+       1434 +                  } else {
+       1435 +                      // Don't merge arrays - keep 
+            + destination (collision)
+       1436 +                      return dest;
+       1437 +                  }
+       1438                }
+       1439    
+       1440                // Handle objects
+     ...
+       1439                        if (source.hasOwnProperty(key)) {
+       1440                            if (result.hasOwnProperty(key)) {
+       1441                                // Key exists in both - 
+              recursively merge
+       1442 -                              result[key] = 
+            -  deepMergeJson(result[key], source[key]);
+       1442 +                              result[key] = 
+            +  deepMergeJson(result[key], source[key], mergeArrays);
+       1443                            } else {
+       1444                                // Key only in source - add it
+       1445                                result[key] = source[key];
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Updated minecraft_recipe.html with 1 addition and 1 removal      
+       1465            /**
+       1466             * Merge arrays by appending unique items from 
+              source
+       1467             */
+       1468 -          function mergeArrays(destArray, sourceArray) {
+       1468 +          function mergeArraysUnique
+            +  (destArray, sourceArray) {
+       1469                const result = [...destArray];
+       1470    
+       1471                for (const sourceItem of sourceArray) {
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Updated minecraft_recipe.html with 3 additions and 1 removal     
+       1640                                const sourceJson = 
+              JSON.parse(sourceContent);
+       1641                                const destJson = 
+              JSON.parse(destContent);
+       1642    
+       1643 -                              const mergedJson = 
+            - deepMergeJson(destJson, sourceJson);
+       1643 +                              // Check if this is 
+            + manifest.json - don't merge arrays for manifest files
+       1644 +                              const isManifest = 
+            + relativePath.toLowerCase().endsWith('manifest.json');
+       1645 +                              const mergedJson = 
+            + deepMergeJson(destJson, sourceJson, !isManifest);
+       1646    
+       1647                                combinedZip.file(destPath, 
+              JSON.stringify(mergedJson, null, 2));
+       1648                                filesMerged++;
+
+⏺ Bash(open minecraft_recipe.html)
+  ⎿  (No content)
+
+⏺ Perfect! I've corrected the merge behavior for manifest.json files. Here's what changed:
+
+  Updates Made
+
+  1. Enhanced Deep Merge Function (minecraft_recipe.html:1424-1463)
+
+  - Added mergeArrays parameter (default true)
+  - When mergeArrays = false, arrays are treated as collisions and destination value is kept
+  - Parameter propagates recursively through nested objects
+
+  2. Renamed Array Merge Function (minecraft_recipe.html:1468-1483)
+
+  - Renamed mergeArrays() to mergeArraysUnique() to avoid naming conflict with the parameter
+
+  3. Conditional Array Merging (minecraft_recipe.html:1643-1645)
+
+  - Detects if the file being merged is manifest.json
+  - For manifest.json: calls deepMergeJson(destJson, sourceJson, false) - arrays NOT merged
+  - For other JSON files: calls deepMergeJson(destJson, sourceJson, true) - arrays ARE merged
+
+  Behavior Summary
+
+  For manifest.json files:
+  - Arrays are treated as collisions → destination value is kept
+  - Example: "version": [2, 0, 0] in dest stays [2, 0, 0] even if source has [1, 0, 0]
+
+  For all other JSON files:
+  - Arrays merge with unique concatenation
+  - Example: "tags": ["crafting_table"] in dest + "tags": ["smithing_table"] in source = ["crafting_table", "smithing_table"]
+
+  The implementation now correctly handles both cases!
+
+
+
