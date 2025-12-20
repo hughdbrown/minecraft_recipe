@@ -889,6 +889,208 @@
             text-transform: uppercase;
             font-weight: 500;
         }
+
+        /* Builtin Features Styles */
+        .builtin-section {
+            margin-bottom: 30px;
+        }
+
+        .builtin-feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .builtin-feature-btn {
+            padding: 20px;
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .builtin-feature-btn:hover {
+            border-color: #667eea;
+            background: #f8f9fa;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .builtin-item-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .builtin-item-btn {
+            padding: 15px;
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .builtin-item-btn:hover {
+            border-color: #667eea;
+            background: #f8f9fa;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .builtin-item-name {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .builtin-item-path {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        .selected-item-info {
+            background: #e7f5ff;
+            border: 1px solid #74c0fc;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .selected-item-info h4 {
+            margin: 0 0 5px 0;
+            color: #1864ab;
+        }
+
+        .selected-item-info p {
+            margin: 0;
+            color: #495057;
+            font-size: 14px;
+        }
+
+        .food-effects-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .food-effects-header h3 {
+            margin: 0;
+            color: #2c3e50;
+        }
+
+        .add-effect-btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+
+        .add-effect-btn:hover {
+            background: #5568d3;
+        }
+
+        .food-effects-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .food-effect-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .food-effect-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .food-effect-header h4 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 16px;
+        }
+
+        .remove-effect-btn {
+            background: #e03131;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+
+        .remove-effect-btn:hover {
+            background: #c92a2a;
+        }
+
+        .food-effect-fields {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 15px;
+        }
+
+        .effect-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .effect-field label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+
+        .effect-field input {
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .effect-field input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .effect-field input.error {
+            border-color: #e03131;
+        }
+
+        .effect-field .error-message {
+            color: #e03131;
+            font-size: 12px;
+            margin-top: 4px;
+            min-height: 16px;
+        }
+
+        .builtin-actions {
+            display: flex;
+            justify-content: center;
+        }
     </style>
 </head>
 <body>
@@ -900,6 +1102,7 @@
             <button class="nav-button" onclick="switchScreen(2)">Combine MCADDON Files</button>
             <button class="nav-button" onclick="switchScreen(3)">Diff MCADDON Files</button>
             <button class="nav-button" onclick="switchScreen(4)">Validate MCADDON</button>
+            <button class="nav-button" onclick="switchScreen(5)">Builtin Features</button>
         </div>
 
         <!-- Main Content Area -->
@@ -1137,6 +1340,78 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Screen 6: Builtin Features -->
+            <div class="screen" id="screen-builtin">
+                <div class="container">
+                    <div class="header">
+                        <h1>Builtin Features</h1>
+                        <p>Apply builtin features to items in MCADDON files</p>
+                    </div>
+
+                    <div class="tab-content active" style="display: block;">
+                        <!-- Step 1: Select Builtin Feature -->
+                        <div id="builtin-feature-selector" class="builtin-section">
+                            <div class="info-box">
+                                <strong>Step 1: Select a Builtin Feature</strong>
+                                Choose which feature you want to apply to your items.
+                            </div>
+                            <div id="builtinFeatureList" class="builtin-feature-list"></div>
+                        </div>
+
+                        <!-- Step 2: Select MCADDON File -->
+                        <div id="builtin-file-selector" class="builtin-section" style="display: none;">
+                            <div class="info-box">
+                                <strong>Step 2: Select MCADDON File</strong>
+                                Choose the MCADDON file containing items to modify.
+                            </div>
+                            <div class="form-group">
+                                <label for="builtinMcAddonFile">Select MCADDON File (.mcaddon)</label>
+                                <input type="file" id="builtinMcAddonFile" accept=".mcaddon" onchange="handleBuiltinMcAddonSelect()">
+                                <div class="file-info" id="builtinFileInfo"></div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Select Item -->
+                        <div id="builtin-item-selector" class="builtin-section" style="display: none;">
+                            <div class="info-box">
+                                <strong>Step 3: Select Item</strong>
+                                Choose an item to apply the feature to.
+                            </div>
+                            <div id="builtinItemList" class="builtin-item-list"></div>
+                        </div>
+
+                        <!-- Step 4: Configure Feature -->
+                        <div id="builtin-feature-config" class="builtin-section" style="display: none;">
+                            <div class="info-box">
+                                <strong>Step 4: Configure Feature</strong>
+                                Add and configure the feature properties.
+                            </div>
+
+                            <div id="selectedItemInfo" class="selected-item-info"></div>
+
+                            <div id="foodEffectsContainer" style="display: none;">
+                                <div class="food-effects-header">
+                                    <h3>Food Effects</h3>
+                                    <button class="add-effect-btn" onclick="addFoodEffect()">+ Add Effect</button>
+                                </div>
+                                <div id="foodEffectsList" class="food-effects-list"></div>
+
+                                <div class="builtin-actions">
+                                    <button class="convert-btn" id="submitBuiltinBtn" onclick="submitBuiltinFeature()" style="margin-top: 20px;">
+                                        Submit
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Download Button -->
+                        <button class="convert-btn" id="downloadBuiltinBtn" onclick="downloadBuiltinMcAddon()" style="display: none; margin-top: 15px; background: #27ae60;">
+                            Download Modified MCADDON
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1300,6 +1575,92 @@
         let diffFile1Zip = null;
         let diffFile2Zip = null;
         let diffResults = null;
+
+        // Builtin Features state
+        let builtinSelectedFeature = null;
+        let builtinMcAddonFile = null;
+        let builtinZip = null;
+        let builtinFilteredItems = [];
+        let builtinSelectedItem = null;
+        let builtinFoodEffects = [];
+        let builtinEffectCounter = 0;
+        let builtinModifiedZip = null;
+
+        // Builtin Features definitions
+        const builtinFeatures = [
+            {
+                id: 'food_effects',
+                name: 'Food Effects',
+                description: 'Add effects to food items',
+                filterFunction: async (zip) => {
+                    const items = [];
+
+                    // Find behavior pack
+                    let behaviorPack = null;
+                    for (const [path, zipEntry] of Object.entries(zip.files)) {
+                        if (zipEntry.dir && path.includes('manifest.json') === false) continue;
+
+                        const manifestPath = path.endsWith('/') ? path + 'manifest.json' : path;
+                        if (zip.files[manifestPath]) {
+                            try {
+                                const manifestContent = await zip.files[manifestPath].async('string');
+                                const manifest = JSON.parse(manifestContent);
+
+                                if (manifest.modules) {
+                                    for (const module of manifest.modules) {
+                                        if (module.type === 'data') {
+                                            behaviorPack = path.endsWith('/') ? path.slice(0, -1) : path.substring(0, path.lastIndexOf('/'));
+                                            if (behaviorPack === '') behaviorPack = '.';
+                                            break;
+                                        }
+                                    }
+                                }
+                            } catch (e) {
+                                // Not a valid manifest, continue
+                            }
+                        }
+                        if (behaviorPack) break;
+                    }
+
+                    if (!behaviorPack) {
+                        return items;
+                    }
+
+                    // Find items directory
+                    const itemsPath = behaviorPack === '.' ? 'items/' : `${behaviorPack}/items/`;
+
+                    // Search for items with minecraft:food component
+                    for (const [path, zipEntry] of Object.entries(zip.files)) {
+                        if (zipEntry.dir) continue;
+                        if (!path.toLowerCase().includes('/items/')) continue;
+                        if (!path.toLowerCase().endsWith('.json')) continue;
+
+                        try {
+                            const content = await zipEntry.async('string');
+                            const itemData = JSON.parse(content);
+
+                            // Check if item has minecraft:food component
+                            if (itemData['minecraft:item'] &&
+                                itemData['minecraft:item'].components &&
+                                itemData['minecraft:item'].components['minecraft:food']) {
+
+                                const identifier = itemData['minecraft:item'].description?.identifier || 'Unknown';
+                                items.push({
+                                    path: path,
+                                    identifier: identifier,
+                                    content: content,
+                                    data: itemData
+                                });
+                            }
+                        } catch (e) {
+                            // Invalid JSON or structure, skip
+                        }
+                    }
+
+                    return items;
+                }
+            }
+        ];
 
         // Screen switching
         function switchScreen(screenIndex) {
@@ -3280,6 +3641,335 @@
                 warningsDiv.innerHTML = warningsHtml;
             } else {
                 warningsDiv.innerHTML = '';
+            }
+        }
+
+        // ========== BUILTIN FEATURES FUNCTIONS ==========
+
+        // Initialize builtin features list on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            initializeBuiltinFeatures();
+        });
+
+        function initializeBuiltinFeatures() {
+            const featureList = document.getElementById('builtinFeatureList');
+            featureList.innerHTML = '';
+
+            builtinFeatures.forEach(feature => {
+                const button = document.createElement('button');
+                button.className = 'builtin-feature-btn';
+                button.textContent = feature.name;
+                button.onclick = () => selectBuiltinFeature(feature);
+                featureList.appendChild(button);
+            });
+        }
+
+        function selectBuiltinFeature(feature) {
+            builtinSelectedFeature = feature;
+
+            // Hide feature selector, show file selector
+            document.getElementById('builtin-feature-selector').style.display = 'none';
+            document.getElementById('builtin-file-selector').style.display = 'block';
+
+            // Reset subsequent sections
+            document.getElementById('builtin-item-selector').style.display = 'none';
+            document.getElementById('builtin-feature-config').style.display = 'none';
+            document.getElementById('downloadBuiltinBtn').style.display = 'none';
+
+            // Reset state
+            builtinMcAddonFile = null;
+            builtinZip = null;
+            builtinFilteredItems = [];
+            builtinSelectedItem = null;
+            builtinFoodEffects = [];
+            builtinEffectCounter = 0;
+        }
+
+        async function handleBuiltinMcAddonSelect() {
+            const fileInput = document.getElementById('builtinMcAddonFile');
+            const fileInfo = document.getElementById('builtinFileInfo');
+
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            builtinMcAddonFile = file;
+            fileInfo.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
+            fileInfo.classList.add('show');
+
+            try {
+                // Load the ZIP file
+                const mcaddonData = await readFileAsArrayBuffer(file);
+                builtinZip = await JSZip.loadAsync(mcaddonData);
+
+                // Apply filter function to find matching items
+                builtinFilteredItems = await builtinSelectedFeature.filterFunction(builtinZip);
+
+                if (builtinFilteredItems.length === 0) {
+                    alert(`No items found matching the filter for ${builtinSelectedFeature.name}`);
+                    return;
+                }
+
+                // Show item selector
+                document.getElementById('builtin-item-selector').style.display = 'block';
+                loadBuiltinItemList();
+
+            } catch (error) {
+                alert(`Error loading MCADDON file: ${error.message}`);
+            }
+        }
+
+        function loadBuiltinItemList() {
+            const itemList = document.getElementById('builtinItemList');
+            itemList.innerHTML = '';
+
+            builtinFilteredItems.forEach(item => {
+                const button = document.createElement('button');
+                button.className = 'builtin-item-btn';
+                button.innerHTML = `
+                    <div class="builtin-item-name">${item.identifier}</div>
+                    <div class="builtin-item-path">${item.path}</div>
+                `;
+                button.onclick = () => selectBuiltinItem(item);
+                itemList.appendChild(button);
+            });
+        }
+
+        function selectBuiltinItem(item) {
+            builtinSelectedItem = item;
+
+            // Show feature configuration section
+            document.getElementById('builtin-feature-config').style.display = 'block';
+
+            // Show selected item info
+            const itemInfo = document.getElementById('selectedItemInfo');
+            itemInfo.innerHTML = `
+                <h4>Selected Item</h4>
+                <p><strong>Identifier:</strong> ${item.identifier}</p>
+                <p><strong>Path:</strong> ${item.path}</p>
+            `;
+
+            // Show appropriate configuration UI based on feature
+            if (builtinSelectedFeature.id === 'food_effects') {
+                document.getElementById('foodEffectsContainer').style.display = 'block';
+                // Reset food effects list
+                builtinFoodEffects = [];
+                builtinEffectCounter = 0;
+                document.getElementById('foodEffectsList').innerHTML = '';
+            }
+
+            // Hide download button
+            document.getElementById('downloadBuiltinBtn').style.display = 'none';
+        }
+
+        function addFoodEffect() {
+            const effectId = builtinEffectCounter++;
+            const effect = {
+                id: effectId,
+                tag: '',
+                duration: '',
+                intensity: ''
+            };
+
+            builtinFoodEffects.push(effect);
+            renderFoodEffect(effect);
+        }
+
+        function renderFoodEffect(effect) {
+            const effectsList = document.getElementById('foodEffectsList');
+
+            const effectDiv = document.createElement('div');
+            effectDiv.className = 'food-effect-item';
+            effectDiv.id = `food-effect-${effect.id}`;
+            effectDiv.innerHTML = `
+                <div class="food-effect-header">
+                    <h4>Effect ${effect.id + 1}</h4>
+                    <button class="remove-effect-btn" onclick="removeFoodEffect(${effect.id})">- Remove</button>
+                </div>
+                <div class="food-effect-fields">
+                    <div class="effect-field">
+                        <label for="effect-tag-${effect.id}">Effect Tag</label>
+                        <input type="text" id="effect-tag-${effect.id}"
+                               placeholder="e.g., regeneration, speed"
+                               oninput="updateFoodEffect(${effect.id}, 'tag', this.value)">
+                        <div class="error-message" id="error-tag-${effect.id}"></div>
+                    </div>
+                    <div class="effect-field">
+                        <label for="effect-duration-${effect.id}">Duration (seconds)</label>
+                        <input type="number" id="effect-duration-${effect.id}"
+                               placeholder="30"
+                               oninput="updateFoodEffect(${effect.id}, 'duration', this.value)">
+                        <div class="error-message" id="error-duration-${effect.id}"></div>
+                    </div>
+                    <div class="effect-field">
+                        <label for="effect-intensity-${effect.id}">Intensity (1-255)</label>
+                        <input type="number" id="effect-intensity-${effect.id}"
+                               placeholder="1"
+                               min="1" max="255"
+                               oninput="updateFoodEffect(${effect.id}, 'intensity', this.value)">
+                        <div class="error-message" id="error-intensity-${effect.id}"></div>
+                    </div>
+                </div>
+            `;
+
+            effectsList.appendChild(effectDiv);
+        }
+
+        function removeFoodEffect(effectId) {
+            const index = builtinFoodEffects.findIndex(e => e.id === effectId);
+            if (index !== -1) {
+                builtinFoodEffects.splice(index, 1);
+            }
+
+            const effectDiv = document.getElementById(`food-effect-${effectId}`);
+            if (effectDiv) {
+                effectDiv.remove();
+            }
+        }
+
+        function updateFoodEffect(effectId, field, value) {
+            const effect = builtinFoodEffects.find(e => e.id === effectId);
+            if (effect) {
+                effect[field] = value;
+                validateFoodEffectField(effectId, field, value);
+            }
+        }
+
+        function validateFoodEffectField(effectId, field, value) {
+            const inputElement = document.getElementById(`effect-${field}-${effectId}`);
+            const errorElement = document.getElementById(`error-${field}-${effectId}`);
+
+            let isValid = true;
+            let errorMessage = '';
+
+            if (field === 'duration') {
+                const duration = parseInt(value);
+                if (value && (isNaN(duration) || duration <= 0)) {
+                    isValid = false;
+                    errorMessage = 'Must be a positive number';
+                }
+            } else if (field === 'intensity') {
+                const intensity = parseInt(value);
+                if (value && (isNaN(intensity) || intensity < 1 || intensity > 255)) {
+                    isValid = false;
+                    errorMessage = 'Must be between 1 and 255';
+                }
+            }
+
+            if (isValid) {
+                inputElement.classList.remove('error');
+                errorElement.textContent = '';
+            } else {
+                inputElement.classList.add('error');
+                errorElement.textContent = errorMessage;
+            }
+
+            return isValid;
+        }
+
+        function validateAllFoodEffects() {
+            let allValid = true;
+
+            // Check if there's at least one effect
+            if (builtinFoodEffects.length === 0) {
+                alert('Please add at least one food effect');
+                return false;
+            }
+
+            // Validate each effect
+            for (const effect of builtinFoodEffects) {
+                // Validate tag
+                if (!effect.tag || effect.tag.trim() === '') {
+                    alert(`Effect ${effect.id + 1}: Tag is required`);
+                    allValid = false;
+                    break;
+                }
+
+                // Validate duration
+                const duration = parseInt(effect.duration);
+                if (!effect.duration || isNaN(duration) || duration <= 0) {
+                    const isValid = validateFoodEffectField(effect.id, 'duration', effect.duration);
+                    if (!isValid) {
+                        alert(`Effect ${effect.id + 1}: Duration must be a positive number`);
+                        allValid = false;
+                        break;
+                    }
+                }
+
+                // Validate intensity
+                const intensity = parseInt(effect.intensity);
+                if (!effect.intensity || isNaN(intensity) || intensity < 1 || intensity > 255) {
+                    const isValid = validateFoodEffectField(effect.id, 'intensity', effect.intensity);
+                    if (!isValid) {
+                        alert(`Effect ${effect.id + 1}: Intensity must be between 1 and 255`);
+                        allValid = false;
+                        break;
+                    }
+                }
+            }
+
+            return allValid;
+        }
+
+        async function submitBuiltinFeature() {
+            if (!builtinSelectedItem) {
+                alert('No item selected');
+                return;
+            }
+
+            if (builtinSelectedFeature.id === 'food_effects') {
+                if (!validateAllFoodEffects()) {
+                    return;
+                }
+
+                try {
+                    // Clone the zip for modification
+                    builtinModifiedZip = await JSZip.loadAsync(await builtinZip.generateAsync({ type: 'arraybuffer' }));
+
+                    // Get the item data
+                    const itemData = JSON.parse(builtinSelectedItem.content);
+
+                    // Ensure the food component has an effects array
+                    if (!itemData['minecraft:item'].components['minecraft:food'].effects) {
+                        itemData['minecraft:item'].components['minecraft:food'].effects = [];
+                    }
+
+                    // Add new effects (append to existing)
+                    for (const effect of builtinFoodEffects) {
+                        const effectObj = {
+                            name: effect.tag,
+                            duration: parseInt(effect.duration),
+                            amplifier: parseInt(effect.intensity) - 1  // Minecraft uses 0-based amplifier
+                        };
+                        itemData['minecraft:item'].components['minecraft:food'].effects.push(effectObj);
+                    }
+
+                    // Update the JSON in the zip
+                    const updatedJson = JSON.stringify(itemData, null, 2);
+                    builtinModifiedZip.file(builtinSelectedItem.path, updatedJson);
+
+                    // Show download button
+                    document.getElementById('downloadBuiltinBtn').style.display = 'block';
+
+                    alert('Food effects applied successfully! Click Download to save the modified MCADDON file.');
+
+                } catch (error) {
+                    alert(`Error applying food effects: ${error.message}`);
+                }
+            }
+        }
+
+        async function downloadBuiltinMcAddon() {
+            if (!builtinModifiedZip) {
+                alert('No modified file to download');
+                return;
+            }
+
+            try {
+                const blob = await builtinModifiedZip.generateAsync({ type: 'blob' });
+                const fileName = builtinMcAddonFile.name.replace('.mcaddon', '_modified.mcaddon');
+                downloadBlob(blob, fileName);
+            } catch (error) {
+                alert(`Error generating download: ${error.message}`);
             }
         }
     </script>
