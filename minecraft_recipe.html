@@ -1974,6 +1974,67 @@
             document.getElementById('result2').classList.remove('show');
         }
 
+        // ========== UI STATUS & RESULT DISPLAY UTILITIES ==========
+
+        /**
+         * Display a status message in a result container
+         * @param {string} containerId - The ID of the result container element
+         * @param {string} type - The type of message: 'success', 'error', 'warning', or '' for neutral
+         * @param {string} title - The title of the message
+         * @param {string} message - The message content (can include HTML)
+         */
+        function displayStatus(containerId, type, title, message) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            container.className = type ? `result ${type} show` : 'result show';
+            container.innerHTML = `
+                <div class="result-title">${title}</div>
+                <div class="result-message">${message}</div>
+            `;
+        }
+
+        /**
+         * Show a loading status
+         */
+        function showLoading(containerId, message = 'Processing...') {
+            displayStatus(containerId, '', 'Processing...', message);
+        }
+
+        /**
+         * Show an error status
+         */
+        function showError(containerId, message, title = 'Error') {
+            displayStatus(containerId, 'error', title, message);
+        }
+
+        /**
+         * Show a success status
+         */
+        function showSuccess(containerId, message, title = 'Success!') {
+            displayStatus(containerId, 'success', title, message);
+        }
+
+        /**
+         * Hide a result container
+         */
+        function hideStatus(containerId) {
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.classList.remove('show');
+            }
+        }
+
+        /**
+         * Toggle download button visibility
+         */
+        function toggleDownloadButton(buttonId, show) {
+            const button = document.getElementById(buttonId);
+            if (button) {
+                button.style.display = show ? 'block' : 'none';
+            }
+        }
+
         // ========== MCADDON EDITOR FUNCTIONS ==========
 
         async function handleMcAddonEditorSelect() {
@@ -2008,11 +2069,7 @@
                 jsonFiles.sort((a, b) => a.path.localeCompare(b.path));
 
                 // Show success message
-                resultDiv.className = 'result success show';
-                resultDiv.innerHTML = `
-                    <div class="result-title">Success!</div>
-                    <div class="result-message">Found ${jsonFiles.length} JSON file(s) in the package.</div>
-                `;
+                showSuccess('mcaddon-result', `Found ${jsonFiles.length} JSON file(s) in the package.`);
 
                 // Enable and switch to tab 2
                 const tab1 = document.getElementById('workflow-tab-1');
@@ -2027,11 +2084,7 @@
                 }, 1000);
 
             } catch (error) {
-                resultDiv.className = 'result error show';
-                resultDiv.innerHTML = `
-                    <div class="result-title">Error</div>
-                    <div class="result-message">${error.message}</div>
-                `;
+                showError('mcaddon-result', error.message);
             }
         }
 
@@ -2216,12 +2269,7 @@
                 downloadBlob(newZipBlob, outputFileName);
 
                 // Show success message
-                const resultDiv = document.getElementById('mcaddon-result');
-                resultDiv.className = 'result success show';
-                resultDiv.innerHTML = `
-                    <div class="result-title">Success!</div>
-                    <div class="result-message">Modified MCADDON file "${outputFileName}" has been downloaded.</div>
-                `;
+                showSuccess('mcaddon-result', `Modified MCADDON file "${outputFileName}" has been downloaded.`);
 
                 // Update the current file content in our cache
                 const fileIndex = jsonFiles.findIndex(f => f.path === currentEditingPath);
@@ -2327,8 +2375,8 @@
             const downloadBtn = document.getElementById('downloadCombinedBtn');
 
             // Hide previous results
-            resultDiv.classList.remove('show');
-            downloadBtn.style.display = 'none';
+            hideStatus('combineResult');
+            toggleDownloadButton('downloadCombinedBtn', false);
 
             if (type === 'source') {
                 const file = sourceInput.files[0];
@@ -2353,11 +2401,7 @@
                     combineSourceFile.lastModified === combineDestFile.lastModified) {
                     // Same file selected
                     combineBtn.disabled = true;
-                    resultDiv.className = 'result error show';
-                    resultDiv.innerHTML = `
-                        <div class="result-title">Error</div>
-                        <div class="result-message">Source and destination cannot be the same file. Please select different files.</div>
-                    `;
+                    showError('combineResult', 'Source and destination cannot be the same file. Please select different files.');
                 } else {
                     combineBtn.disabled = false;
                 }
@@ -2544,11 +2588,7 @@
             const downloadBtn = document.getElementById('downloadCombinedBtn');
 
             try {
-                resultDiv.className = 'result show';
-                resultDiv.innerHTML = `
-                    <div class="result-title">Processing...</div>
-                    <div class="result-message">Loading and validating MCADDON files...</div>
-                `;
+                showLoading('combineResult', 'Loading and validating MCADDON files...');
 
                 // Load both MCADDON files
                 const sourceZip = await loadMcAddonZip(combineSourceFile);
@@ -2558,10 +2598,7 @@
                 const sourceStructure = validateAndFindMcAddonStructure(sourceZip, combineSourceFile.name);
                 const destStructure = validateAndFindMcAddonStructure(destZip, combineDestFile.name);
 
-                resultDiv.innerHTML = `
-                    <div class="result-title">Processing...</div>
-                    <div class="result-message">Merging Behavior and Resources sections...</div>
-                `;
+                showLoading('combineResult', 'Merging Behavior and Resources sections...');
 
                 // Create a new zip based on destination
                 combinedZip = destZip;
@@ -2590,30 +2627,23 @@
                 const totalSkipped = behaviorStats.filesSkipped + resourcesStats.filesSkipped;
 
                 // Show success message
-                resultDiv.className = 'result success show';
-                resultDiv.innerHTML = `
-                    <div class="result-title">Success!</div>
-                    <div class="result-message">
-                        Combined MCADDON file ready for download.<br>
-                        <strong>Summary:</strong><br>
-                        - ${totalAdded} file(s) added from source<br>
-                        - ${totalMerged} JSON file(s) merged<br>
-                        - ${totalSkipped} file(s) skipped (collisions)<br><br>
-                        <strong>Behavior:</strong> ${behaviorStats.filesAdded} added, ${behaviorStats.filesMerged} merged, ${behaviorStats.filesSkipped} skipped<br>
-                        <strong>Resources:</strong> ${resourcesStats.filesAdded} added, ${resourcesStats.filesMerged} merged, ${resourcesStats.filesSkipped} skipped
-                    </div>
+                const message = `
+                    Combined MCADDON file ready for download.<br>
+                    <strong>Summary:</strong><br>
+                    - ${totalAdded} file(s) added from source<br>
+                    - ${totalMerged} JSON file(s) merged<br>
+                    - ${totalSkipped} file(s) skipped (collisions)<br><br>
+                    <strong>Behavior:</strong> ${behaviorStats.filesAdded} added, ${behaviorStats.filesMerged} merged, ${behaviorStats.filesSkipped} skipped<br>
+                    <strong>Resources:</strong> ${resourcesStats.filesAdded} added, ${resourcesStats.filesMerged} merged, ${resourcesStats.filesSkipped} skipped
                 `;
+                showSuccess('combineResult', message);
 
                 // Show download button
-                downloadBtn.style.display = 'block';
+                toggleDownloadButton('downloadCombinedBtn', true);
 
             } catch (error) {
-                resultDiv.className = 'result error show';
-                resultDiv.innerHTML = `
-                    <div class="result-title">Error</div>
-                    <div class="result-message">${error.message}</div>
-                `;
-                downloadBtn.style.display = 'none';
+                showError('combineResult', error.message);
+                toggleDownloadButton('downloadCombinedBtn', false);
                 combinedZip = null; // Clear any partial data
             }
         }
@@ -2631,19 +2661,9 @@
 
                 downloadBlob(blob, outputFileName);
 
-                const resultDiv = document.getElementById('combineResult');
-                resultDiv.className = 'result success show';
-                resultDiv.innerHTML = `
-                    <div class="result-title">Downloaded!</div>
-                    <div class="result-message">"${outputFileName}" has been downloaded.</div>
-                `;
+                showSuccess('combineResult', `"${outputFileName}" has been downloaded.`, 'Downloaded!');
             } catch (error) {
-                const resultDiv = document.getElementById('combineResult');
-                resultDiv.className = 'result error show';
-                resultDiv.innerHTML = `
-                    <div class="result-title">Error</div>
-                    <div class="result-message">Failed to download: ${error.message}</div>
-                `;
+                showError('combineResult', `Failed to download: ${error.message}`);
             }
         }
 
@@ -2662,7 +2682,7 @@
             const diffDisplay = document.getElementById('diffDisplay');
 
             // Hide previous results
-            resultDiv.classList.remove('show');
+            hideStatus('diffResult');
             diffDisplay.style.display = 'none';
 
             if (type === 'file1') {
@@ -2695,20 +2715,13 @@
             const diffDisplay = document.getElementById('diffDisplay');
 
             try {
-                resultDiv.className = 'result show';
-                resultDiv.innerHTML = `
-                    <div class="result-title">Processing...</div>
-                    <div class="result-message">Loading MCADDON files...</div>
-                `;
+                showLoading('diffResult', 'Loading MCADDON files...');
 
                 // Load both MCADDON files
                 diffFile1Zip = await loadMcAddonZip(diffFile1);
                 diffFile2Zip = await loadMcAddonZip(diffFile2);
 
-                resultDiv.innerHTML = `
-                    <div class="result-title">Processing...</div>
-                    <div class="result-message">Extracting and comparing JSON files...</div>
-                `;
+                showLoading('diffResult', 'Extracting and comparing JSON files...');
 
                 // Extract JSON files from both and convert to object format
                 const file1Array = await extractJsonFiles(diffFile1Zip);
@@ -2771,20 +2784,13 @@
                 // Display results
                 displayDiffResults();
 
-                resultDiv.className = 'result success show';
-                resultDiv.innerHTML = `
-                    <div class="result-title">Comparison Complete!</div>
-                    <div class="result-message">Found ${diffResults.onlyInFile1.length + diffResults.onlyInFile2.length + diffResults.modified.length} difference(s).</div>
-                `;
+                const totalDiffs = diffResults.onlyInFile1.length + diffResults.onlyInFile2.length + diffResults.modified.length;
+                showSuccess('diffResult', `Found ${totalDiffs} difference(s).`, 'Comparison Complete!');
 
                 diffDisplay.style.display = 'block';
 
             } catch (error) {
-                resultDiv.className = 'result error show';
-                resultDiv.innerHTML = `
-                    <div class="result-title">Error</div>
-                    <div class="result-message">${error.message}</div>
-                `;
+                showError('diffResult', error.message);
                 diffDisplay.style.display = 'none';
             }
         }
