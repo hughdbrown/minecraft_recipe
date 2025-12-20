@@ -1,0 +1,835 @@
+
+ * ▐▛███▜▌ *   Claude Code v2.0.74
+* ▝▜█████▛▘ *  Sonnet 4.5 · Claude Pro
+ *  ▘▘ ▝▝  *   ~/workspace/tyler/minecraft-recipe
+
+> Read `ai/diff_mcaddon_files.md`. Understand the requirements of the new 
+feature.
+Ask questions as necessary to resolve unclarities. When all questions are 
+resolved, begine implementation. 
+
+⏺ I'll read the requirements document for the new feature.
+
+⏺ Read(ai/diff_mcaddon_files.md)
+  ⎿  Error reading file
+
+⏺ Let me search for the requirements document with the correct filename:
+
+⏺ Search(pattern: "ai/*")
+  ⎿  Found 13 files (ctrl+o to expand)
+
+⏺ Found it! Let me read the requirements document:
+
+⏺ Read(ai/diff-mcaddon-files.prd)
+  ⎿  Read 18 lines
+
+⏺ Now let me explore the existing codebase to understand the current implementation patterns:
+
+⏺ Read(ai/combine-mcaddon-files.md)
+  ⎿  Read 26 lines
+
+⏺ Search(pattern: "*.html")
+  ⎿  Found 1 file (ctrl+o to expand)
+
+⏺ Search(pattern: "src/**/*.rs")
+  ⎿  Found 2 files (ctrl+o to expand)
+
+⏺ Read(minecraft_recipe.html)
+  ⎿  Read 1783 lines
+
+⏺ I've read the requirements document and examined the existing codebase. I can see that you already have similar features like "Combine MCADDON Files" which I can use as a reference.
+
+  Before I begin implementation, I have some questions about the diff functionality to ensure I build exactly what you need:
+                                                                           
+⏺ User answered Claude's questions:
+  ⎿  · What level of detail should the hierarchical diff view show? → 
+     Side-by-side JSON comparison
+     · Should the diff include non-JSON files (images, sounds, etc.)? → JSON
+      files only (Recommended)
+     · How should the diff results be organized? → Grouped by status 
+     (Recommended)
+
+⏺ Perfect! I'll implement a diff feature that shows:
+  - Side-by-side JSON comparison
+  - JSON files only
+  - Grouped by status (Only in File 1, Only in File 2, Modified)
+
+  Let me create a todo list and start implementing:
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Added 1 line                                                        
+      558              <button class="nav-button active"                 
+           onclick="switchScreen(0)">Recipe Maker</button>               
+      559              <button class="nav-button"                        
+           onclick="switchScreen(1)">Edit MCADDON Files</button>         
+      560              <button class="nav-button"                        
+           onclick="switchScreen(2)">Combine MCADDON Files</button>      
+      561 +            <button class="nav-button"                        
+          +onclick="switchScreen(3)">Diff MCADDON Files</button>         
+      562          </div>                                                
+      563                                                                
+      564          <!-- Main Content Area -->                            
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Added 42 lines                                                      
+      725                      </div>                                    
+      726                  </div>                                        
+      727              </div>                                            
+      728 +                                                              
+      729 +            <!-- Screen 4: Diff MCADDON Files -->             
+      730 +            <div class="screen" id="screen-diff">             
+      731 +                <div class="container">                       
+      732 +                    <div class="header">                      
+      733 +                        <h1>Diff MCADDON Files</h1>           
+      734 +                        <p>Compare two MCADDON files to see   
+          +what changed</p>                                              
+      735 +                    </div>                                    
+      736 +                                                              
+      737 +                    <div class="tab-content active"           
+          +style="display: block;">                                      
+      738 +                        <div class="info-box">                
+      739 +                            <strong>How it works:</strong>    
+      740 +                            Select two versions of an MCADDON 
+          + file. The tool will compare all JSON files and show you      
+          +what's different between them.                                
+      741 +                        </div>                                
+      742 +                                                              
+      743 +                        <div class="form-group">              
+      744 +                            <label for="diffFile1">Select     
+          +First MCADDON File (Version 1)</label>                        
+      745 +                            <input type="file" id="diffFile1" 
+          + accept=".mcaddon" onchange="handleDiffFileSelect('file1')">  
+      746 +                            <div class="file-info"            
+          +id="diffFile1Info"></div>                                     
+      747 +                        </div>                                
+      748 +                                                              
+      749 +                        <div class="form-group">              
+      750 +                            <label for="diffFile2">Select     
+          +Second MCADDON File (Version 2)</label>                       
+      751 +                            <input type="file" id="diffFile2" 
+          + accept=".mcaddon" onchange="handleDiffFileSelect('file2')">  
+      752 +                            <div class="file-info"            
+          +id="diffFile2Info"></div>                                     
+      753 +                        </div>                                
+      754 +                                                              
+      755 +                        <button class="convert-btn"           
+          +id="diffBtn" onclick="diffMcAddonFiles()" disabled>           
+      756 +                            Compare Files                     
+      757 +                        </button>                             
+      758 +                                                              
+      759 +                        <div class="result"                   
+          +id="diffResult"></div>                                        
+      760 +                                                              
+      761 +                        <div id="diffDisplay" style="display: 
+          + none; margin-top: 25px;">                                    
+      762 +                            <div id="diffSummary"             
+          +style="margin-bottom: 20px;"></div>                           
+      763 +                            <div id="diffOnlyInFile1"></div>  
+      764 +                            <div id="diffOnlyInFile2"></div>  
+      765 +                            <div id="diffModified"></div>     
+      766 +                        </div>                                
+      767 +                    </div>                                    
+      768 +                </div>                                        
+      769 +            </div>                                            
+      770          </div>                                                
+      771      </div>                                                    
+      772                                                                
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Added 191 lines                                                     
+      549              margin-bottom: 15px;                              
+      550              font-size: 14px;                                  
+      551          }                                                     
+      552 +                                                              
+      553 +        /* Diff Display Styles */                             
+      554 +        .diff-section {                                       
+      555 +            margin-bottom: 30px;                              
+      556 +            border-radius: 6px;                               
+      557 +            overflow: hidden;                                 
+      558 +            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);         
+      559 +        }                                                     
+      560 +                                                              
+      561 +        .diff-section-header {                                
+      562 +            padding: 15px 20px;                               
+      563 +            font-weight: 600;                                 
+      564 +            font-size: 16px;                                  
+      565 +            display: flex;                                    
+      566 +            justify-content: space-between;                   
+      567 +            align-items: center;                              
+      568 +            cursor: pointer;                                  
+      569 +            user-select: none;                                
+      570 +        }                                                     
+      571 +                                                              
+      572 +        .diff-section-header.only-in-1 {                      
+      573 +            background: #ffe5e5;                              
+      574 +            color: #c92a2a;                                   
+      575 +            border-left: 5px solid #fa5252;                   
+      576 +        }                                                     
+      577 +                                                              
+      578 +        .diff-section-header.only-in-2 {                      
+      579 +            background: #e3f7ed;                              
+      580 +            color: #087f5b;                                   
+      581 +            border-left: 5px solid #51cf66;                   
+      582 +        }                                                     
+      583 +                                                              
+      584 +        .diff-section-header.modified {                       
+      585 +            background: #fff3cd;                              
+      586 +            color: #856404;                                   
+      587 +            border-left: 5px solid #ffc107;                   
+      588 +        }                                                     
+      589 +                                                              
+      590 +        .diff-section-count {                                 
+      591 +            background: rgba(0, 0, 0, 0.1);                   
+      592 +            padding: 4px 12px;                                
+      593 +            border-radius: 12px;                              
+      594 +            font-size: 14px;                                  
+      595 +        }                                                     
+      596 +                                                              
+      597 +        .diff-section-content {                               
+      598 +            display: none;                                    
+      599 +            background: white;                                
+      600 +        }                                                     
+      601 +                                                              
+      602 +        .diff-section-content.expanded {                      
+      603 +            display: block;                                   
+      604 +        }                                                     
+      605 +                                                              
+      606 +        .diff-file-item {                                     
+      607 +            padding: 15px 20px;                               
+      608 +            border-bottom: 1px solid #e9ecef;                 
+      609 +            cursor: pointer;                                  
+      610 +            transition: all 0.2s ease;                        
+      611 +        }                                                     
+      612 +                                                              
+      613 +        .diff-file-item:hover {                               
+      614 +            background: #f8f9fa;                              
+      615 +        }                                                     
+      616 +                                                              
+      617 +        .diff-file-item:last-child {                          
+      618 +            border-bottom: none;                              
+      619 +        }                                                     
+      620 +                                                              
+      621 +        .diff-file-path {                                     
+      622 +            font-weight: 500;                                 
+      623 +            color: #2c3e50;                                   
+      624 +            margin-bottom: 5px;                               
+      625 +        }                                                     
+      626 +                                                              
+      627 +        .diff-file-preview {                                  
+      628 +            font-size: 12px;                                  
+      629 +            color: #7f8c8d;                                   
+      630 +            font-family: 'Courier New', monospace;            
+      631 +        }                                                     
+      632 +                                                              
+      633 +        .diff-comparison {                                    
+      634 +            display: none;                                    
+      635 +            margin-top: 10px;                                 
+      636 +            padding-top: 10px;                                
+      637 +            border-top: 2px solid #dee2e6;                    
+      638 +        }                                                     
+      639 +                                                              
+      640 +        .diff-comparison.expanded {                           
+      641 +            display: block;                                   
+      642 +        }                                                     
+      643 +                                                              
+      644 +        .diff-side-by-side {                                  
+      645 +            display: grid;                                    
+      646 +            grid-template-columns: 1fr 1fr;                   
+      647 +            gap: 15px;                                        
+      648 +            margin-top: 10px;                                 
+      649 +        }                                                     
+      650 +                                                              
+      651 +        .diff-side {                                          
+      652 +            background: #f8f9fa;                              
+      653 +            border-radius: 6px;                               
+      654 +            overflow: hidden;                                 
+      655 +        }                                                     
+      656 +                                                              
+      657 +        .diff-side-header {                                   
+      658 +            background: #34495e;                              
+      659 +            color: white;                                     
+      660 +            padding: 10px 15px;                               
+      661 +            font-weight: 600;                                 
+      662 +            font-size: 13px;                                  
+      663 +        }                                                     
+      664 +                                                              
+      665 +        .diff-side-content {                                  
+      666 +            padding: 15px;                                    
+      667 +            max-height: 500px;                                
+      668 +            overflow-y: auto;                                 
+      669 +        }                                                     
+      670 +                                                              
+      671 +        .diff-json-view {                                     
+      672 +            font-family: 'Courier New', monospace;            
+      673 +            font-size: 12px;                                  
+      674 +            line-height: 1.6;                                 
+      675 +            white-space: pre-wrap;                            
+      676 +            word-wrap: break-word;                            
+      677 +            color: #2c3e50;                                   
+      678 +        }                                                     
+      679 +                                                              
+      680 +        .diff-summary {                                       
+      681 +            background: #e3f2fd;                              
+      682 +            border-left: 4px solid #2196f3;                   
+      683 +            padding: 15px 20px;                               
+      684 +            border-radius: 4px;                               
+      685 +            margin-bottom: 25px;                              
+      686 +        }                                                     
+      687 +                                                              
+      688 +        .diff-summary-title {                                 
+      689 +            font-weight: 600;                                 
+      690 +            font-size: 16px;                                  
+      691 +            color: #0d47a1;                                   
+      692 +            margin-bottom: 10px;                              
+      693 +        }                                                     
+      694 +                                                              
+      695 +        .diff-summary-stats {                                 
+      696 +            display: grid;                                    
+      697 +            grid-template-columns: repeat(3, 1fr);            
+      698 +            gap: 15px;                                        
+      699 +            margin-top: 10px;                                 
+      700 +        }                                                     
+      701 +                                                              
+      702 +        .diff-stat {                                          
+      703 +            text-align: center;                               
+      704 +            padding: 10px;                                    
+      705 +            background: white;                                
+      706 +            border-radius: 4px;                               
+      707 +        }                                                     
+      708 +                                                              
+      709 +        .diff-stat-value {                                    
+      710 +            font-size: 24px;                                  
+      711 +            font-weight: 700;                                 
+      712 +            display: block;                                   
+      713 +            margin-bottom: 5px;                               
+      714 +        }                                                     
+      715 +                                                              
+      716 +        .diff-stat-value.removed {                            
+      717 +            color: #c92a2a;                                   
+      718 +        }                                                     
+      719 +                                                              
+      720 +        .diff-stat-value.added {                              
+      721 +            color: #087f5b;                                   
+      722 +        }                                                     
+      723 +                                                              
+      724 +        .diff-stat-value.modified {                           
+      725 +            color: #856404;                                   
+      726 +        }                                                     
+      727 +                                                              
+      728 +        .diff-stat-label {                                    
+      729 +            font-size: 12px;                                  
+      730 +            color: #7f8c8d;                                   
+      731 +            text-transform: uppercase;                        
+      732 +            font-weight: 500;                                 
+      733 +        }                                                     
+      734 +                                                              
+      735 +        .diff-toggle-icon {                                   
+      736 +            transition: transform 0.3s ease;                  
+      737 +            display: inline-block;                            
+      738 +        }                                                     
+      739 +                                                              
+      740 +        .diff-toggle-icon.expanded {                          
+      741 +            transform: rotate(90deg);                         
+      742 +        }                                                     
+      743      </style>                                                  
+      744  </head>                                                       
+      745  <body>                                                        
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Added 7 lines                                                       
+      1115          let combineDestFile = null;                          
+      1116          let combinedZip = null;                              
+      1117                                                               
+      1118 +        // Diff MCADDON state                                
+      1119 +        let diffFile1 = null;                                
+      1120 +        let diffFile2 = null;                                
+      1121 +        let diffFile1Zip = null;                             
+      1122 +        let diffFile2Zip = null;                             
+      1123 +        let diffResults = null;                              
+      1124 +                                                             
+      1125          // Screen switching                                  
+      1126          function switchScreen(screenIndex) {                 
+      1127              const navButtons =                               
+            document.querySelectorAll('.nav-button');                    
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Added 337 lines                                                     
+      2018                  `;                                           
+      2019              }                                                
+      2020          }                                                    
+      2021 +                                                             
+      2022 +        // ========== DIFF MCADDON FUNCTIONS ==========      
+      2023 +                                                             
+      2024 +        /**                                                  
+      2025 +         * Handle file selection for diff feature            
+      2026 +         */                                                  
+      2027 +        function handleDiffFileSelect(type) {                
+      2028 +            const file1Input =                               
+           +document.getElementById('diffFile1');                        
+      2029 +            const file2Input =                               
+           +document.getElementById('diffFile2');                        
+      2030 +            const file1Info =                                
+           +document.getElementById('diffFile1Info');                    
+      2031 +            const file2Info =                                
+           +document.getElementById('diffFile2Info');                    
+      2032 +            const diffBtn =                                  
+           +document.getElementById('diffBtn');                          
+      2033 +            const resultDiv =                                
+           +document.getElementById('diffResult');                       
+      2034 +            const diffDisplay =                              
+           +document.getElementById('diffDisplay');                      
+      2035 +                                                             
+      2036 +            // Hide previous results                         
+      2037 +            resultDiv.classList.remove('show');              
+      2038 +            diffDisplay.style.display = 'none';              
+      2039 +                                                             
+      2040 +            if (type === 'file1') {                          
+      2041 +                const file = file1Input.files[0];            
+      2042 +                if (file) {                                  
+      2043 +                    diffFile1 = file;                        
+      2044 +                    file1Info.textContent = `Selected:       
+           +${file.name} (${formatFileSize(file.size)})`;                
+      2045 +                    file1Info.classList.add('show');         
+      2046 +                }                                            
+      2047 +            } else {                                         
+      2048 +                const file = file2Input.files[0];            
+      2049 +                if (file) {                                  
+      2050 +                    diffFile2 = file;                        
+      2051 +                    file2Info.textContent = `Selected:       
+           +${file.name} (${formatFileSize(file.size)})`;                
+      2052 +                    file2Info.classList.add('show');         
+      2053 +                }                                            
+      2054 +            }                                                
+      2055 +                                                             
+      2056 +            // Enable button if both files are selected      
+      2057 +            diffBtn.disabled = !(diffFile1 && diffFile2);    
+      2058 +        }                                                    
+      2059 +                                                             
+      2060 +        /**                                                  
+      2061 +         * Extract all JSON files from a ZIP                 
+      2062 +         */                                                  
+      2063 +        async function extractJsonFilesFromZip(zip) {        
+      2064 +            const jsonFiles = {};                            
+      2065 +                                                             
+      2066 +            for (const [path, entry] of                      
+           +Object.entries(zip.files)) {                                 
+      2067 +                if (!entry.dir &&                            
+           +path.toLowerCase().endsWith('.json')) {                      
+      2068 +                    try {                                    
+      2069 +                        const content = await                
+           +entry.async('string');                                       
+      2070 +                        const parsed = JSON.parse(content);  
+      2071 +                        jsonFiles[path] = {                  
+      2072 +                            content: content,                
+      2073 +                            parsed: parsed                   
+      2074 +                        };                                   
+      2075 +                    } catch (e) {                            
+      2076 +                        // Skip invalid JSON files           
+      2077 +                    }                                        
+      2078 +                }                                            
+      2079 +            }                                                
+      2080 +                                                             
+      2081 +            return jsonFiles;                                
+      2082 +        }                                                    
+      2083 +                                                             
+      2084 +        /**                                                  
+      2085 +         * Compare two MCADDON files                         
+      2086 +         */                                                  
+      2087 +        async function diffMcAddonFiles() {                  
+      2088 +            if (!diffFile1 || !diffFile2) return;            
+      2089 +                                                             
+      2090 +            const resultDiv =                                
+           +document.getElementById('diffResult');                       
+      2091 +            const diffDisplay =                              
+           +document.getElementById('diffDisplay');                      
+      2092 +                                                             
+      2093 +            try {                                            
+      2094 +                resultDiv.className = 'result show';         
+      2095 +                resultDiv.innerHTML = `                      
+      2096 +                    <div                                     
+           +class="result-title">Processing...</div>                     
+      2097 +                    <div class="result-message">Loading      
+           +MCADDON files...</div>                                       
+      2098 +                `;                                           
+      2099 +                                                             
+      2100 +                // Load both MCADDON files                   
+      2101 +                const file1Data = await                      
+           +readFileAsArrayBuffer(diffFile1);                            
+      2102 +                const file2Data = await                      
+           +readFileAsArrayBuffer(diffFile2);                            
+      2103 +                                                             
+      2104 +                diffFile1Zip = await                         
+           +JSZip.loadAsync(file1Data);                                  
+      2105 +                diffFile2Zip = await                         
+           +JSZip.loadAsync(file2Data);                                  
+      2106 +                                                             
+      2107 +                resultDiv.innerHTML = `                      
+      2108 +                    <div                                     
+           +class="result-title">Processing...</div>                     
+      2109 +                    <div class="result-message">Extracting   
+           +and comparing JSON files...</div>                            
+      2110 +                `;                                           
+      2111 +                                                             
+      2112 +                // Extract JSON files from both              
+      2113 +                const file1Json = await                      
+           +extractJsonFilesFromZip(diffFile1Zip);                       
+      2114 +                const file2Json = await                      
+           +extractJsonFilesFromZip(diffFile2Zip);                       
+      2115 +                                                             
+      2116 +                // Compare                                   
+      2117 +                diffResults = {                              
+      2118 +                    onlyInFile1: [],                         
+      2119 +                    onlyInFile2: [],                         
+      2120 +                    modified: []                             
+      2121 +                };                                           
+      2122 +                                                             
+      2123 +                // Find files only in file1 or modified      
+      2124 +                for (const path in file1Json) {              
+      2125 +                    if (!file2Json[path]) {                  
+      2126 +                        diffResults.onlyInFile1.push({       
+      2127 +                            path: path,                      
+      2128 +                            content:                         
+           +file1Json[path].content,                                     
+      2129 +                            parsed: file1Json[path].parsed   
+      2130 +                        });                                  
+      2131 +                    } else {                                 
+      2132 +                        // File exists in both - check if    
+           +different                                                    
+      2133 +                        const content1 =                     
+           +JSON.stringify(file1Json[path].parsed, null, 2);             
+      2134 +                        const content2 =                     
+           +JSON.stringify(file2Json[path].parsed, null, 2);             
+      2135 +                                                             
+      2136 +                        if (content1 !== content2) {         
+      2137 +                            diffResults.modified.push({      
+      2138 +                                path: path,                  
+      2139 +                                content1: content1,          
+      2140 +                                content2: content2,          
+      2141 +                                parsed1:                     
+           +file1Json[path].parsed,                                      
+      2142 +                                parsed2:                     
+           +file2Json[path].parsed                                       
+      2143 +                            });                              
+      2144 +                        }                                    
+      2145 +                    }                                        
+      2146 +                }                                            
+      2147 +                                                             
+      2148 +                // Find files only in file2                  
+      2149 +                for (const path in file2Json) {              
+      2150 +                    if (!file1Json[path]) {                  
+      2151 +                        diffResults.onlyInFile2.push({       
+      2152 +                            path: path,                      
+      2153 +                            content:                         
+           +file2Json[path].content,                                     
+      2154 +                            parsed: file2Json[path].parsed   
+      2155 +                        });                                  
+      2156 +                    }                                        
+      2157 +                }                                            
+      2158 +                                                             
+      2159 +                // Display results                           
+      2160 +                displayDiffResults();                        
+      2161 +                                                             
+      2162 +                resultDiv.className = 'result success show'; 
+      2163 +                resultDiv.innerHTML = `                      
+      2164 +                    <div class="result-title">Comparison     
+           +Complete!</div>                                              
+      2165 +                    <div class="result-message">Found        
+           +${diffResults.onlyInFile1.length +                           
+           +diffResults.onlyInFile2.length +                             
+           +diffResults.modified.length} difference(s).</div>            
+      2166 +                `;                                           
+      2167 +                                                             
+      2168 +                diffDisplay.style.display = 'block';         
+      2169 +                                                             
+      2170 +            } catch (error) {                                
+      2171 +                resultDiv.className = 'result error show';   
+      2172 +                resultDiv.innerHTML = `                      
+      2173 +                    <div class="result-title">Error</div>    
+      2174 +                    <div                                     
+           +class="result-message">${error.message}</div>                
+      2175 +                `;                                           
+      2176 +                diffDisplay.style.display = 'none';          
+      2177 +            }                                                
+      2178 +        }                                                    
+      2179 +                                                             
+      2180 +        /**                                                  
+      2181 +         * Display diff results in the UI                    
+      2182 +         */                                                  
+      2183 +        function displayDiffResults() {                      
+      2184 +            const summaryDiv =                               
+           +document.getElementById('diffSummary');                      
+      2185 +            const onlyIn1Div =                               
+           +document.getElementById('diffOnlyInFile1');                  
+      2186 +            const onlyIn2Div =                               
+           +document.getElementById('diffOnlyInFile2');                  
+      2187 +            const modifiedDiv =                              
+           +document.getElementById('diffModified');                     
+      2188 +                                                             
+      2189 +            // Summary                                       
+      2190 +            summaryDiv.innerHTML = `                         
+      2191 +                <div class="diff-summary">                   
+      2192 +                    <div                                     
+           +class="diff-summary-title">Comparison Summary</div>          
+      2193 +                    <div class="diff-summary-stats">         
+      2194 +                        <div class="diff-stat">              
+      2195 +                            <span class="diff-stat-value     
+           +removed">${diffResults.onlyInFile1.length}</span>            
+      2196 +                            <span                            
+           +class="diff-stat-label">Only in File 1</span>                
+      2197 +                        </div>                               
+      2198 +                        <div class="diff-stat">              
+      2199 +                            <span class="diff-stat-value     
+           +added">${diffResults.onlyInFile2.length}</span>              
+      2200 +                            <span                            
+           +class="diff-stat-label">Only in File 2</span>                
+      2201 +                        </div>                               
+      2202 +                        <div class="diff-stat">              
+      2203 +                            <span class="diff-stat-value     
+           +modified">${diffResults.modified.length}</span>              
+      2204 +                            <span                            
+           +class="diff-stat-label">Modified</span>                      
+      2205 +                        </div>                               
+      2206 +                    </div>                                   
+      2207 +                </div>                                       
+      2208 +            `;                                               
+      2209 +                                                             
+      2210 +            // Only in File 1                                
+      2211 +            if (diffResults.onlyInFile1.length > 0) {        
+      2212 +                onlyIn1Div.innerHTML = createDiffSection(    
+      2213 +                    'only-in-1',                             
+      2214 +                    'Only in File 1 (Removed)',              
+      2215 +                    diffResults.onlyInFile1,                 
+      2216 +                    'removed'                                
+      2217 +                );                                           
+      2218 +            } else {                                         
+      2219 +                onlyIn1Div.innerHTML = '';                   
+      2220 +            }                                                
+      2221 +                                                             
+      2222 +            // Only in File 2                                
+      2223 +            if (diffResults.onlyInFile2.length > 0) {        
+      2224 +                onlyIn2Div.innerHTML = createDiffSection(    
+      2225 +                    'only-in-2',                             
+      2226 +                    'Only in File 2 (Added)',                
+      2227 +                    diffResults.onlyInFile2,                 
+      2228 +                    'added'                                  
+      2229 +                );                                           
+      2230 +            } else {                                         
+      2231 +                onlyIn2Div.innerHTML = '';                   
+      2232 +            }                                                
+      2233 +                                                             
+      2234 +            // Modified                                      
+      2235 +            if (diffResults.modified.length > 0) {           
+      2236 +                modifiedDiv.innerHTML = createDiffSection(   
+      2237 +                    'modified',                              
+      2238 +                    'Modified Files',                        
+      2239 +                    diffResults.modified,                    
+      2240 +                    'modified'                               
+      2241 +                );                                           
+      2242 +            } else {                                         
+      2243 +                modifiedDiv.innerHTML = '';                  
+      2244 +            }                                                
+      2245 +        }                                                    
+      2246 +                                                             
+      2247 +        /**                                                  
+      2248 +         * Create a diff section HTML                        
+      2249 +         */                                                  
+      2250 +        function createDiffSection(type, title, files,       
+           +category) {                                                  
+      2251 +            const sectionId = `diff-section-${type}`;        
+      2252 +            const contentId = `diff-content-${type}`;        
+      2253 +                                                             
+      2254 +            let html = `                                     
+      2255 +                <div class="diff-section">                   
+      2256 +                    <div class="diff-section-header ${type}" 
+           + onclick="toggleDiffSection('${contentId}',                  
+           +'${sectionId}')">                                            
+      2257 +                        <span><span class="diff-toggle-icon" 
+           + id="${sectionId}-icon">▶</span> ${title}</span>             
+      2258 +                        <span                                
+           +class="diff-section-count">${files.length}                   
+           +file${files.length !== 1 ? 's' : ''}</span>                  
+      2259 +                    </div>                                   
+      2260 +                    <div class="diff-section-content"        
+           +id="${contentId}">                                           
+      2261 +            `;                                               
+      2262 +                                                             
+      2263 +            files.forEach((file, index) => {                 
+      2264 +                const itemId = `diff-item-${type}-${index}`; 
+      2265 +                const comparisonId =                         
+           +`diff-comparison-${type}-${index}`;                          
+      2266 +                                                             
+      2267 +                html += `                                    
+      2268 +                    <div class="diff-file-item"              
+           +onclick="toggleDiffComparison('${comparisonId}')">           
+      2269 +                        <div                                 
+           +class="diff-file-path">${file.path}</div>                    
+      2270 +                `;                                           
+      2271 +                                                             
+      2272 +                if (category === 'modified') {               
+      2273 +                    html += `                                
+      2274 +                        <div class="diff-file-preview">Click 
+           + to view side-by-side comparison</div>                       
+      2275 +                        <div class="diff-comparison"         
+           +id="${comparisonId}">                                        
+      2276 +                            <div class="diff-side-by-side">  
+      2277 +                                <div class="diff-side">      
+      2278 +                                    <div                     
+           +class="diff-side-header">File 1 (${diffFile1.name})</div>    
+      2279 +                                    <div                     
+           +class="diff-side-content">                                   
+      2280 +                                        <pre                 
+           +class="diff-json-view">${escapeHtml(file.content1)}</pre>    
+      2281 +                                    </div>                   
+      2282 +                                </div>                       
+      2283 +                                <div class="diff-side">      
+      2284 +                                    <div                     
+           +class="diff-side-header">File 2 (${diffFile2.name})</div>    
+      2285 +                                    <div                     
+           +class="diff-side-content">                                   
+      2286 +                                        <pre                 
+           +class="diff-json-view">${escapeHtml(file.content2)}</pre>    
+      2287 +                                    </div>                   
+      2288 +                                </div>                       
+      2289 +                            </div>                           
+      2290 +                        </div>                               
+      2291 +                    `;                                       
+      2292 +                } else {                                     
+      2293 +                    const content =                          
+           +JSON.stringify(file.parsed, null, 2);                        
+      2294 +                    const fileName = category === 'removed'  
+           +? diffFile1.name : diffFile2.name;                           
+      2295 +                    html += `                                
+      2296 +                        <div class="diff-file-preview">Click 
+           + to view content</div>                                       
+      2297 +                        <div class="diff-comparison"         
+           +id="${comparisonId}">                                        
+      2298 +                            <div class="diff-side-by-side">  
+      2299 +                                <div class="diff-side"       
+           +style="grid-column: span 2;">                                
+      2300 +                                    <div                     
+           +class="diff-side-header">${fileName}</div>                   
+      2301 +                                    <div                     
+           +class="diff-side-content">                                   
+      2302 +                                        <pre                 
+           +class="diff-json-view">${escapeHtml(content)}</pre>          
+      2303 +                                    </div>                   
+      2304 +                                </div>                       
+      2305 +                            </div>                           
+      2306 +                        </div>                               
+      2307 +                    `;                                       
+      2308 +                }                                            
+      2309 +                                                             
+      2310 +                html += `</div>`;                            
+      2311 +            });                                              
+      2312 +                                                             
+      2313 +            html += `                                        
+      2314 +                    </div>                                   
+      2315 +                </div>                                       
+      2316 +            `;                                               
+      2317 +                                                             
+      2318 +            return html;                                     
+      2319 +        }                                                    
+      2320 +                                                             
+      2321 +        /**                                                  
+      2322 +         * Toggle diff section expansion                     
+      2323 +         */                                                  
+      2324 +        function toggleDiffSection(contentId, sectionId) {   
+      2325 +            const content =                                  
+           +document.getElementById(contentId);                          
+      2326 +            const icon =                                     
+           +document.getElementById(`${sectionId}-icon`);                
+      2327 +                                                             
+      2328 +            if (content.classList.contains('expanded')) {    
+      2329 +                content.classList.remove('expanded');        
+      2330 +                icon.classList.remove('expanded');           
+      2331 +            } else {                                         
+      2332 +                content.classList.add('expanded');           
+      2333 +                icon.classList.add('expanded');              
+      2334 +            }                                                
+      2335 +        }                                                    
+      2336 +                                                             
+      2337 +        /**                                                  
+      2338 +         * Toggle diff comparison display                    
+      2339 +         */                                                  
+      2340 +        function toggleDiffComparison(comparisonId) {        
+      2341 +            const comparison =                               
+           +document.getElementById(comparisonId);                       
+      2342 +                                                             
+      2343 +            if (comparison.classList.contains('expanded')) { 
+      2344 +                comparison.classList.remove('expanded');     
+      2345 +            } else {                                         
+      2346 +                comparison.classList.add('expanded');        
+      2347 +            }                                                
+      2348 +        }                                                    
+      2349 +                                                             
+      2350 +        /**                                                  
+      2351 +         * Escape HTML for display                           
+      2352 +         */                                                  
+      2353 +        function escapeHtml(text) {                          
+      2354 +            const div = document.createElement('div');       
+      2355 +            div.textContent = text;                          
+      2356 +            return div.innerHTML;                            
+      2357 +        }                                                    
+      2358      </script>                                                
+      2359  </body>                                                      
+      2360  </html>                                                      
+
+⏺ Bash(open minecraft_recipe.html)
+  ⎿  (No content)
+
+⏺ I've successfully implemented the "Diff MCADDON Files" feature! Here's what was added:
+
+  Implementation Summary
+
+  1. Navigation (minecraft_recipe.html:561)
+
+  - Added a new button "Diff MCADDON Files" to the left navigation panel
+
+  2. User Interface (minecraft_recipe.html:729-769)
+
+  - Created a new screen with:
+    - Header explaining the feature
+    - Two file selectors for selecting the MCADDON files to compare
+    - "Compare Files" button
+    - Results display area
+
+  3. Styling (minecraft_recipe.html:553-742)
+
+  - Color-coded sections:
+    - Red for files only in File 1 (removed)
+    - Green for files only in File 2 (added)
+    - Yellow for modified files
+  - Side-by-side comparison view for modified JSON files
+  - Expandable/collapsible sections
+  - Summary statistics dashboard
+
+  4. Functionality (minecraft_recipe.html:2022-2357)
+
+  - File Selection: Handles two MCADDON file inputs
+  - Comparison Logic:
+    - Extracts and parses all JSON files from both MCADDON packages
+    - Categorizes files into three groups:
+        - Only in File 1 (removed files)
+      - Only in File 2 (added files)
+      - Modified files (exist in both but content differs)
+  - Display:
+    - Summary statistics showing count of each category
+    - Expandable sections for each category
+    - Click on any file to view its content
+    - Side-by-side JSON comparison for modified files
+
+  5. Features
+
+  - Read-only display (no download/save functionality as specified)
+  - Only compares JSON files (non-JSON files are ignored)
+  - Normalized JSON comparison (ignores whitespace differences)
+  - Clean, intuitive interface matching the existing design
+
+  The HTML file is now open in your default browser. You can test the diff functionality by:
+  1. Clicking "Diff MCADDON Files" in the navigation
+  2. Selecting two MCADDON files
+  3. Clicking "Compare Files"
+  4. Viewing the hierarchical diff results with side-by-side comparison
+
+
+

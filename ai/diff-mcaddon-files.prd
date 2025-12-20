@@ -1,0 +1,17 @@
+# Purpose
+Diff two MCADDON files, making it possible to see what changed.
+
+# Description
+
+# User interface
+Add a mode named "Diff MCADDON Files" to vertical navigation display on the left.
+Add a tabbed view for this mode.
+In the tabbed view, have file selectors for the two versions of the same file.
+
+# Operation
+1. Select the two files
+2. Generate a diff of the files in memory
+3. Show a hierarchical view of the differences
+
+# Actions
+Once displayed, there are no actions. There is no saving files or downloading or anything.
