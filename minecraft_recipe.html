@@ -740,6 +740,155 @@
         .diff-toggle-icon.expanded {
             transform: rotate(90deg);
         }
+
+        /* Validation Results Styles */
+        .validation-summary {
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .validation-summary.pass {
+            background: #d4edda;
+            border: 2px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .validation-summary.fail {
+            background: #f8d7da;
+            border: 2px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .validation-summary-icon {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+
+        .validation-section {
+            margin-bottom: 25px;
+        }
+
+        .validation-section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .validation-section-title.errors {
+            color: #c92a2a;
+            border-bottom-color: #f5c6cb;
+        }
+
+        .validation-section-title.warnings {
+            color: #e67700;
+            border-bottom-color: #ffe8cc;
+        }
+
+        .validation-item {
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            line-height: 1.6;
+        }
+
+        .validation-item.error {
+            background: #ffe5e5;
+            border-left: 4px solid #fa5252;
+        }
+
+        .validation-item.warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+
+        .validation-item-icon {
+            font-weight: bold;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .validation-item.error .validation-item-icon {
+            color: #c92a2a;
+        }
+
+        .validation-item.warning .validation-item-icon {
+            color: #e67700;
+        }
+
+        .validation-item-content {
+            flex: 1;
+        }
+
+        .validation-item-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #2c3e50;
+        }
+
+        .validation-item-details {
+            font-size: 14px;
+            color: #495057;
+        }
+
+        .validation-item-path {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-top: 4px;
+            display: inline-block;
+        }
+
+        .validation-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .validation-stat {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+        }
+
+        .validation-stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .validation-stat-value.pass {
+            color: #087f5b;
+        }
+
+        .validation-stat-value.errors {
+            color: #c92a2a;
+        }
+
+        .validation-stat-value.warnings {
+            color: #e67700;
+        }
+
+        .validation-stat-label {
+            font-size: 13px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -750,6 +899,7 @@
             <button class="nav-button" onclick="switchScreen(1)">Edit MCADDON Files</button>
             <button class="nav-button" onclick="switchScreen(2)">Combine MCADDON Files</button>
             <button class="nav-button" onclick="switchScreen(3)">Diff MCADDON Files</button>
+            <button class="nav-button" onclick="switchScreen(4)">Validate MCADDON</button>
         </div>
 
         <!-- Main Content Area -->
@@ -954,6 +1104,35 @@
                             <div id="diffOnlyInFile1"></div>
                             <div id="diffOnlyInFile2"></div>
                             <div id="diffModified"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screen 5: Validate MCADDON -->
+            <div class="screen" id="screen-validate">
+                <div class="container">
+                    <div class="header">
+                        <h1>Validate MCADDON File</h1>
+                        <p>Check MCADDON files for errors and anomalies</p>
+                    </div>
+
+                    <div class="tab-content active" style="display: block;">
+                        <div class="info-box">
+                            <strong>Automatic Validation:</strong>
+                            Select an MCADDON file and it will be automatically validated. The tool checks for mandatory structure, proper JSON formatting, display names, and potential issues.
+                        </div>
+
+                        <div class="form-group">
+                            <label for="validateFile">Select MCADDON File (.mcaddon)</label>
+                            <input type="file" id="validateFile" accept=".mcaddon" onchange="handleValidateFileSelect()">
+                            <div class="file-info" id="validateFileInfo"></div>
+                        </div>
+
+                        <div id="validationResults" style="display: none; margin-top: 25px;">
+                            <div id="validationSummary"></div>
+                            <div id="validationErrors"></div>
+                            <div id="validationWarnings"></div>
                         </div>
                     </div>
                 </div>
@@ -2394,6 +2573,714 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        // ========== VALIDATE MCADDON FUNCTIONS ==========
+
+        // Validation state
+        let validateFile = null;
+        let validateZip = null;
+        let validationResults = {
+            errors: [],
+            warnings: [],
+            passed: false
+        };
+
+        /**
+         * Handle file selection for validation
+         */
+        async function handleValidateFileSelect() {
+            const fileInput = document.getElementById('validateFile');
+            const fileInfo = document.getElementById('validateFileInfo');
+            const resultsDiv = document.getElementById('validationResults');
+
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            validateFile = file;
+            fileInfo.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
+            fileInfo.classList.add('show');
+
+            // Automatically start validation
+            await validateMcAddonFile();
+        }
+
+        /**
+         * Main validation function
+         */
+        async function validateMcAddonFile() {
+            if (!validateFile) return;
+
+            const resultsDiv = document.getElementById('validationResults');
+            const summaryDiv = document.getElementById('validationSummary');
+            const errorsDiv = document.getElementById('validationErrors');
+            const warningsDiv = document.getElementById('validationWarnings');
+
+            // Reset results
+            validationResults = {
+                errors: [],
+                warnings: [],
+                passed: false
+            };
+
+            try {
+                // Show loading state
+                resultsDiv.style.display = 'block';
+                summaryDiv.innerHTML = '<div class="validation-summary">Validating MCADDON file...</div>';
+                errorsDiv.innerHTML = '';
+                warningsDiv.innerHTML = '';
+
+                // Load the ZIP file
+                const fileData = await readFileAsArrayBuffer(validateFile);
+                validateZip = await JSZip.loadAsync(fileData);
+
+                // Run all validation checks
+                await validateStructure();
+                await validateManifests();
+                await validateJsonFiles();
+                await validateDisplayNames();
+                await detectAnomalies();
+
+                // Check if validation passed
+                validationResults.passed = validationResults.errors.length === 0;
+
+                // Display results
+                displayValidationResults();
+
+            } catch (error) {
+                summaryDiv.innerHTML = `
+                    <div class="validation-summary fail">
+                        <span class="validation-summary-icon">✗</span>
+                        Critical Error: ${error.message}
+                    </div>
+                `;
+                errorsDiv.innerHTML = '';
+                warningsDiv.innerHTML = '';
+            }
+        }
+
+        /**
+         * Validate MCADDON structure (mandatory check)
+         */
+        async function validateStructure() {
+            const topLevelItems = {};
+
+            // Find all top-level items
+            for (const [path, entry] of Object.entries(validateZip.files)) {
+                const pathParts = path.split('/').filter(p => p.length > 0);
+                if (pathParts.length === 0) continue;
+
+                const topLevelName = pathParts[0];
+
+                if (pathParts.length === 1 && !entry.dir) {
+                    validationResults.errors.push({
+                        title: 'Invalid Structure',
+                        details: 'Top-level files are not allowed in MCADDON packages.',
+                        path: topLevelName
+                    });
+                }
+
+                if (!topLevelItems[topLevelName]) {
+                    topLevelItems[topLevelName] = entry.dir;
+                }
+            }
+
+            // Check for Behavior folder
+            const behaviorFolders = Object.keys(topLevelItems).filter(name =>
+                name.endsWith('Behavior')
+            );
+
+            if (behaviorFolders.length === 0) {
+                validationResults.errors.push({
+                    title: 'Missing Behavior Pack',
+                    details: 'No folder ending with "Behavior" found at top level.',
+                    path: null
+                });
+            } else if (behaviorFolders.length > 1) {
+                validationResults.errors.push({
+                    title: 'Multiple Behavior Packs',
+                    details: `Found multiple folders ending with "Behavior": ${behaviorFolders.join(', ')}`,
+                    path: null
+                });
+            }
+
+            // Check for Resources folder
+            const resourcesFolders = Object.keys(topLevelItems).filter(name =>
+                name.endsWith('Resources')
+            );
+
+            if (resourcesFolders.length === 0) {
+                validationResults.errors.push({
+                    title: 'Missing Resources Pack',
+                    details: 'No folder ending with "Resources" found at top level.',
+                    path: null
+                });
+            } else if (resourcesFolders.length > 1) {
+                validationResults.errors.push({
+                    title: 'Multiple Resources Packs',
+                    details: `Found multiple folders ending with "Resources": ${resourcesFolders.join(', ')}`,
+                    path: null
+                });
+            }
+
+            // Check for extra top-level folders
+            const extraFolders = Object.keys(topLevelItems).filter(name =>
+                !name.endsWith('Behavior') && !name.endsWith('Resources')
+            );
+
+            if (extraFolders.length > 0) {
+                validationResults.warnings.push({
+                    title: 'Extra Top-Level Folders',
+                    details: `Found unexpected top-level folders: ${extraFolders.join(', ')}`,
+                    path: null
+                });
+            }
+        }
+
+        /**
+         * Validate manifest.json files (mandatory check)
+         */
+        async function validateManifests() {
+            const manifests = [];
+
+            // Find all manifest.json files
+            for (const [path, entry] of Object.entries(validateZip.files)) {
+                if (!entry.dir && path.toLowerCase().endsWith('manifest.json')) {
+                    manifests.push({ path, entry });
+                }
+            }
+
+            if (manifests.length === 0) {
+                validationResults.errors.push({
+                    title: 'No Manifest Files',
+                    details: 'No manifest.json files found in the package.',
+                    path: null
+                });
+                return;
+            }
+
+            let hasBehaviorManifest = false;
+            let hasResourcesManifest = false;
+
+            for (const { path, entry } of manifests) {
+                try {
+                    const content = await entry.async('string');
+                    const manifest = JSON.parse(content);
+
+                    // Validate manifest structure
+                    if (!manifest.format_version) {
+                        validationResults.errors.push({
+                            title: 'Missing format_version',
+                            details: 'manifest.json is missing format_version field.',
+                            path: path
+                        });
+                    }
+
+                    if (!manifest.header) {
+                        validationResults.errors.push({
+                            title: 'Missing header',
+                            details: 'manifest.json is missing header section.',
+                            path: path
+                        });
+                    } else {
+                        // Check header fields
+                        if (!manifest.header.name) {
+                            validationResults.errors.push({
+                                title: 'Missing Pack Name',
+                                details: 'manifest.json header is missing name field.',
+                                path: path
+                            });
+                        }
+
+                        if (!manifest.header.description) {
+                            validationResults.warnings.push({
+                                title: 'Missing Pack Description',
+                                details: 'manifest.json header is missing description field.',
+                                path: path
+                            });
+                        }
+
+                        if (!manifest.header.uuid) {
+                            validationResults.errors.push({
+                                title: 'Missing Pack UUID',
+                                details: 'manifest.json header is missing uuid field.',
+                                path: path
+                            });
+                        }
+
+                        if (!manifest.header.version) {
+                            validationResults.errors.push({
+                                title: 'Missing Pack Version',
+                                details: 'manifest.json header is missing version field.',
+                                path: path
+                            });
+                        }
+                    }
+
+                    if (!manifest.modules || !Array.isArray(manifest.modules)) {
+                        validationResults.errors.push({
+                            title: 'Missing modules',
+                            details: 'manifest.json is missing modules array.',
+                            path: path
+                        });
+                    } else {
+                        // Check module types
+                        const moduleTypes = manifest.modules.map(m => m.type);
+
+                        if (moduleTypes.includes('data')) {
+                            hasBehaviorManifest = true;
+                        }
+
+                        if (moduleTypes.includes('resources')) {
+                            hasResourcesManifest = true;
+                        }
+
+                        // Validate each module
+                        manifest.modules.forEach((module, idx) => {
+                            if (!module.type) {
+                                validationResults.errors.push({
+                                    title: 'Missing Module Type',
+                                    details: `Module ${idx} is missing type field.`,
+                                    path: path
+                                });
+                            }
+
+                            if (!module.uuid) {
+                                validationResults.errors.push({
+                                    title: 'Missing Module UUID',
+                                    details: `Module ${idx} (${module.type || 'unknown'}) is missing uuid field.`,
+                                    path: path
+                                });
+                            }
+
+                            if (!module.version) {
+                                validationResults.errors.push({
+                                    title: 'Missing Module Version',
+                                    details: `Module ${idx} (${module.type || 'unknown'}) is missing version field.`,
+                                    path: path
+                                });
+                            }
+                        });
+                    }
+
+                    // Check minimum version (Minecraft 1.20.0 or later recommended)
+                    if (manifest.format_version) {
+                        const version = parseFloat(manifest.format_version);
+                        if (version < 1.20) {
+                            validationResults.warnings.push({
+                                title: 'Old Format Version',
+                                details: `Format version ${manifest.format_version} is older than 1.20.0. Consider updating.`,
+                                path: path
+                            });
+                        }
+                    }
+
+                } catch (error) {
+                    validationResults.errors.push({
+                        title: 'Invalid Manifest JSON',
+                        details: `Failed to parse manifest.json: ${error.message}`,
+                        path: path
+                    });
+                }
+            }
+
+            // Check that we have both types of manifests
+            if (!hasBehaviorManifest) {
+                validationResults.errors.push({
+                    title: 'No Behavior Pack Manifest',
+                    details: 'No manifest.json with "data" module type found.',
+                    path: null
+                });
+            }
+
+            if (!hasResourcesManifest) {
+                validationResults.errors.push({
+                    title: 'No Resources Pack Manifest',
+                    details: 'No manifest.json with "resources" module type found.',
+                    path: null
+                });
+            }
+        }
+
+        /**
+         * Validate all JSON files for proper syntax and structure
+         */
+        async function validateJsonFiles() {
+            let jsonCount = 0;
+            let invalidCount = 0;
+
+            for (const [path, entry] of Object.entries(validateZip.files)) {
+                if (!entry.dir && path.toLowerCase().endsWith('.json')) {
+                    jsonCount++;
+
+                    try {
+                        const content = await entry.async('string');
+                        const parsed = JSON.parse(content);
+
+                        // Validate specific file types
+                        if (path.toLowerCase().includes('/recipes/')) {
+                            validateRecipeFile(path, parsed);
+                        } else if (path.toLowerCase().includes('/items/')) {
+                            validateItemFile(path, parsed);
+                        } else if (path.toLowerCase().includes('/blocks/')) {
+                            validateBlockFile(path, parsed);
+                        }
+
+                    } catch (error) {
+                        invalidCount++;
+                        validationResults.errors.push({
+                            title: 'Invalid JSON',
+                            details: `Failed to parse JSON file: ${error.message}`,
+                            path: path
+                        });
+                    }
+                }
+            }
+
+            if (jsonCount === 0) {
+                validationResults.warnings.push({
+                    title: 'No JSON Files',
+                    details: 'No JSON files found in the package (besides manifests).',
+                    path: null
+                });
+            }
+        }
+
+        /**
+         * Validate recipe file structure
+         */
+        function validateRecipeFile(path, json) {
+            if (!json.format_version) {
+                validationResults.warnings.push({
+                    title: 'Missing format_version in Recipe',
+                    details: 'Recipe file is missing format_version field.',
+                    path: path
+                });
+            }
+
+            if (!json['minecraft:recipe_shaped'] && !json['minecraft:recipe_shapeless']) {
+                validationResults.errors.push({
+                    title: 'Invalid Recipe Type',
+                    details: 'Recipe file must contain either minecraft:recipe_shaped or minecraft:recipe_shapeless.',
+                    path: path
+                });
+            }
+        }
+
+        /**
+         * Validate item file structure
+         */
+        function validateItemFile(path, json) {
+            if (!json.format_version) {
+                validationResults.warnings.push({
+                    title: 'Missing format_version in Item',
+                    details: 'Item file is missing format_version field.',
+                    path: path
+                });
+            }
+
+            if (!json['minecraft:item']) {
+                validationResults.errors.push({
+                    title: 'Invalid Item Structure',
+                    details: 'Item file must contain minecraft:item object.',
+                    path: path
+                });
+            } else if (!json['minecraft:item'].description || !json['minecraft:item'].description.identifier) {
+                validationResults.errors.push({
+                    title: 'Missing Item Identifier',
+                    details: 'Item is missing description.identifier field.',
+                    path: path
+                });
+            }
+        }
+
+        /**
+         * Validate block file structure
+         */
+        function validateBlockFile(path, json) {
+            // Check for identifier only if minecraft:block exists
+            if (json['minecraft:block'] && (!json['minecraft:block'].description || !json['minecraft:block'].description.identifier)) {
+                validationResults.errors.push({
+                    title: 'Missing Block Identifier',
+                    details: 'Block is missing description.identifier field.',
+                    path: path
+                });
+            }
+        }
+
+        /**
+         * Validate display names and localization
+         */
+        async function validateDisplayNames() {
+            // Find all .lang files
+            const langFiles = [];
+            const identifiers = new Set();
+
+            // Extract identifiers from items and blocks
+            for (const [path, entry] of Object.entries(validateZip.files)) {
+                if (!entry.dir && path.toLowerCase().endsWith('.json')) {
+                    try {
+                        const content = await entry.async('string');
+                        const json = JSON.parse(content);
+
+                        // Extract item identifiers
+                        if (json['minecraft:item'] && json['minecraft:item'].description) {
+                            const id = json['minecraft:item'].description.identifier;
+                            if (id) identifiers.add(id);
+                        }
+
+                        // Extract block identifiers
+                        if (json['minecraft:block'] && json['minecraft:block'].description) {
+                            const id = json['minecraft:block'].description.identifier;
+                            if (id) identifiers.add(id);
+                        }
+                    } catch (e) {
+                        // Skip invalid JSON
+                    }
+                }
+
+                // Collect .lang files
+                if (!entry.dir && path.toLowerCase().endsWith('.lang')) {
+                    const content = await entry.async('string');
+                    langFiles.push({ path, content });
+                }
+            }
+
+            // Check if there are .lang files
+            if (langFiles.length === 0 && identifiers.size > 0) {
+                validationResults.warnings.push({
+                    title: 'No Localization Files',
+                    details: 'No .lang files found. Items and blocks will not have display names.',
+                    path: null
+                });
+            } else if (identifiers.size > 0) {
+                // Parse all .lang files
+                const translations = new Map();
+
+                for (const { path, content } of langFiles) {
+                    const lines = content.split('\n');
+                    for (const line of lines) {
+                        const trimmed = line.trim();
+                        if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+                            const key = trimmed.substring(0, trimmed.indexOf('=')).trim();
+                            translations.set(key, true);
+                        }
+                    }
+                }
+
+                // Check each identifier for localization
+                const missingTranslations = [];
+                for (const id of identifiers) {
+                    const expectedKey = `item.${id}.name`;
+                    const expectedKey2 = `tile.${id}.name`;
+
+                    if (!translations.has(expectedKey) && !translations.has(expectedKey2)) {
+                        missingTranslations.push(id);
+                    }
+                }
+
+                if (missingTranslations.length > 0) {
+                    validationResults.warnings.push({
+                        title: 'Missing Display Names',
+                        details: `${missingTranslations.length} item(s)/block(s) missing localization entries: ${missingTranslations.slice(0, 5).join(', ')}${missingTranslations.length > 5 ? '...' : ''}`,
+                        path: null
+                    });
+                }
+            }
+        }
+
+        /**
+         * Detect anomalies and potential issues
+         */
+        async function detectAnomalies() {
+            // Check for empty folders
+            const folders = new Set();
+            const filesInFolders = new Set();
+
+            for (const [path, entry] of Object.entries(validateZip.files)) {
+                const parts = path.split('/').filter(p => p);
+
+                if (parts.length > 1) {
+                    // Track all parent folders
+                    for (let i = 1; i < parts.length; i++) {
+                        const folderPath = parts.slice(0, i).join('/');
+                        folders.add(folderPath);
+
+                        if (!entry.dir) {
+                            filesInFolders.add(folderPath);
+                        }
+                    }
+                }
+            }
+
+            // Check for empty folders that should typically have content
+            const importantFolders = ['recipes', 'items', 'blocks', 'texts', 'textures'];
+            for (const folder of folders) {
+                const folderName = folder.split('/').pop().toLowerCase();
+
+                if (importantFolders.includes(folderName) && !filesInFolders.has(folder)) {
+                    validationResults.warnings.push({
+                        title: 'Empty Important Folder',
+                        details: `Folder appears to be empty but typically should contain files.`,
+                        path: folder
+                    });
+                }
+            }
+
+            // Check for duplicate identifiers
+            const identifierMap = new Map();
+
+            for (const [path, entry] of Object.entries(validateZip.files)) {
+                if (!entry.dir && path.toLowerCase().endsWith('.json')) {
+                    try {
+                        const content = await entry.async('string');
+                        const json = JSON.parse(content);
+
+                        let identifier = null;
+
+                        if (json['minecraft:item']) {
+                            identifier = json['minecraft:item'].description?.identifier;
+                        } else if (json['minecraft:block']) {
+                            identifier = json['minecraft:block'].description?.identifier;
+                        } else if (json['minecraft:recipe_shaped']) {
+                            identifier = json['minecraft:recipe_shaped'].description?.identifier;
+                        } else if (json['minecraft:recipe_shapeless']) {
+                            identifier = json['minecraft:recipe_shapeless'].description?.identifier;
+                        }
+
+                        if (identifier) {
+                            if (identifierMap.has(identifier)) {
+                                identifierMap.get(identifier).push(path);
+                            } else {
+                                identifierMap.set(identifier, [path]);
+                            }
+                        }
+                    } catch (e) {
+                        // Skip invalid JSON
+                    }
+                }
+            }
+
+            // Report duplicates
+            for (const [id, paths] of identifierMap.entries()) {
+                if (paths.length > 1) {
+                    validationResults.warnings.push({
+                        title: 'Duplicate Identifier',
+                        details: `Identifier "${id}" is defined in ${paths.length} files: ${paths.join(', ')}`,
+                        path: null
+                    });
+                }
+            }
+
+            // Check file naming conventions
+            for (const [path, entry] of Object.entries(validateZip.files)) {
+                if (!entry.dir) {
+                    const fileName = path.split('/').pop();
+
+                    // Check for spaces in filenames (not recommended)
+                    if (fileName.includes(' ')) {
+                        validationResults.warnings.push({
+                            title: 'Spaces in Filename',
+                            details: 'Filenames with spaces may cause issues. Consider using underscores instead.',
+                            path: path
+                        });
+                    }
+
+                    // Check for uppercase in filenames (not recommended)
+                    if (fileName !== fileName.toLowerCase() && !path.toLowerCase().endsWith('manifest.json')) {
+                        validationResults.warnings.push({
+                            title: 'Uppercase in Filename',
+                            details: 'Filenames should be lowercase for consistency.',
+                            path: path
+                        });
+                    }
+                }
+            }
+        }
+
+        /**
+         * Display validation results in the UI
+         */
+        function displayValidationResults() {
+            const summaryDiv = document.getElementById('validationSummary');
+            const errorsDiv = document.getElementById('validationErrors');
+            const warningsDiv = document.getElementById('validationWarnings');
+
+            // Summary
+            const errorCount = validationResults.errors.length;
+            const warningCount = validationResults.warnings.length;
+            const passClass = validationResults.passed ? 'pass' : 'fail';
+            const passIcon = validationResults.passed ? '✓' : '✗';
+            const passText = validationResults.passed
+                ? 'MCADDON file is valid!'
+                : 'MCADDON file has errors';
+
+            summaryDiv.innerHTML = `
+                <div class="validation-summary ${passClass}">
+                    <span class="validation-summary-icon">${passIcon}</span>
+                    ${passText}
+                </div>
+                <div class="validation-stats">
+                    <div class="validation-stat">
+                        <span class="validation-stat-value ${passClass}">${passIcon}</span>
+                        <span class="validation-stat-label">Validation ${validationResults.passed ? 'Passed' : 'Failed'}</span>
+                    </div>
+                    <div class="validation-stat">
+                        <span class="validation-stat-value errors">${errorCount}</span>
+                        <span class="validation-stat-label">Error${errorCount !== 1 ? 's' : ''}</span>
+                    </div>
+                    <div class="validation-stat">
+                        <span class="validation-stat-value warnings">${warningCount}</span>
+                        <span class="validation-stat-label">Warning${warningCount !== 1 ? 's' : ''}</span>
+                    </div>
+                </div>
+            `;
+
+            // Errors
+            if (errorCount > 0) {
+                let errorsHtml = '<div class="validation-section"><div class="validation-section-title errors">Errors</div>';
+
+                for (const error of validationResults.errors) {
+                    errorsHtml += `
+                        <div class="validation-item error">
+                            <div class="validation-item-icon">✗</div>
+                            <div class="validation-item-content">
+                                <div class="validation-item-title">${error.title}</div>
+                                <div class="validation-item-details">${error.details}</div>
+                                ${error.path ? `<div class="validation-item-path">${error.path}</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                errorsHtml += '</div>';
+                errorsDiv.innerHTML = errorsHtml;
+            } else {
+                errorsDiv.innerHTML = '';
+            }
+
+            // Warnings
+            if (warningCount > 0) {
+                let warningsHtml = '<div class="validation-section"><div class="validation-section-title warnings">Warnings</div>';
+
+                for (const warning of validationResults.warnings) {
+                    warningsHtml += `
+                        <div class="validation-item warning">
+                            <div class="validation-item-icon">⚠</div>
+                            <div class="validation-item-content">
+                                <div class="validation-item-title">${warning.title}</div>
+                                <div class="validation-item-details">${warning.details}</div>
+                                ${warning.path ? `<div class="validation-item-path">${warning.path}</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                warningsHtml += '</div>';
+                warningsDiv.innerHTML = warningsHtml;
+            } else {
+                warningsDiv.innerHTML = '';
+            }
         }
     </script>
 </body>

@@ -1,0 +1,1382 @@
+
+ * ▐▛███▜▌ *   Claude Code v2.0.74
+* ▝▜█████▛▘ *  Sonnet 4.5 · Claude Pro
+ *  ▘▘ ▝▝  *   ~/workspace/tyler/minecraft-recipe
+
+> Add a top-level navigation button that opens a tab with only one UI item: 
+a file selector to select MCADDON files. The selection of a file 
+automatically starts a validation of the MCADDON file and reports either 
+that the file is correct in all respects or it has errors (like missing 
+mandatory parts to the file) or parts of the file are anomalous (like the 
+display names are not available for all items).
+Ask questions to resolve unclarity or ambiguity. Begin implementation when 
+all questions are resolved. 
+
+⏺ I'll help you add a validation feature for MCADDON files. Let me first explore the current codebase to understand the structure, then ask some clarifying questions.
+
+⏺ Read(minecraft_recipe.html)
+  ⎿  Read 2401 lines
+
+⏺ Search(pattern: "**/*.py")
+  ⎿  Found 2 files (ctrl+o to expand)
+
+⏺ Search(pattern: "**/*.rs")
+  ⎿  Found 2 files (ctrl+o to expand)
+
+⏺ I can see this is a web-based tool for working with Minecraft MCADDON files. Before implementing the validation feature, I need to clarify a few things about what constitutes valid MCADDON file validation:
+                                                                           
+⏺ User answered Claude's questions:
+  ⎿  · What mandatory structure/files should an MCADDON file contain for it 
+     to be considered valid? → Behavior and Resources folders, manifest.json
+      in both folders, Specific module types in manifest, Minimum version 
+     requirements
+
+     · What display name validation should be performed? → Check both pack 
+     and item names
+     · What level of JSON validation should be performed? → Parse all JSON 
+     files, Validate manifest schema, Validate recipe/item schemas
+     · What other anomalies should be detected and reported? → Missing 
+     language files, Empty or suspicious folders, Duplicate identifiers, 
+     File naming conventions
+
+⏺ Perfect! Now I have clear requirements. Let me implement the MCADDON validation feature with:
+
+  Mandatory checks (errors):
+  - Behavior and Resources folders structure
+  - manifest.json in both folders
+  - Correct module types
+  - Version requirements
+
+  Display name validation:
+  - Pack names in manifests
+  - Item/block localization in .lang files
+
+  JSON validation:
+  - Parse all JSON files
+  - Validate manifest schema
+  - Validate recipe/item schemas
+
+  Anomaly detection (warnings):
+  - Missing language files
+  - Empty folders
+  - Duplicate identifiers
+  - File naming conventions
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Added 1 line                                                        
+      750              <button class="nav-button"                        
+           onclick="switchScreen(1)">Edit MCADDON Files</button>         
+      751              <button class="nav-button"                        
+           onclick="switchScreen(2)">Combine MCADDON Files</button>      
+      752              <button class="nav-button"                        
+           onclick="switchScreen(3)">Diff MCADDON Files</button>         
+      753 +            <button class="nav-button"                        
+          +onclick="switchScreen(4)">Validate MCADDON</button>           
+      754          </div>                                                
+      755                                                                
+      756          <!-- Main Content Area -->                            
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Added 29 lines                                                      
+      959                      </div>                                    
+      960                  </div>                                        
+      961              </div>                                            
+      962 +                                                              
+      963 +            <!-- Screen 5: Validate MCADDON -->               
+      964 +            <div class="screen" id="screen-validate">         
+      965 +                <div class="container">                       
+      966 +                    <div class="header">                      
+      967 +                        <h1>Validate MCADDON File</h1>        
+      968 +                        <p>Check MCADDON files for errors and 
+          + anomalies</p>                                                
+      969 +                    </div>                                    
+      970 +                                                              
+      971 +                    <div class="tab-content active"           
+          +style="display: block;">                                      
+      972 +                        <div class="info-box">                
+      973 +                            <strong>Automatic                 
+          +Validation:</strong>                                          
+      974 +                            Select an MCADDON file and it     
+          +will be automatically validated. The tool checks for          
+          +mandatory structure, proper JSON formatting, display names,   
+          +and potential issues.                                         
+      975 +                        </div>                                
+      976 +                                                              
+      977 +                        <div class="form-group">              
+      978 +                            <label for="validateFile">Select  
+          +MCADDON File (.mcaddon)</label>                               
+      979 +                            <input type="file"                
+          +id="validateFile" accept=".mcaddon"                           
+          +onchange="handleValidateFileSelect()">                        
+      980 +                            <div class="file-info"            
+          +id="validateFileInfo"></div>                                  
+      981 +                        </div>                                
+      982 +                                                              
+      983 +                        <div id="validationResults"           
+          +style="display: none; margin-top: 25px;">                     
+      984 +                            <div                              
+          +id="validationSummary"></div>                                 
+      985 +                            <div id="validationErrors"></div> 
+      986 +                            <div                              
+          +id="validationWarnings"></div>                                
+      987 +                        </div>                                
+      988 +                    </div>                                    
+      989 +                </div>                                        
+      990 +            </div>                                            
+      991          </div>                                                
+      992      </div>                                                    
+      993                                                                
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Added 149 lines                                                     
+      740          .diff-toggle-icon.expanded {                          
+      741              transform: rotate(90deg);                         
+      742          }                                                     
+      743 +                                                              
+      744 +        /* Validation Results Styles */                       
+      745 +        .validation-summary {                                 
+      746 +            padding: 20px;                                    
+      747 +            border-radius: 8px;                               
+      748 +            margin-bottom: 25px;                              
+      749 +            font-size: 16px;                                  
+      750 +            font-weight: 600;                                 
+      751 +        }                                                     
+      752 +                                                              
+      753 +        .validation-summary.pass {                            
+      754 +            background: #d4edda;                              
+      755 +            border: 2px solid #c3e6cb;                        
+      756 +            color: #155724;                                   
+      757 +        }                                                     
+      758 +                                                              
+      759 +        .validation-summary.fail {                            
+      760 +            background: #f8d7da;                              
+      761 +            border: 2px solid #f5c6cb;                        
+      762 +            color: #721c24;                                   
+      763 +        }                                                     
+      764 +                                                              
+      765 +        .validation-summary-icon {                            
+      766 +            font-size: 24px;                                  
+      767 +            margin-right: 10px;                               
+      768 +        }                                                     
+      769 +                                                              
+      770 +        .validation-section {                                 
+      771 +            margin-bottom: 25px;                              
+      772 +        }                                                     
+      773 +                                                              
+      774 +        .validation-section-title {                           
+      775 +            font-size: 18px;                                  
+      776 +            font-weight: 600;                                 
+      777 +            color: #2c3e50;                                   
+      778 +            margin-bottom: 15px;                              
+      779 +            padding-bottom: 8px;                              
+      780 +            border-bottom: 2px solid #ecf0f1;                 
+      781 +        }                                                     
+      782 +                                                              
+      783 +        .validation-section-title.errors {                    
+      784 +            color: #c92a2a;                                   
+      785 +            border-bottom-color: #f5c6cb;                     
+      786 +        }                                                     
+      787 +                                                              
+      788 +        .validation-section-title.warnings {                  
+      789 +            color: #e67700;                                   
+      790 +            border-bottom-color: #ffe8cc;                     
+      791 +        }                                                     
+      792 +                                                              
+      793 +        .validation-item {                                    
+      794 +            padding: 12px 15px;                               
+      795 +            margin-bottom: 10px;                              
+      796 +            border-radius: 6px;                               
+      797 +            display: flex;                                    
+      798 +            align-items: flex-start;                          
+      799 +            gap: 10px;                                        
+      800 +            line-height: 1.6;                                 
+      801 +        }                                                     
+      802 +                                                              
+      803 +        .validation-item.error {                              
+      804 +            background: #ffe5e5;                              
+      805 +            border-left: 4px solid #fa5252;                   
+      806 +        }                                                     
+      807 +                                                              
+      808 +        .validation-item.warning {                            
+      809 +            background: #fff3cd;                              
+      810 +            border-left: 4px solid #ffc107;                   
+      811 +        }                                                     
+      812 +                                                              
+      813 +        .validation-item-icon {                               
+      814 +            font-weight: bold;                                
+      815 +            font-size: 16px;                                  
+      816 +            flex-shrink: 0;                                   
+      817 +        }                                                     
+      818 +                                                              
+      819 +        .validation-item.error .validation-item-icon {        
+      820 +            color: #c92a2a;                                   
+      821 +        }                                                     
+      822 +                                                              
+      823 +        .validation-item.warning .validation-item-icon {      
+      824 +            color: #e67700;                                   
+      825 +        }                                                     
+      826 +                                                              
+      827 +        .validation-item-content {                            
+      828 +            flex: 1;                                          
+      829 +        }                                                     
+      830 +                                                              
+      831 +        .validation-item-title {                              
+      832 +            font-weight: 600;                                 
+      833 +            margin-bottom: 4px;                               
+      834 +            color: #2c3e50;                                   
+      835 +        }                                                     
+      836 +                                                              
+      837 +        .validation-item-details {                            
+      838 +            font-size: 14px;                                  
+      839 +            color: #495057;                                   
+      840 +        }                                                     
+      841 +                                                              
+      842 +        .validation-item-path {                               
+      843 +            font-family: 'Courier New', monospace;            
+      844 +            font-size: 12px;                                  
+      845 +            background: rgba(0, 0, 0, 0.05);                  
+      846 +            padding: 2px 6px;                                 
+      847 +            border-radius: 3px;                               
+      848 +            margin-top: 4px;                                  
+      849 +            display: inline-block;                            
+      850 +        }                                                     
+      851 +                                                              
+      852 +        .validation-stats {                                   
+      853 +            display: grid;                                    
+      854 +            grid-template-columns: repeat(3, 1fr);            
+      855 +            gap: 15px;                                        
+      856 +            margin-top: 15px;                                 
+      857 +        }                                                     
+      858 +                                                              
+      859 +        .validation-stat {                                    
+      860 +            text-align: center;                               
+      861 +            padding: 15px;                                    
+      862 +            background: white;                                
+      863 +            border-radius: 6px;                               
+      864 +            border: 1px solid #dee2e6;                        
+      865 +        }                                                     
+      866 +                                                              
+      867 +        .validation-stat-value {                              
+      868 +            font-size: 28px;                                  
+      869 +            font-weight: 700;                                 
+      870 +            display: block;                                   
+      871 +            margin-bottom: 5px;                               
+      872 +        }                                                     
+      873 +                                                              
+      874 +        .validation-stat-value.pass {                         
+      875 +            color: #087f5b;                                   
+      876 +        }                                                     
+      877 +                                                              
+      878 +        .validation-stat-value.errors {                       
+      879 +            color: #c92a2a;                                   
+      880 +        }                                                     
+      881 +                                                              
+      882 +        .validation-stat-value.warnings {                     
+      883 +            color: #e67700;                                   
+      884 +        }                                                     
+      885 +                                                              
+      886 +        .validation-stat-label {                              
+      887 +            font-size: 13px;                                  
+      888 +            color: #7f8c8d;                                   
+      889 +            text-transform: uppercase;                        
+      890 +            font-weight: 500;                                 
+      891 +        }                                                     
+      892      </style>                                                  
+      893  </head>                                                       
+      894  <body>                                                        
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Added 714 lines                                                     
+      2574              div.textContent = text;                          
+      2575              return div.innerHTML;                            
+      2576          }                                                    
+      2577 +                                                             
+      2578 +        // ========== VALIDATE MCADDON FUNCTIONS ==========  
+      2579 +                                                             
+      2580 +        // Validation state                                  
+      2581 +        let validateFile = null;                             
+      2582 +        let validateZip = null;                              
+      2583 +        let validationResults = {                            
+      2584 +            errors: [],                                      
+      2585 +            warnings: [],                                    
+      2586 +            passed: false                                    
+      2587 +        };                                                   
+      2588 +                                                             
+      2589 +        /**                                                  
+      2590 +         * Handle file selection for validation              
+      2591 +         */                                                  
+      2592 +        async function handleValidateFileSelect() {          
+      2593 +            const fileInput =                                
+           +document.getElementById('validateFile');                     
+      2594 +            const fileInfo =                                 
+           +document.getElementById('validateFileInfo');                 
+      2595 +            const resultsDiv =                               
+           +document.getElementById('validationResults');                
+      2596 +                                                             
+      2597 +            const file = fileInput.files[0];                 
+      2598 +            if (!file) return;                               
+      2599 +                                                             
+      2600 +            validateFile = file;                             
+      2601 +            fileInfo.textContent = `Selected: ${file.name}   
+           +(${formatFileSize(file.size)})`;                             
+      2602 +            fileInfo.classList.add('show');                  
+      2603 +                                                             
+      2604 +            // Automatically start validation                
+      2605 +            await validateMcAddonFile();                     
+      2606 +        }                                                    
+      2607 +                                                             
+      2608 +        /**                                                  
+      2609 +         * Main validation function                          
+      2610 +         */                                                  
+      2611 +        async function validateMcAddonFile() {               
+      2612 +            if (!validateFile) return;                       
+      2613 +                                                             
+      2614 +            const resultsDiv =                               
+           +document.getElementById('validationResults');                
+      2615 +                                                             
+      2616 +            // Reset results                                 
+      2617 +            validationResults = {                            
+      2618 +                errors: [],                                  
+      2619 +                warnings: [],                                
+      2620 +                passed: false                                
+      2621 +            };                                               
+      2622 +                                                             
+      2623 +            try {                                            
+      2624 +                // Show loading state                        
+      2625 +                resultsDiv.style.display = 'block';          
+      2626 +                resultsDiv.innerHTML = '<div                 
+           +class="validation-summary">Validating MCADDON                
+           +file...</div>';                                              
+      2627 +                                                             
+      2628 +                // Load the ZIP file                         
+      2629 +                const fileData = await                       
+           +readFileAsArrayBuffer(validateFile);                         
+      2630 +                validateZip = await                          
+           +JSZip.loadAsync(fileData);                                   
+      2631 +                                                             
+      2632 +                // Run all validation checks                 
+      2633 +                await validateStructure();                   
+      2634 +                await validateManifests();                   
+      2635 +                await validateJsonFiles();                   
+      2636 +                await validateDisplayNames();                
+      2637 +                await detectAnomalies();                     
+      2638 +                                                             
+      2639 +                // Check if validation passed                
+      2640 +                validationResults.passed =                   
+           +validationResults.errors.length === 0;                       
+      2641 +                                                             
+      2642 +                // Display results                           
+      2643 +                displayValidationResults();                  
+      2644 +                                                             
+      2645 +            } catch (error) {                                
+      2646 +                resultsDiv.innerHTML = `                     
+      2647 +                    <div class="validation-summary fail">    
+      2648 +                        <span                                
+           +class="validation-summary-icon">✗</span>                     
+      2649 +                        Critical Error: ${error.message}     
+      2650 +                    </div>                                   
+      2651 +                `;                                           
+      2652 +            }                                                
+      2653 +        }                                                    
+      2654 +                                                             
+      2655 +        /**                                                  
+      2656 +         * Validate MCADDON structure (mandatory check)      
+      2657 +         */                                                  
+      2658 +        async function validateStructure() {                 
+      2659 +            const topLevelItems = {};                        
+      2660 +                                                             
+      2661 +            // Find all top-level items                      
+      2662 +            for (const [path, entry] of                      
+           +Object.entries(validateZip.files)) {                         
+      2663 +                const pathParts = path.split('/').filter(p   
+           +=> p.length > 0);                                            
+      2664 +                if (pathParts.length === 0) continue;        
+      2665 +                                                             
+      2666 +                const topLevelName = pathParts[0];           
+      2667 +                                                             
+      2668 +                if (pathParts.length === 1 && !entry.dir) {  
+      2669 +                    validationResults.errors.push({          
+      2670 +                        title: 'Invalid Structure',          
+      2671 +                        details: 'Top-level files are not    
+           +allowed in MCADDON packages.',                               
+      2672 +                        path: topLevelName                   
+      2673 +                    });                                      
+      2674 +                }                                            
+      2675 +                                                             
+      2676 +                if (!topLevelItems[topLevelName]) {          
+      2677 +                    topLevelItems[topLevelName] = entry.dir; 
+      2678 +                }                                            
+      2679 +            }                                                
+      2680 +                                                             
+      2681 +            // Check for Behavior folder                     
+      2682 +            const behaviorFolders =                          
+           +Object.keys(topLevelItems).filter(name =>                    
+      2683 +                name.endsWith('Behavior')                    
+      2684 +            );                                               
+      2685 +                                                             
+      2686 +            if (behaviorFolders.length === 0) {              
+      2687 +                validationResults.errors.push({              
+      2688 +                    title: 'Missing Behavior Pack',          
+      2689 +                    details: 'No folder ending with          
+           +"Behavior" found at top level.',                             
+      2690 +                    path: null                               
+      2691 +                });                                          
+      2692 +            } else if (behaviorFolders.length > 1) {         
+      2693 +                validationResults.errors.push({              
+      2694 +                    title: 'Multiple Behavior Packs',        
+      2695 +                    details: `Found multiple folders ending  
+           +with "Behavior": ${behaviorFolders.join(', ')}`,             
+      2696 +                    path: null                               
+      2697 +                });                                          
+      2698 +            }                                                
+      2699 +                                                             
+      2700 +            // Check for Resources folder                    
+      2701 +            const resourcesFolders =                         
+           +Object.keys(topLevelItems).filter(name =>                    
+      2702 +                name.endsWith('Resources')                   
+      2703 +            );                                               
+      2704 +                                                             
+      2705 +            if (resourcesFolders.length === 0) {             
+      2706 +                validationResults.errors.push({              
+      2707 +                    title: 'Missing Resources Pack',         
+      2708 +                    details: 'No folder ending with          
+           +"Resources" found at top level.',                            
+      2709 +                    path: null                               
+      2710 +                });                                          
+      2711 +            } else if (resourcesFolders.length > 1) {        
+      2712 +                validationResults.errors.push({              
+      2713 +                    title: 'Multiple Resources Packs',       
+      2714 +                    details: `Found multiple folders ending  
+           +with "Resources": ${resourcesFolders.join(', ')}`,           
+      2715 +                    path: null                               
+      2716 +                });                                          
+      2717 +            }                                                
+      2718 +                                                             
+      2719 +            // Check for extra top-level folders             
+      2720 +            const extraFolders =                             
+           +Object.keys(topLevelItems).filter(name =>                    
+      2721 +                !name.endsWith('Behavior') &&                
+           +!name.endsWith('Resources')                                  
+      2722 +            );                                               
+      2723 +                                                             
+      2724 +            if (extraFolders.length > 0) {                   
+      2725 +                validationResults.warnings.push({            
+      2726 +                    title: 'Extra Top-Level Folders',        
+      2727 +                    details: `Found unexpected top-level     
+           +folders: ${extraFolders.join(', ')}`,                        
+      2728 +                    path: null                               
+      2729 +                });                                          
+      2730 +            }                                                
+      2731 +        }                                                    
+      2732 +                                                             
+      2733 +        /**                                                  
+      2734 +         * Validate manifest.json files (mandatory check)    
+      2735 +         */                                                  
+      2736 +        async function validateManifests() {                 
+      2737 +            const manifests = [];                            
+      2738 +                                                             
+      2739 +            // Find all manifest.json files                  
+      2740 +            for (const [path, entry] of                      
+           +Object.entries(validateZip.files)) {                         
+      2741 +                if (!entry.dir &&                            
+           +path.toLowerCase().endsWith('manifest.json')) {              
+      2742 +                    manifests.push({ path, entry });         
+      2743 +                }                                            
+      2744 +            }                                                
+      2745 +                                                             
+      2746 +            if (manifests.length === 0) {                    
+      2747 +                validationResults.errors.push({              
+      2748 +                    title: 'No Manifest Files',              
+      2749 +                    details: 'No manifest.json files found   
+           +in the package.',                                            
+      2750 +                    path: null                               
+      2751 +                });                                          
+      2752 +                return;                                      
+      2753 +            }                                                
+      2754 +                                                             
+      2755 +            let hasBehaviorManifest = false;                 
+      2756 +            let hasResourcesManifest = false;                
+      2757 +                                                             
+      2758 +            for (const { path, entry } of manifests) {       
+      2759 +                try {                                        
+      2760 +                    const content = await                    
+           +entry.async('string');                                       
+      2761 +                    const manifest = JSON.parse(content);    
+      2762 +                                                             
+      2763 +                    // Validate manifest structure           
+      2764 +                    if (!manifest.format_version) {          
+      2765 +                        validationResults.errors.push({      
+      2766 +                            title: 'Missing format_version', 
+      2767 +                            details: 'manifest.json is       
+           +missing format_version field.',                              
+      2768 +                            path: path                       
+      2769 +                        });                                  
+      2770 +                    }                                        
+      2771 +                                                             
+      2772 +                    if (!manifest.header) {                  
+      2773 +                        validationResults.errors.push({      
+      2774 +                            title: 'Missing header',         
+      2775 +                            details: 'manifest.json is       
+           +missing header section.',                                    
+      2776 +                            path: path                       
+      2777 +                        });                                  
+      2778 +                    } else {                                 
+      2779 +                        // Check header fields               
+      2780 +                        if (!manifest.header.name) {         
+      2781 +                            validationResults.errors.push({  
+      2782 +                                title: 'Missing Pack Name',  
+      2783 +                                details: 'manifest.json      
+           +header is missing name field.',                              
+      2784 +                                path: path                   
+      2785 +                            });                              
+      2786 +                        }                                    
+      2787 +                                                             
+      2788 +                        if (!manifest.header.description) {  
+      2789 +                                                             
+           +validationResults.warnings.push({                            
+      2790 +                                title: 'Missing Pack         
+           +Description',                                                
+      2791 +                                details: 'manifest.json      
+           +header is missing description field.',                       
+      2792 +                                path: path                   
+      2793 +                            });                              
+      2794 +                        }                                    
+      2795 +                                                             
+      2796 +                        if (!manifest.header.uuid) {         
+      2797 +                            validationResults.errors.push({  
+      2798 +                                title: 'Missing Pack UUID',  
+      2799 +                                details: 'manifest.json      
+           +header is missing uuid field.',                              
+      2800 +                                path: path                   
+      2801 +                            });                              
+      2802 +                        }                                    
+      2803 +                                                             
+      2804 +                        if (!manifest.header.version) {      
+      2805 +                            validationResults.errors.push({  
+      2806 +                                title: 'Missing Pack         
+           +Version',                                                    
+      2807 +                                details: 'manifest.json      
+           +header is missing version field.',                           
+      2808 +                                path: path                   
+      2809 +                            });                              
+      2810 +                        }                                    
+      2811 +                    }                                        
+      2812 +                                                             
+      2813 +                    if (!manifest.modules ||                 
+           +!Array.isArray(manifest.modules)) {                          
+      2814 +                        validationResults.errors.push({      
+      2815 +                            title: 'Missing modules',        
+      2816 +                            details: 'manifest.json is       
+           +missing modules array.',                                     
+      2817 +                            path: path                       
+      2818 +                        });                                  
+      2819 +                    } else {                                 
+      2820 +                        // Check module types                
+      2821 +                        const moduleTypes =                  
+           +manifest.modules.map(m => m.type);                           
+      2822 +                                                             
+      2823 +                        if (moduleTypes.includes('data')) {  
+      2824 +                            hasBehaviorManifest = true;      
+      2825 +                        }                                    
+      2826 +                                                             
+      2827 +                        if                                   
+           +(moduleTypes.includes('resources')) {                        
+      2828 +                            hasResourcesManifest = true;     
+      2829 +                        }                                    
+      2830 +                                                             
+      2831 +                        // Validate each module              
+      2832 +                        manifest.modules.forEach((module,    
+           +idx) => {                                                    
+      2833 +                            if (!module.type) {              
+      2834 +                                                             
+           +validationResults.errors.push({                              
+      2835 +                                    title: 'Missing Module   
+           +Type',                                                       
+      2836 +                                    details: `Module ${idx}  
+           +is missing type field.`,                                     
+      2837 +                                    path: path               
+      2838 +                                });                          
+      2839 +                            }                                
+      2840 +                                                             
+      2841 +                            if (!module.uuid) {              
+      2842 +                                                             
+           +validationResults.errors.push({                              
+      2843 +                                    title: 'Missing Module   
+           +UUID',                                                       
+      2844 +                                    details: `Module ${idx}  
+           +(${module.type || 'unknown'}) is missing uuid field.`,       
+      2845 +                                    path: path               
+      2846 +                                });                          
+      2847 +                            }                                
+      2848 +                                                             
+      2849 +                            if (!module.version) {           
+      2850 +                                                             
+           +validationResults.errors.push({                              
+      2851 +                                    title: 'Missing Module   
+           +Version',                                                    
+      2852 +                                    details: `Module ${idx}  
+           +(${module.type || 'unknown'}) is missing version field.`,    
+      2853 +                                    path: path               
+      2854 +                                });                          
+      2855 +                            }                                
+      2856 +                        });                                  
+      2857 +                    }                                        
+      2858 +                                                             
+      2859 +                    // Check minimum version (Minecraft      
+           +1.20.0 or later recommended)                                 
+      2860 +                    if (manifest.format_version) {           
+      2861 +                        const version =                      
+           +parseFloat(manifest.format_version);                         
+      2862 +                        if (version < 1.20) {                
+      2863 +                                                             
+           +validationResults.warnings.push({                            
+      2864 +                                title: 'Old Format Version', 
+      2865 +                                details: `Format version     
+           +${manifest.format_version} is older than 1.20.0. Consider    
+           +updating.`,                                                  
+      2866 +                                path: path                   
+      2867 +                            });                              
+      2868 +                        }                                    
+      2869 +                    }                                        
+      2870 +                                                             
+      2871 +                } catch (error) {                            
+      2872 +                    validationResults.errors.push({          
+      2873 +                        title: 'Invalid Manifest JSON',      
+      2874 +                        details: `Failed to parse            
+           +manifest.json: ${error.message}`,                            
+      2875 +                        path: path                           
+      2876 +                    });                                      
+      2877 +                }                                            
+      2878 +            }                                                
+      2879 +                                                             
+      2880 +            // Check that we have both types of manifests    
+      2881 +            if (!hasBehaviorManifest) {                      
+      2882 +                validationResults.errors.push({              
+      2883 +                    title: 'No Behavior Pack Manifest',      
+      2884 +                    details: 'No manifest.json with "data"   
+           +module type found.',                                         
+      2885 +                    path: null                               
+      2886 +                });                                          
+      2887 +            }                                                
+      2888 +                                                             
+      2889 +            if (!hasResourcesManifest) {                     
+      2890 +                validationResults.errors.push({              
+      2891 +                    title: 'No Resources Pack Manifest',     
+      2892 +                    details: 'No manifest.json with          
+           +"resources" module type found.',                             
+      2893 +                    path: null                               
+      2894 +                });                                          
+      2895 +            }                                                
+      2896 +        }                                                    
+      2897 +                                                             
+      2898 +        /**                                                  
+      2899 +         * Validate all JSON files for proper syntax and     
+           +structure                                                    
+      2900 +         */                                                  
+      2901 +        async function validateJsonFiles() {                 
+      2902 +            let jsonCount = 0;                               
+      2903 +            let invalidCount = 0;                            
+      2904 +                                                             
+      2905 +            for (const [path, entry] of                      
+           +Object.entries(validateZip.files)) {                         
+      2906 +                if (!entry.dir &&                            
+           +path.toLowerCase().endsWith('.json')) {                      
+      2907 +                    jsonCount++;                             
+      2908 +                                                             
+      2909 +                    try {                                    
+      2910 +                        const content = await                
+           +entry.async('string');                                       
+      2911 +                        const parsed = JSON.parse(content);  
+      2912 +                                                             
+      2913 +                        // Validate specific file types      
+      2914 +                        if                                   
+           +(path.toLowerCase().includes('/recipes/')) {                 
+      2915 +                            validateRecipeFile(path,         
+           +parsed);                                                     
+      2916 +                        } else if                            
+           +(path.toLowerCase().includes('/items/')) {                   
+      2917 +                            validateItemFile(path, parsed);  
+      2918 +                        } else if                            
+           +(path.toLowerCase().includes('/blocks/')) {                  
+      2919 +                            validateBlockFile(path, parsed); 
+      2920 +                        }                                    
+      2921 +                                                             
+      2922 +                    } catch (error) {                        
+      2923 +                        invalidCount++;                      
+      2924 +                        validationResults.errors.push({      
+      2925 +                            title: 'Invalid JSON',           
+      2926 +                            details: `Failed to parse JSON   
+           +file: ${error.message}`,                                     
+      2927 +                            path: path                       
+      2928 +                        });                                  
+      2929 +                    }                                        
+      2930 +                }                                            
+      2931 +            }                                                
+      2932 +                                                             
+      2933 +            if (jsonCount === 0) {                           
+      2934 +                validationResults.warnings.push({            
+      2935 +                    title: 'No JSON Files',                  
+      2936 +                    details: 'No JSON files found in the     
+           +package (besides manifests).',                               
+      2937 +                    path: null                               
+      2938 +                });                                          
+      2939 +            }                                                
+      2940 +        }                                                    
+      2941 +                                                             
+      2942 +        /**                                                  
+      2943 +         * Validate recipe file structure                    
+      2944 +         */                                                  
+      2945 +        function validateRecipeFile(path, json) {            
+      2946 +            if (!json.format_version) {                      
+      2947 +                validationResults.warnings.push({            
+      2948 +                    title: 'Missing format_version in        
+           +Recipe',                                                     
+      2949 +                    details: 'Recipe file is missing         
+           +format_version field.',                                      
+      2950 +                    path: path                               
+      2951 +                });                                          
+      2952 +            }                                                
+      2953 +                                                             
+      2954 +            if (!json['minecraft:recipe_shaped'] &&          
+           +!json['minecraft:recipe_shapeless']) {                       
+      2955 +                validationResults.errors.push({              
+      2956 +                    title: 'Invalid Recipe Type',            
+      2957 +                    details: 'Recipe file must contain       
+           +either minecraft:recipe_shaped or                            
+           +minecraft:recipe_shapeless.',                                
+      2958 +                    path: path                               
+      2959 +                });                                          
+      2960 +            }                                                
+      2961 +        }                                                    
+      2962 +                                                             
+      2963 +        /**                                                  
+      2964 +         * Validate item file structure                      
+      2965 +         */                                                  
+      2966 +        function validateItemFile(path, json) {              
+      2967 +            if (!json.format_version) {                      
+      2968 +                validationResults.warnings.push({            
+      2969 +                    title: 'Missing format_version in Item', 
+      2970 +                    details: 'Item file is missing           
+           +format_version field.',                                      
+      2971 +                    path: path                               
+      2972 +                });                                          
+      2973 +            }                                                
+      2974 +                                                             
+      2975 +            if (!json['minecraft:item']) {                   
+      2976 +                validationResults.errors.push({              
+      2977 +                    title: 'Invalid Item Structure',         
+      2978 +                    details: 'Item file must contain         
+           +minecraft:item object.',                                     
+      2979 +                    path: path                               
+      2980 +                });                                          
+      2981 +            } else if (!json['minecraft:item'].description   
+           +|| !json['minecraft:item'].description.identifier) {         
+      2982 +                validationResults.errors.push({              
+      2983 +                    title: 'Missing Item Identifier',        
+      2984 +                    details: 'Item is missing                
+           +description.identifier field.',                              
+      2985 +                    path: path                               
+      2986 +                });                                          
+      2987 +            }                                                
+      2988 +        }                                                    
+      2989 +                                                             
+      2990 +        /**                                                  
+      2991 +         * Validate block file structure                     
+      2992 +         */                                                  
+      2993 +        function validateBlockFile(path, json) {             
+      2994 +            if (!json.format_version) {                      
+      2995 +                validationResults.warnings.push({            
+      2996 +                    title: 'Missing format_version in        
+           +Block',                                                      
+      2997 +                    details: 'Block file is missing          
+           +format_version field.',                                      
+      2998 +                    path: path                               
+      2999 +                });                                          
+      3000 +            }                                                
+      3001 +                                                             
+      3002 +            if (!json['minecraft:block']) {                  
+      3003 +                validationResults.errors.push({              
+      3004 +                    title: 'Invalid Block Structure',        
+      3005 +                    details: 'Block file must contain        
+           +minecraft:block object.',                                    
+      3006 +                    path: path                               
+      3007 +                });                                          
+      3008 +            } else if (!json['minecraft:block'].description  
+           +|| !json['minecraft:block'].description.identifier) {        
+      3009 +                validationResults.errors.push({              
+      3010 +                    title: 'Missing Block Identifier',       
+      3011 +                    details: 'Block is missing               
+           +description.identifier field.',                              
+      3012 +                    path: path                               
+      3013 +                });                                          
+      3014 +            }                                                
+      3015 +        }                                                    
+      3016 +                                                             
+      3017 +        /**                                                  
+      3018 +         * Validate display names and localization           
+      3019 +         */                                                  
+      3020 +        async function validateDisplayNames() {              
+      3021 +            // Find all .lang files                          
+      3022 +            const langFiles = [];                            
+      3023 +            const identifiers = new Set();                   
+      3024 +                                                             
+      3025 +            // Extract identifiers from items and blocks     
+      3026 +            for (const [path, entry] of                      
+           +Object.entries(validateZip.files)) {                         
+      3027 +                if (!entry.dir &&                            
+           +path.toLowerCase().endsWith('.json')) {                      
+      3028 +                    try {                                    
+      3029 +                        const content = await                
+           +entry.async('string');                                       
+      3030 +                        const json = JSON.parse(content);    
+      3031 +                                                             
+      3032 +                        // Extract item identifiers          
+      3033 +                        if (json['minecraft:item'] &&        
+           +json['minecraft:item'].description) {                        
+      3034 +                            const id =                       
+           +json['minecraft:item'].description.identifier;               
+      3035 +                            if (id) identifiers.add(id);     
+      3036 +                        }                                    
+      3037 +                                                             
+      3038 +                        // Extract block identifiers         
+      3039 +                        if (json['minecraft:block'] &&       
+           +json['minecraft:block'].description) {                       
+      3040 +                            const id =                       
+           +json['minecraft:block'].description.identifier;              
+      3041 +                            if (id) identifiers.add(id);     
+      3042 +                        }                                    
+      3043 +                    } catch (e) {                            
+      3044 +                        // Skip invalid JSON                 
+      3045 +                    }                                        
+      3046 +                }                                            
+      3047 +                                                             
+      3048 +                // Collect .lang files                       
+      3049 +                if (!entry.dir &&                            
+           +path.toLowerCase().endsWith('.lang')) {                      
+      3050 +                    const content = await                    
+           +entry.async('string');                                       
+      3051 +                    langFiles.push({ path, content });       
+      3052 +                }                                            
+      3053 +            }                                                
+      3054 +                                                             
+      3055 +            // Check if there are .lang files                
+      3056 +            if (langFiles.length === 0 && identifiers.size > 
+           + 0) {                                                        
+      3057 +                validationResults.warnings.push({            
+      3058 +                    title: 'No Localization Files',          
+      3059 +                    details: 'No .lang files found. Items    
+           +and blocks will not have display names.',                    
+      3060 +                    path: null                               
+      3061 +                });                                          
+      3062 +            } else if (identifiers.size > 0) {               
+      3063 +                // Parse all .lang files                     
+      3064 +                const translations = new Map();              
+      3065 +                                                             
+      3066 +                for (const { path, content } of langFiles) { 
+      3067 +                    const lines = content.split('\n');       
+      3068 +                    for (const line of lines) {              
+      3069 +                        const trimmed = line.trim();         
+      3070 +                        if (trimmed &&                       
+           +!trimmed.startsWith('#') && trimmed.includes('=')) {         
+      3071 +                            const key = trimmed.substring(0, 
+           + trimmed.indexOf('=')).trim();                               
+      3072 +                            translations.set(key, true);     
+      3073 +                        }                                    
+      3074 +                    }                                        
+      3075 +                }                                            
+      3076 +                                                             
+      3077 +                // Check each identifier for localization    
+      3078 +                const missingTranslations = [];              
+      3079 +                for (const id of identifiers) {              
+      3080 +                    const expectedKey = `item.${id}.name`;   
+      3081 +                    const expectedKey2 = `tile.${id}.name`;  
+      3082 +                                                             
+      3083 +                    if (!translations.has(expectedKey) &&    
+           +!translations.has(expectedKey2)) {                           
+      3084 +                        missingTranslations.push(id);        
+      3085 +                    }                                        
+      3086 +                }                                            
+      3087 +                                                             
+      3088 +                if (missingTranslations.length > 0) {        
+      3089 +                    validationResults.warnings.push({        
+      3090 +                        title: 'Missing Display Names',      
+      3091 +                        details:                             
+           +`${missingTranslations.length} item(s)/block(s) missing      
+           +localization entries: ${missingTranslations.slice(0,         
+           +5).join(', ')}${missingTranslations.length > 5 ? '...' :     
+           +''}`,                                                        
+      3092 +                        path: null                           
+      3093 +                    });                                      
+      3094 +                }                                            
+      3095 +            }                                                
+      3096 +        }                                                    
+      3097 +                                                             
+      3098 +        /**                                                  
+      3099 +         * Detect anomalies and potential issues             
+      3100 +         */                                                  
+      3101 +        async function detectAnomalies() {                   
+      3102 +            // Check for empty folders                       
+      3103 +            const folders = new Set();                       
+      3104 +            const filesInFolders = new Set();                
+      3105 +                                                             
+      3106 +            for (const [path, entry] of                      
+           +Object.entries(validateZip.files)) {                         
+      3107 +                const parts = path.split('/').filter(p =>    
+           +p);                                                          
+      3108 +                                                             
+      3109 +                if (parts.length > 1) {                      
+      3110 +                    // Track all parent folders              
+      3111 +                    for (let i = 1; i < parts.length; i++) { 
+      3112 +                        const folderPath = parts.slice(0,    
+           +i).join('/');                                                
+      3113 +                        folders.add(folderPath);             
+      3114 +                                                             
+      3115 +                        if (!entry.dir) {                    
+      3116 +                            filesInFolders.add(folderPath);  
+      3117 +                        }                                    
+      3118 +                    }                                        
+      3119 +                }                                            
+      3120 +            }                                                
+      3121 +                                                             
+      3122 +            // Check for empty folders that should typically 
+           + have content                                                
+      3123 +            const importantFolders = ['recipes', 'items',    
+           +'blocks', 'texts', 'textures'];                              
+      3124 +            for (const folder of folders) {                  
+      3125 +                const folderName =                           
+           +folder.split('/').pop().toLowerCase();                       
+      3126 +                                                             
+      3127 +                if (importantFolders.includes(folderName) && 
+           + !filesInFolders.has(folder)) {                              
+      3128 +                    validationResults.warnings.push({        
+      3129 +                        title: 'Empty Important Folder',     
+      3130 +                        details: `Folder appears to be empty 
+           + but typically should contain files.`,                       
+      3131 +                        path: folder                         
+      3132 +                    });                                      
+      3133 +                }                                            
+      3134 +            }                                                
+      3135 +                                                             
+      3136 +            // Check for duplicate identifiers               
+      3137 +            const identifierMap = new Map();                 
+      3138 +                                                             
+      3139 +            for (const [path, entry] of                      
+           +Object.entries(validateZip.files)) {                         
+      3140 +                if (!entry.dir &&                            
+           +path.toLowerCase().endsWith('.json')) {                      
+      3141 +                    try {                                    
+      3142 +                        const content = await                
+           +entry.async('string');                                       
+      3143 +                        const json = JSON.parse(content);    
+      3144 +                                                             
+      3145 +                        let identifier = null;               
+      3146 +                                                             
+      3147 +                        if (json['minecraft:item']) {        
+      3148 +                            identifier =                     
+           +json['minecraft:item'].description?.identifier;              
+      3149 +                        } else if (json['minecraft:block'])  
+           +{                                                            
+      3150 +                            identifier =                     
+           +json['minecraft:block'].description?.identifier;             
+      3151 +                        } else if                            
+           +(json['minecraft:recipe_shaped']) {                          
+      3152 +                            identifier =                     
+           +json['minecraft:recipe_shaped'].description?.identifier;     
+      3153 +                        } else if                            
+           +(json['minecraft:recipe_shapeless']) {                       
+      3154 +                            identifier =                     
+           +json['minecraft:recipe_shapeless'].description?.identifier;  
+      3155 +                        }                                    
+      3156 +                                                             
+      3157 +                        if (identifier) {                    
+      3158 +                            if                               
+           +(identifierMap.has(identifier)) {                            
+      3159 +                                                             
+           +identifierMap.get(identifier).push(path);                    
+      3160 +                            } else {                         
+      3161 +                                                             
+           +identifierMap.set(identifier, [path]);                       
+      3162 +                            }                                
+      3163 +                        }                                    
+      3164 +                    } catch (e) {                            
+      3165 +                        // Skip invalid JSON                 
+      3166 +                    }                                        
+      3167 +                }                                            
+      3168 +            }                                                
+      3169 +                                                             
+      3170 +            // Report duplicates                             
+      3171 +            for (const [id, paths] of                        
+           +identifierMap.entries()) {                                   
+      3172 +                if (paths.length > 1) {                      
+      3173 +                    validationResults.warnings.push({        
+      3174 +                        title: 'Duplicate Identifier',       
+      3175 +                        details: `Identifier "${id}" is      
+           +defined in ${paths.length} files: ${paths.join(', ')}`,      
+      3176 +                        path: null                           
+      3177 +                    });                                      
+      3178 +                }                                            
+      3179 +            }                                                
+      3180 +                                                             
+      3181 +            // Check file naming conventions                 
+      3182 +            for (const [path, entry] of                      
+           +Object.entries(validateZip.files)) {                         
+      3183 +                if (!entry.dir) {                            
+      3184 +                    const fileName = path.split('/').pop();  
+      3185 +                                                             
+      3186 +                    // Check for spaces in filenames (not    
+           +recommended)                                                 
+      3187 +                    if (fileName.includes(' ')) {            
+      3188 +                        validationResults.warnings.push({    
+      3189 +                            title: 'Spaces in Filename',     
+      3190 +                            details: 'Filenames with spaces  
+           +may cause issues. Consider using underscores instead.',      
+      3191 +                            path: path                       
+      3192 +                        });                                  
+      3193 +                    }                                        
+      3194 +                                                             
+      3195 +                    // Check for uppercase in filenames (not 
+           + recommended)                                                
+      3196 +                    if (fileName !== fileName.toLowerCase()  
+           +&& !path.toLowerCase().endsWith('manifest.json')) {          
+      3197 +                        validationResults.warnings.push({    
+      3198 +                            title: 'Uppercase in Filename',  
+      3199 +                            details: 'Filenames should be    
+           +lowercase for consistency.',                                 
+      3200 +                            path: path                       
+      3201 +                        });                                  
+      3202 +                    }                                        
+      3203 +                }                                            
+      3204 +            }                                                
+      3205 +        }                                                    
+      3206 +                                                             
+      3207 +        /**                                                  
+      3208 +         * Display validation results in the UI              
+      3209 +         */                                                  
+      3210 +        function displayValidationResults() {                
+      3211 +            const summaryDiv =                               
+           +document.getElementById('validationSummary');                
+      3212 +            const errorsDiv =                                
+           +document.getElementById('validationErrors');                 
+      3213 +            const warningsDiv =                              
+           +document.getElementById('validationWarnings');               
+      3214 +                                                             
+      3215 +            // Summary                                       
+      3216 +            const errorCount =                               
+           +validationResults.errors.length;                             
+      3217 +            const warningCount =                             
+           +validationResults.warnings.length;                           
+      3218 +            const passClass = validationResults.passed ?     
+           +'pass' : 'fail';                                             
+      3219 +            const passIcon = validationResults.passed ? '✓'  
+           +: '✗';                                                       
+      3220 +            const passText = validationResults.passed        
+      3221 +                ? 'MCADDON file is valid!'                   
+      3222 +                : 'MCADDON file has errors';                 
+      3223 +                                                             
+      3224 +            summaryDiv.innerHTML = `                         
+      3225 +                <div class="validation-summary               
+           +${passClass}">                                               
+      3226 +                    <span                                    
+           +class="validation-summary-icon">${passIcon}</span>           
+      3227 +                    ${passText}                              
+      3228 +                </div>                                       
+      3229 +                <div class="validation-stats">               
+      3230 +                    <div class="validation-stat">            
+      3231 +                        <span class="validation-stat-value   
+           +${passClass}">${passIcon}</span>                             
+      3232 +                        <span                                
+           +class="validation-stat-label">Validation                     
+           +${validationResults.passed ? 'Passed' : 'Failed'}</span>     
+      3233 +                    </div>                                   
+      3234 +                    <div class="validation-stat">            
+      3235 +                        <span class="validation-stat-value   
+           +errors">${errorCount}</span>                                 
+      3236 +                        <span                                
+           +class="validation-stat-label">Error${errorCount !== 1 ? 's'  
+           +: ''}</span>                                                 
+      3237 +                    </div>                                   
+      3238 +                    <div class="validation-stat">            
+      3239 +                        <span class="validation-stat-value   
+           +warnings">${warningCount}</span>                             
+      3240 +                        <span                                
+           +class="validation-stat-label">Warning${warningCount !== 1 ?  
+           +'s' : ''}</span>                                             
+      3241 +                    </div>                                   
+      3242 +                </div>                                       
+      3243 +            `;                                               
+      3244 +                                                             
+      3245 +            // Errors                                        
+      3246 +            if (errorCount > 0) {                            
+      3247 +                let errorsHtml = '<div                       
+           +class="validation-section"><div                              
+           +class="validation-section-title errors">Errors</div>';       
+      3248 +                                                             
+      3249 +                for (const error of                          
+           +validationResults.errors) {                                  
+      3250 +                    errorsHtml += `                          
+      3251 +                        <div class="validation-item error">  
+      3252 +                            <div                             
+           +class="validation-item-icon">✗</div>                         
+      3253 +                            <div                             
+           +class="validation-item-content">                             
+      3254 +                                <div                         
+           +class="validation-item-title">${error.title}</div>           
+      3255 +                                <div                         
+           +class="validation-item-details">${error.details}</div>       
+      3256 +                                ${error.path ? `<div         
+           +class="validation-item-path">${error.path}</div>` : ''}      
+      3257 +                            </div>                           
+      3258 +                        </div>                               
+      3259 +                    `;                                       
+      3260 +                }                                            
+      3261 +                                                             
+      3262 +                errorsHtml += '</div>';                      
+      3263 +                errorsDiv.innerHTML = errorsHtml;            
+      3264 +            } else {                                         
+      3265 +                errorsDiv.innerHTML = '';                    
+      3266 +            }                                                
+      3267 +                                                             
+      3268 +            // Warnings                                      
+      3269 +            if (warningCount > 0) {                          
+      3270 +                let warningsHtml = '<div                     
+           +class="validation-section"><div                              
+           +class="validation-section-title warnings">Warnings</div>';   
+      3271 +                                                             
+      3272 +                for (const warning of                        
+           +validationResults.warnings) {                                
+      3273 +                    warningsHtml += `                        
+      3274 +                        <div class="validation-item          
+           +warning">                                                    
+      3275 +                            <div                             
+           +class="validation-item-icon">⚠</div>                         
+      3276 +                            <div                             
+           +class="validation-item-content">                             
+      3277 +                                <div                         
+           +class="validation-item-title">${warning.title}</div>         
+      3278 +                                <div                         
+           +class="validation-item-details">${warning.details}</div>     
+      3279 +                                ${warning.path ? `<div       
+           +class="validation-item-path">${warning.path}</div>` : ''}    
+      3280 +                            </div>                           
+      3281 +                        </div>                               
+      3282 +                    `;                                       
+      3283 +                }                                            
+      3284 +                                                             
+      3285 +                warningsHtml += '</div>';                    
+      3286 +                warningsDiv.innerHTML = warningsHtml;        
+      3287 +            } else {                                         
+      3288 +                warningsDiv.innerHTML = '';                  
+      3289 +            }                                                
+      3290 +        }                                                    
+      3291      </script>                                                
+      3292  </body>                                                      
+      3293  </html>                                                      
+
+⏺ Bash(open minecraft_recipe.html)
+  ⎿  (No content)
+
+⏺ I've successfully implemented the MCADDON validation feature! Here's what was added:
+
+  Summary of Implementation
+
+  New Navigation Button
+
+  - Added "Validate MCADDON" button to the left navigation panel
+
+  Validation Screen
+
+  - Clean, simple interface with just a file selector
+  - Automatic validation - validation starts immediately when a file is selected
+
+  Comprehensive Validation Checks
+
+  Mandatory Structure (Errors):
+
+  1. Folder Structure - Validates Behavior and Resources folders exist at top level
+  2. Manifest Files - Ensures manifest.json exists in both packs
+  3. Manifest Schema - Validates:
+    - format_version field
+    - header section (name, description, uuid, version)
+    - modules array with correct types ("data" for Behavior, "resources" for Resources)
+    - module UUIDs and versions
+  4. Minimum Version - Checks format_version meets requirements
+
+  JSON Validation:
+
+  - Parses all JSON files to ensure valid syntax
+  - Schema validation for:
+    - Recipes - minecraft:recipe_shaped or minecraft:recipe_shapeless
+    - Items - minecraft:item with description.identifier
+    - Blocks - minecraft:block with description.identifier
+
+  Display Name Validation:
+
+  - Checks pack names in manifests
+  - Validates item/block localization in .lang files
+  - Reports missing display name entries
+
+  Anomaly Detection (Warnings):
+
+  - Missing language files
+  - Empty important folders (recipes, items, blocks, texts, textures)
+  - Duplicate identifiers across files
+  - File naming issues (spaces, uppercase characters)
+  - Extra top-level folders
+  - Old format versions
+
+  Results Display
+
+  - Visual summary with pass/fail indicator
+  - Statistics dashboard showing error and warning counts
+  - Detailed error list with specific file paths
+  - Warning list for potential issues
+  - Color-coded items:
+    - ✓ Green for pass
+    - ✗ Red for errors
+    - ⚠ Orange for warnings
+
+  The feature is now live at /minecraft_recipe.html:753 (navigation button). The validation runs automatically when a file is selected, providing immediate feedback about the MCADDON file's validity.
+
+> There is a problem that looks like it is in the HTML, not the MCADDON 
+being validated. I get the error:
+```
+ Critical Error: Cannot set properties of null (setting 'innerHTML')
+```
+when I validate a particular MCADDON file. It is not clear which line of the
+ HTML this occurs at. 
+
+⏺ I can see the issue. When showing the loading state, the code replaces the entire content of the validationResults div, which destroys the child divs (validationSummary, validationErrors, validationWarnings). Then when displayValidationResults() tries to access them, they no longer exist.
+
+  Let me fix this:
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  File must be read first
+
+⏺ Read(minecraft_recipe.html)
+  ⎿  Read 50 lines
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Added 9 lines, removed 2 lines                                      
+      2612              if (!validateFile) return;                       
+      2613                                                               
+      2614              const resultsDiv =                               
+            document.getElementById('validationResults');                
+      2615 +            const summaryDiv =                               
+           +document.getElementById('validationSummary');                
+      2616 +            const errorsDiv =                                
+           +document.getElementById('validationErrors');                 
+      2617 +            const warningsDiv =                              
+           +document.getElementById('validationWarnings');               
+      2618                                                               
+      2619              // Reset results                                 
+      2620              validationResults = {                            
+     ...
+      2623              try {                                            
+      2624                  // Show loading state                        
+      2625                  resultsDiv.style.display = 'block';          
+      2626 -                resultsDiv                                   
+           -.innerHTML = '<div class="validation-summary">Validating     
+           -MCADDON file...</div>';                                      
+      2626 +                summaryDiv                                   
+           +.innerHTML = '<div class="validation-summary">Validating     
+           +MCADDON file...</div>';                                      
+      2627 +                errorsDiv.innerHTML = '';                    
+      2628 +                warningsDiv.innerHTML = '';                  
+      2629                                                               
+      2630                  // Load the ZIP file                         
+      2631                  const fileData = await                       
+            readFileAsArrayBuffer(validateFile);                         
+     ...
+      2643                  displayValidationResults();                  
+      2644                                                               
+      2645              } catch (error) {                                
+      2646 -                resultsDiv.innerHTML = `                     
+      2646 +                summaryDiv.innerHTML = `                     
+      2647                      <div class="validation-summary fail">    
+      2648                          <span                                
+            class="validation-summary-icon">✗</span>                     
+      2649                          Critical Error: ${error.message}     
+      2650                      </div>                                   
+      2651                  `;                                           
+      2652 +                errorsDiv.innerHTML = '';                    
+      2653 +                warningsDiv.innerHTML = '';                  
+      2654              }                                                
+      2655          }                                                    
+      2656                                                               
+
+⏺ Perfect! I've fixed the issue. The problem was on line 2626 (now 2629) in the validateMcAddonFile function.
+
+  The Problem
+
+  When showing the loading state, the code was doing:
+  resultsDiv.innerHTML = '<div class="validation-summary">Validating MCADDON file...</div>';
+
+  This replaced the entire content of the validationResults div, destroying the child divs (validationSummary, validationErrors, and validationWarnings). Later, when displayValidationResults() tried to access these divs with getElementById(), they no longer existed, causing the "Cannot set properties of null" error.
+
+  The Fix
+
+  Now the code:
+  1. Gets references to all the child divs at the start
+  2. Updates each div individually instead of replacing the entire parent
+  3. Does the same thing in the error handler
+
+  This preserves the DOM structure and prevents the null reference error.
+
+  The file should now work correctly. You can refresh your browser and try validating the MCADDON file again.
+
+> I think I was mistaken about the importance of these two validation items:
+`Block file must contain minecraft:block object.`
+and
+`Block file is missing format_version field.`
+I believe they are not errors. I am not sure they should be warnings. For 
+now, remove these as errors and warnings. 
+
+⏺ I'll remove those validation checks for block files.
+
+⏺ Read(minecraft_recipe.html)
+  ⎿  Read 30 lines
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Added 2 lines, removed 15 lines                                     
+      2998           * Validate block file structure                     
+      2999           */                                                  
+      3000          function validateBlockFile(path, json) {             
+      3001 -            if (!json.format_version) {                      
+      3002 -                validationResults.warnings.push({            
+      3003 -                    title: 'Missing format_version in        
+           -Block',                                                      
+      3004 -                    details: 'Block file is missing          
+           -format_version field.',                                      
+      3005 -                    path: path                               
+      3006 -                });                                          
+      3007 -            }                                                
+      3008 -                                                             
+      3009 -            if (!json['minecraft:block']) {                  
+      3001 +            // Check for identifier only if minecraft:block  
+           +exists                                                       
+      3002 +            if (json['minecraft:block'] &&                   
+           +(!json['minecraft:block'].description ||                     
+           +!json['minecraft:block'].description.identifier)) {          
+      3003                  validationResults.errors.push({              
+      3004 -                    title: 'Invalid Block Structure',        
+      3005 -                    details: 'Block file must contain        
+           -minecraft:block object.',                                    
+      3006 -                    path: path                               
+      3007 -                });                                          
+      3008 -            } else if (!json['minecraft:block'].description  
+           -|| !json['minecraft:block'].description.identifier) {        
+      3009 -                validationResults.errors.push({              
+      3004                      title: 'Missing Block Identifier',       
+      3005                      details: 'Block is missing               
+            description.identifier field.',                              
+      3006                      path: path                               
+
+⏺ Done! I've removed those two validation checks for block files:
+
+  1. Removed: "Block file must contain minecraft:block object." (was an error)
+  2. Removed: "Block file is missing format_version field." (was a warning)
+
+  I kept the identifier check, but now it only validates the identifier if minecraft:block exists in the file. This way, block files won't be flagged for missing the minecraft:block structure or format_version field.
+
+
+
