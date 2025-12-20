@@ -557,6 +557,7 @@
         <div class="nav-panel">
             <button class="nav-button active" onclick="switchScreen(0)">Recipe Maker</button>
             <button class="nav-button" onclick="switchScreen(1)">Edit MCADDON Files</button>
+            <button class="nav-button" onclick="switchScreen(2)">Combine MCADDON Files</button>
         </div>
 
         <!-- Main Content Area -->
@@ -681,6 +682,45 @@
                                 <button class="save-btn" onclick="saveModifiedMcAddon()">Save & Download MCADDON</button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screen 3: Combine MCADDON Files -->
+            <div class="screen" id="screen-combine">
+                <div class="container">
+                    <div class="header">
+                        <h1>Combine MCADDON Files</h1>
+                        <p>Merge two MCADDON files by adding content from source to destination</p>
+                    </div>
+
+                    <div class="tab-content active" style="display: block;">
+                        <div class="info-box">
+                            <strong>How it works:</strong>
+                            Select a source and destination MCADDON file. Files and keys from the source that don't exist in the destination will be added. Existing content in the destination will not be modified.
+                        </div>
+
+                        <div class="form-group">
+                            <label for="combineSourceFile">Select Source MCADDON File</label>
+                            <input type="file" id="combineSourceFile" accept=".mcaddon" onchange="handleCombineFileSelect('source')">
+                            <div class="file-info" id="combineSourceInfo"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="combineDestFile">Select Destination MCADDON File</label>
+                            <input type="file" id="combineDestFile" accept=".mcaddon" onchange="handleCombineFileSelect('dest')">
+                            <div class="file-info" id="combineDestInfo"></div>
+                        </div>
+
+                        <button class="convert-btn" id="combineBtn" onclick="combineMcAddonFiles()" disabled>
+                            Combine Files
+                        </button>
+
+                        <div class="result" id="combineResult"></div>
+
+                        <button class="convert-btn" id="downloadCombinedBtn" onclick="downloadCombinedMcAddon()" style="display: none; margin-top: 15px; background: #27ae60;">
+                            Download Combined MCADDON
+                        </button>
                     </div>
                 </div>
             </div>
@@ -835,6 +875,11 @@
         let jsonFiles = [];
         let currentEditingFile = null;
         let currentEditingPath = null;
+
+        // Combine MCADDON state
+        let combineSourceFile = null;
+        let combineDestFile = null;
+        let combinedZip = null;
 
         // Screen switching
         function switchScreen(screenIndex) {
@@ -1361,6 +1406,375 @@
             } catch (error) {
                 errorDiv.textContent = `Error saving: ${error.message}`;
                 errorDiv.style.display = 'block';
+            }
+        }
+
+        // ========== COMBINE MCADDON FUNCTIONS ==========
+
+        /**
+         * Deep merge JSON objects/arrays from source into destination
+         * - For objects: recursively merge keys
+         * - For arrays: append unique items from source (unless mergeArrays is false)
+         * - For primitives: keep destination value (collision)
+         *
+         * @param {*} dest - Destination value
+         * @param {*} source - Source value
+         * @param {boolean} mergeArrays - If false, treat arrays as collisions (keep dest)
+         */
+        function deepMergeJson(dest, source, mergeArrays = true) {
+            // If source is not an object/array, or dest is not the same type, return dest (collision)
+            if (source === null || typeof source !== 'object') {
+                return dest;
+            }
+
+            if (dest === null || typeof dest !== 'object') {
+                return dest;
+            }
+
+            // Handle arrays
+            if (Array.isArray(source) && Array.isArray(dest)) {
+                if (mergeArrays) {
+                    return mergeArraysUnique(dest, source);
+                } else {
+                    // Don't merge arrays - keep destination (collision)
+                    return dest;
+                }
+            }
+
+            // Handle objects
+            if (!Array.isArray(source) && !Array.isArray(dest)) {
+                const result = { ...dest };
+                for (const key in source) {
+                    if (source.hasOwnProperty(key)) {
+                        if (result.hasOwnProperty(key)) {
+                            // Key exists in both - recursively merge
+                            result[key] = deepMergeJson(result[key], source[key], mergeArrays);
+                        } else {
+                            // Key only in source - add it
+                            result[key] = source[key];
+                        }
+                    }
+                }
+                return result;
+            }
+
+            // Type mismatch - keep destination
+            return dest;
+        }
+
+        /**
+         * Merge arrays by appending unique items from source
+         */
+        function mergeArraysUnique(destArray, sourceArray) {
+            const result = [...destArray];
+
+            for (const sourceItem of sourceArray) {
+                // Check if item already exists in destination
+                const exists = result.some(destItem =>
+                    JSON.stringify(destItem) === JSON.stringify(sourceItem)
+                );
+
+                if (!exists) {
+                    result.push(sourceItem);
+                }
+            }
+
+            return result;
+        }
+
+        /**
+         * Handle file selection for combine feature
+         */
+        function handleCombineFileSelect(type) {
+            const sourceInput = document.getElementById('combineSourceFile');
+            const destInput = document.getElementById('combineDestFile');
+            const sourceInfo = document.getElementById('combineSourceInfo');
+            const destInfo = document.getElementById('combineDestInfo');
+            const combineBtn = document.getElementById('combineBtn');
+            const resultDiv = document.getElementById('combineResult');
+            const downloadBtn = document.getElementById('downloadCombinedBtn');
+
+            // Hide previous results
+            resultDiv.classList.remove('show');
+            downloadBtn.style.display = 'none';
+
+            if (type === 'source') {
+                const file = sourceInput.files[0];
+                if (file) {
+                    combineSourceFile = file;
+                    sourceInfo.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
+                    sourceInfo.classList.add('show');
+                }
+            } else {
+                const file = destInput.files[0];
+                if (file) {
+                    combineDestFile = file;
+                    destInfo.textContent = `Selected: ${file.name} (${formatFileSize(file.size)})`;
+                    destInfo.classList.add('show');
+                }
+            }
+
+            // Validate that both files are selected and different
+            if (combineSourceFile && combineDestFile) {
+                if (combineSourceFile.name === combineDestFile.name &&
+                    combineSourceFile.size === combineDestFile.size &&
+                    combineSourceFile.lastModified === combineDestFile.lastModified) {
+                    // Same file selected
+                    combineBtn.disabled = true;
+                    resultDiv.className = 'result error show';
+                    resultDiv.innerHTML = `
+                        <div class="result-title">Error</div>
+                        <div class="result-message">Source and destination cannot be the same file. Please select different files.</div>
+                    `;
+                } else {
+                    combineBtn.disabled = false;
+                }
+            } else {
+                combineBtn.disabled = true;
+            }
+        }
+
+        /**
+         * Validate and find Behavior and Resources folders in an MCADDON file
+         * Returns: { behaviorFolder: string, resourcesFolder: string } or throws error
+         */
+        function validateAndFindMcAddonStructure(zip, fileName) {
+            const topLevelItems = {};
+
+            // Find all top-level items
+            for (const [path, entry] of Object.entries(zip.files)) {
+                // Check if this is a top-level item (no slashes except trailing)
+                const pathParts = path.split('/').filter(p => p.length > 0);
+
+                if (pathParts.length === 0) continue; // Root
+
+                const topLevelName = pathParts[0];
+
+                if (pathParts.length === 1 && !entry.dir) {
+                    // Top-level file - not allowed
+                    throw new Error(`Invalid structure in "${fileName}": Top-level files are not allowed. Found file: ${topLevelName}`);
+                }
+
+                if (!topLevelItems[topLevelName]) {
+                    topLevelItems[topLevelName] = entry.dir;
+                }
+            }
+
+            // Find Behavior folder
+            const behaviorFolders = Object.keys(topLevelItems).filter(name =>
+                name.endsWith('Behavior')
+            );
+
+            if (behaviorFolders.length === 0) {
+                throw new Error(`Invalid structure in "${fileName}": No folder ending with "Behavior" found at top level.`);
+            }
+
+            if (behaviorFolders.length > 1) {
+                throw new Error(`Invalid structure in "${fileName}": Multiple folders ending with "Behavior" found: ${behaviorFolders.join(', ')}`);
+            }
+
+            // Find Resources folder
+            const resourcesFolders = Object.keys(topLevelItems).filter(name =>
+                name.endsWith('Resources')
+            );
+
+            if (resourcesFolders.length === 0) {
+                throw new Error(`Invalid structure in "${fileName}": No folder ending with "Resources" found at top level.`);
+            }
+
+            if (resourcesFolders.length > 1) {
+                throw new Error(`Invalid structure in "${fileName}": Multiple folders ending with "Resources" found: ${resourcesFolders.join(', ')}`);
+            }
+
+            // Check for extra top-level folders
+            const extraFolders = Object.keys(topLevelItems).filter(name =>
+                !name.endsWith('Behavior') && !name.endsWith('Resources')
+            );
+
+            if (extraFolders.length > 0) {
+                throw new Error(`Invalid structure in "${fileName}": Extra top-level folders found: ${extraFolders.join(', ')}. Only Behavior and Resources folders are allowed.`);
+            }
+
+            return {
+                behaviorFolder: behaviorFolders[0],
+                resourcesFolder: resourcesFolders[0]
+            };
+        }
+
+        /**
+         * Merge files from source section into destination section
+         */
+        async function mergeSectionFiles(sourceZip, destZip, sourceSectionPath, destSectionPath, combinedZip) {
+            let filesAdded = 0;
+            let filesMerged = 0;
+            let filesSkipped = 0;
+
+            // Process each file in source section
+            for (const [sourcePath, sourceEntry] of Object.entries(sourceZip.files)) {
+                if (sourceEntry.dir) continue;
+
+                // Check if this file is within the source section
+                if (!sourcePath.startsWith(sourceSectionPath + '/')) continue;
+
+                // Get relative path within section
+                const relativePath = sourcePath.substring(sourceSectionPath.length + 1);
+
+                // Construct destination path
+                const destPath = destSectionPath + '/' + relativePath;
+
+                const destEntry = destZip.files[destPath];
+
+                if (!destEntry) {
+                    // File doesn't exist in destination - copy it
+                    const content = await sourceEntry.async('arraybuffer');
+                    combinedZip.file(destPath, content);
+                    filesAdded++;
+                } else {
+                    // File exists in both
+                    if (sourcePath.toLowerCase().endsWith('.json')) {
+                        // JSON file - merge content
+                        try {
+                            const sourceContent = await sourceEntry.async('string');
+                            const destContent = await destEntry.async('string');
+
+                            const sourceJson = JSON.parse(sourceContent);
+                            const destJson = JSON.parse(destContent);
+
+                            // Check if this is manifest.json - don't merge arrays for manifest files
+                            const isManifest = relativePath.toLowerCase().endsWith('manifest.json');
+                            const mergedJson = deepMergeJson(destJson, sourceJson, !isManifest);
+
+                            combinedZip.file(destPath, JSON.stringify(mergedJson, null, 2));
+                            filesMerged++;
+                        } catch (e) {
+                            // Not valid JSON or merge failed - skip
+                            filesSkipped++;
+                        }
+                    } else {
+                        // Non-JSON file - skip (keep destination)
+                        filesSkipped++;
+                    }
+                }
+            }
+
+            return { filesAdded, filesMerged, filesSkipped };
+        }
+
+        /**
+         * Combine two MCADDON files
+         */
+        async function combineMcAddonFiles() {
+            if (!combineSourceFile || !combineDestFile) {
+                return;
+            }
+
+            const resultDiv = document.getElementById('combineResult');
+            const downloadBtn = document.getElementById('downloadCombinedBtn');
+
+            try {
+                resultDiv.className = 'result show';
+                resultDiv.innerHTML = `
+                    <div class="result-title">Processing...</div>
+                    <div class="result-message">Loading and validating MCADDON files...</div>
+                `;
+
+                // Load both MCADDON files
+                const sourceData = await readFileAsArrayBuffer(combineSourceFile);
+                const destData = await readFileAsArrayBuffer(combineDestFile);
+
+                const sourceZip = await JSZip.loadAsync(sourceData);
+                const destZip = await JSZip.loadAsync(destData);
+
+                // Validate structure of both files
+                const sourceStructure = validateAndFindMcAddonStructure(sourceZip, combineSourceFile.name);
+                const destStructure = validateAndFindMcAddonStructure(destZip, combineDestFile.name);
+
+                resultDiv.innerHTML = `
+                    <div class="result-title">Processing...</div>
+                    <div class="result-message">Merging Behavior and Resources sections...</div>
+                `;
+
+                // Create a new zip based on destination
+                combinedZip = destZip;
+
+                // Merge Behavior section
+                const behaviorStats = await mergeSectionFiles(
+                    sourceZip,
+                    destZip,
+                    sourceStructure.behaviorFolder,
+                    destStructure.behaviorFolder,
+                    combinedZip
+                );
+
+                // Merge Resources section
+                const resourcesStats = await mergeSectionFiles(
+                    sourceZip,
+                    destZip,
+                    sourceStructure.resourcesFolder,
+                    destStructure.resourcesFolder,
+                    combinedZip
+                );
+
+                // Calculate totals
+                const totalAdded = behaviorStats.filesAdded + resourcesStats.filesAdded;
+                const totalMerged = behaviorStats.filesMerged + resourcesStats.filesMerged;
+                const totalSkipped = behaviorStats.filesSkipped + resourcesStats.filesSkipped;
+
+                // Show success message
+                resultDiv.className = 'result success show';
+                resultDiv.innerHTML = `
+                    <div class="result-title">Success!</div>
+                    <div class="result-message">
+                        Combined MCADDON file ready for download.<br>
+                        <strong>Summary:</strong><br>
+                        - ${totalAdded} file(s) added from source<br>
+                        - ${totalMerged} JSON file(s) merged<br>
+                        - ${totalSkipped} file(s) skipped (collisions)<br><br>
+                        <strong>Behavior:</strong> ${behaviorStats.filesAdded} added, ${behaviorStats.filesMerged} merged, ${behaviorStats.filesSkipped} skipped<br>
+                        <strong>Resources:</strong> ${resourcesStats.filesAdded} added, ${resourcesStats.filesMerged} merged, ${resourcesStats.filesSkipped} skipped
+                    </div>
+                `;
+
+                // Show download button
+                downloadBtn.style.display = 'block';
+
+            } catch (error) {
+                resultDiv.className = 'result error show';
+                resultDiv.innerHTML = `
+                    <div class="result-title">Error</div>
+                    <div class="result-message">${error.message}</div>
+                `;
+                downloadBtn.style.display = 'none';
+                combinedZip = null; // Clear any partial data
+            }
+        }
+
+        /**
+         * Download the combined MCADDON file
+         */
+        async function downloadCombinedMcAddon() {
+            if (!combinedZip) return;
+
+            try {
+                const blob = await combinedZip.generateAsync({ type: 'blob' });
+                const baseName = combineDestFile.name.replace(/\.mcaddon$/i, '');
+                const outputFileName = `${baseName}_combined.mcaddon`;
+
+                downloadBlob(blob, outputFileName);
+
+                const resultDiv = document.getElementById('combineResult');
+                resultDiv.className = 'result success show';
+                resultDiv.innerHTML = `
+                    <div class="result-title">Downloaded!</div>
+                    <div class="result-message">"${outputFileName}" has been downloaded.</div>
+                `;
+            } catch (error) {
+                const resultDiv = document.getElementById('combineResult');
+                resultDiv.className = 'result error show';
+                resultDiv.innerHTML = `
+                    <div class="result-title">Error</div>
+                    <div class="result-message">Failed to download: ${error.message}</div>
+                `;
             }
         }
     </script>
