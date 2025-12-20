@@ -1891,8 +1891,48 @@
                             // Not valid JSON or merge failed - skip
                             filesSkipped++;
                         }
+                    } else if (sourcePath.toLowerCase().endsWith('.lang')) {
+                        // .lang file - merge by appending source content to destination
+                        try {
+                            const sourceContent = await sourceEntry.async('string');
+                            const destContent = await destEntry.async('string');
+
+                            // Merge .lang files by combining their lines
+                            // Parse both files into key-value maps to avoid duplicates
+                            const destLines = destContent.split('\n');
+                            const sourceLines = sourceContent.split('\n');
+
+                            const translations = new Map();
+
+                            // Add all destination translations first
+                            for (const line of destLines) {
+                                const trimmed = line.trim();
+                                if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+                                    const key = trimmed.substring(0, trimmed.indexOf('='));
+                                    translations.set(key, trimmed);
+                                }
+                            }
+
+                            // Add/overwrite with source translations
+                            for (const line of sourceLines) {
+                                const trimmed = line.trim();
+                                if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+                                    const key = trimmed.substring(0, trimmed.indexOf('='));
+                                    translations.set(key, trimmed);
+                                }
+                            }
+
+                            // Combine into final content
+                            const mergedContent = Array.from(translations.values()).join('\n');
+
+                            combinedZip.file(destPath, mergedContent);
+                            filesMerged++;
+                        } catch (e) {
+                            // Merge failed - skip
+                            filesSkipped++;
+                        }
                     } else {
-                        // Non-JSON file - skip (keep destination)
+                        // Other non-JSON file - skip (keep destination)
                         filesSkipped++;
                     }
                 }
