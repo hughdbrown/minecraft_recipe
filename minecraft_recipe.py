@@ -114,9 +114,10 @@ class RecipeParser:
         json_pattern = [line.replace('-', ' ') for line in self.pattern]
 
         # Build key dictionary
-        key = {}
-        for symbol, item in self.substitutions.items():
-            key[symbol] = {"item": item}
+        key = {
+            symbol: {"item": item}
+            for symbol, item in self.substitutions.items():
+        }
 
         return {
             "format_version": "1.20.0",
