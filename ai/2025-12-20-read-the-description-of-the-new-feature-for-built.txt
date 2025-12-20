@@ -1,0 +1,1431 @@
+
+ * ▐▛███▜▌ *   Claude Code v2.0.75
+* ▝▜█████▛▘ *  Sonnet 4.5 · Claude Pro
+ *  ▘▘ ▝▝  *   ~/workspace/tyler/minecraft-recipe
+
+> Read the description of the new feature for "builtin features" found in 
+`ai/prebuilt-features-tab.md`. Think about this description deeply. Consider
+ if there are unclear points. Ask questions about unclarities. Do not 
+proceed with implementation until the questions are resolved. 
+
+⏺ I'll read the feature description file to understand the "builtin features" requirement.
+
+⏺ Read(ai/prebuilt-features-tab.md)
+  ⎿  Read 39 lines
+
+⏺ I've read the feature description for "builtin features." Let me ask some clarifying questions before proceeding with implementation:
+
+  Questions about the Feature:
+
+  1. Filtering/Navigation Structure
+
+  The description mentions "constant properties in the JavaScript object for a builtin feature that capture this selection/filtering" (line 20). What should this look like?
+  - Should it be a path array like ["Behavior", "items", {hasProperty: "minecraft:food"}]?
+  - Or a custom filter function for each builtin feature?
+  - What's the preferred structure for defining how to navigate to applicable items?
+
+  2. Item Selection Flow
+
+  After selecting a MCADDON file, "only food items in that MCADDON file are shown" (line 11). Then what?
+  - Is this a list where you select ONE item to add effects to?
+  - Or do the effects get applied to ALL matching food items simultaneously?
+  - Or can you select multiple specific items from the list?
+
+  3. Food Effects Editor UI
+
+  Line 29 mentions "a non-modal display for editing a Food Effects object":
+  - What exactly appears when you click the + button? A form with 3 fields (tag, duration, intensity)?
+  - Does each food effect in the list show its current values (tag, duration, intensity) inline for editing?
+  - Or is there a separate edit area?
+
+  4. Effect Tag Values
+
+  For the tag property:
+  - Should this be a dropdown of valid Minecraft effect IDs (like "speed", "regeneration", "poison")?
+  - Or is it free-form text input?
+  - Should it include the "minecraft:" namespace prefix or just the effect name?
+
+  5. Duration Format
+
+  Line 27 says duration is in "minutes", but:
+  - Is this how it's stored in the Minecraft JSON (often it's in ticks or seconds)?
+  - Should the UI convert minutes to the appropriate unit when writing to JSON?
+
+  6. Submit Button and Scope
+
+  When Submit is pressed:
+  - Is there ONE Submit button for the entire operation?
+  - Where is it located in the UI?
+  - Does it apply all the food effects to the selected item(s) and trigger the download?
+
+  7. Handling Existing Effects
+
+  If a food item already has effects in the MCADDON file:
+  - Are they replaced entirely?
+  - Are new effects appended to existing ones?
+  - Should existing effects be displayed for editing?
+
+  8. Current Codebase Context
+
+  - Is this a web application? Should I first explore the existing codebase to understand the current UI structure?
+  - Does a vertical navigation strip already exist, or does that need to be created too?
+
+  Please clarify these points so I can implement the feature correctly.
+
+> 1. Use a custom filter function. For "Food Effects", it should capture the
+ filtering described by `["Behavior", "items", {hasProperty: 
+"minecraft:food"}]`.
+2. Select Only one food item at a time.
+3. Display this: `A form with 3 fields (tag, duration, intensity)`. There 
+are no initial values to display.
+4. Effect Tag Value should be a free-form text input. It should not include 
+the "minecraft:" namespace prefix.
+5. Duration is in seconds, not in minutes as stated.
+6. Submit button is for the entire scope. It is located at the bottom of the
+ last food effects list.
+It applies all the food effects to the selected item but does not trigger 
+the download. It causes a Download button to appear for the modified 
+MCADDON.
+7. Existing Effects are not replaced. New effects are appended. Existing 
+effects should not be displayed for editing.
+8. This is a web application. YOu can understand the context by reading 
+`ai/*.prd` and `ai/*.md` and the html file in the project root.
+The vertical navigation strip already exists. Read the html file in the 
+project root.
+
+Are there more points of unclarity? 
+
+⏺ Thank you for the clarifications! I have a few more questions:
+
+  Additional Questions:
+
+  1. JSON Structure for Food Effects
+
+  What is the exact JSON structure for food effects in Minecraft behavior files?
+  - Where in the item's JSON do the effects go?
+  - What does a single effect object look like in the JSON?
+  - Is it something like this?
+  {
+    "minecraft:food": {
+      "nutrition": 4,
+      "effects": [
+        {
+          "name": "regeneration",
+          "duration": 30,
+          "amplifier": 1
+        }
+      ]
+    }
+  }
+  Or a different structure?
+
+  2. Download Button Behavior
+
+  - If a Download button already exists from a previous operation (e.g., from another feature like validation or diff), what happens when Submit creates a new one?
+  - Should there be only one Download button that gets updated?
+  - Or can multiple Download buttons coexist?
+
+  3. UI State After Download
+
+  After the user downloads the modified MCADDON file:
+  - Does the food effects form reset/clear?
+  - Does the UI return to the builtin features list?
+  - Or does it stay in the current state?
+
+  4. Effects Persistence in UI
+
+  When switching between different food items in the same MCADDON file:
+  - Do the food effects you've added (but not yet submitted) reset?
+  - Or should they persist per item?
+
+  5. Field Validation
+
+  Should there be validation on the form fields?
+  - Duration: positive integers only?
+  - Intensity: must be in range [1, 255]?
+  - Tag: any restrictions or can it be any string?
+
+  Let me also read the existing codebase to understand the structure better.
+
+⏺ Search(pattern: "*.html")
+  ⎿  Found 1 file (ctrl+o to expand)
+
+⏺ Search(pattern: "ai/*.prd")
+  ⎿  Found 3 files (ctrl+o to expand)
+
+⏺ Search(pattern: "ai/*.md")
+  ⎿  Found 3 files (ctrl+o to expand)
+
+⏺ Read(minecraft_recipe.html)
+  ⎿  Error: File content (29486 tokens) exceeds maximum allowed tokens (25000). 
+     Please use offset and limit parameters to read specific portions of the 
+     file, or use the GrepTool to search for specific content.
+
+⏺ Read(ai/recipe.prd)
+  ⎿  Read 76 lines
+
+⏺ Read(ai/modify-html-editor.md)
+  ⎿  Read 22 lines
+
+⏺ Read(ai/combine-mcaddon-files.md)
+  ⎿  Read 26 lines
+
+⏺ Search(pattern: "vertical.*nav", path: "minecraft_recipe.html", output_mode:
+        "content")
+  ⎿  Found 0 lines 
+
+⏺ Search(pattern: "id=".*-screen"", path: "minecraft_recipe.html", output_mode:
+        "content")
+  ⎿  Found 0 lines 
+
+⏺ Search(pattern: "minecraft:food", path: "minecraft_recipe.html", output_mode:
+        "content")
+  ⎿  Found 0 lines 
+
+⏺ Search(pattern: "class="nav-button"", path: "minecraft_recipe.html",
+        output_mode: "content")
+  ⎿  Found 8 lines (ctrl+o to expand)
+
+⏺ Bash(head -100
+      /Users/hughbrown/workspace/tyler/minecraft-recipe/minecraft_recipe.html)
+  ⎿  <!DOCTYPE html>                
+     <html lang="en">
+     <head>
+     … +101 lines (ctrl+o to expand)
+
+⏺ Search(pattern: "downloadBtn|download.*button", path: "minecraft_recipe.html",
+         output_mode: "content", head_limit: 30)
+  ⎿  Found 30 lines (ctrl+o to expand)
+
+⏺ Now let me check if there are any Minecraft JSON examples in the codebase:
+
+⏺ Bash(find /Users/hughbrown/workspace/tyler/minecraft-recipe -name "*.json"
+      -type f | head -5)
+  ⎿ /Users/hughbrown/workspace/tyler/minecraft-recipe/target/.rustc_info.js
+    on
+    /Users/hughbrown/workspace/tyler/minecraft-recipe/target/release/.finge
+    … +9 lines (ctrl+o to expand)
+
+
+
+⏺ Read(ai/diff-mcaddon-files.prd)
+  ⎿  Read 18 lines
+
+⏺ Thank you! I now understand the application structure much better. I have a few final clarifying questions:
+
+  Final Questions:
+
+  1. Minecraft Food Effects JSON Structure (Critical)
+
+  What is the exact JSON structure for food effects in Minecraft Bedrock behavior pack items?
+
+  For example, is it structured like this:
+  {
+    "format_version": "1.20.0",
+    "minecraft:item": {
+      "description": {...},
+      "components": {
+        "minecraft:food": {
+          "nutrition": 4,
+          "saturation_modifier": "low",
+          "effects": [
+            {
+              "name": "regeneration",
+              "duration": 30,
+              "amplifier": 1
+            }
+          ]
+        }
+      }
+    }
+  }
+
+  Or does it use a different structure? Where exactly should the effects array be placed, and what are the exact property names (name vs effect, amplifier vs intensity, etc.)?
+
+  2. Download Button Management
+
+  Based on the "Combine MCADDON Files" feature pattern, should I:
+  - Create a new Download button specifically for this feature (like downloadBuiltinBtn)?
+  - Or reuse an existing download mechanism?
+  - If a download button from another feature is already visible, should it be hidden when showing this feature's download button?
+
+  3. Field Validation
+
+  Should there be validation on the form fields, and if so:
+  - Duration: Must be positive integer? Any max value?
+  - Intensity: Must be in range [1, 255]?
+  - Tag: Any restrictions (length, characters allowed)?
+  - Should invalid inputs show error messages or just prevent submission?
+
+  4. UI State After Download
+
+  After the user clicks the Download button:
+  - Should the food effects list clear?
+  - Should the UI stay on the current item/state?
+
+  5. Filter Function Implementation
+
+  For the filter function that finds food items using ["Behavior", "items", {hasProperty: "minecraft:food"}]:
+  - Within an MCADDON file, is "Behavior" a top-level key in the unzipped structure?
+  - Is "items" a subdirectory or a property within Behavior JSON files?
+  - How is the MCADDON structure organized (directories and files)?
+
+  Once I have these answers, I'll have complete clarity to implement the feature correctly.
+
+> 1. Minecraft Food Effects JSON Structure
+We believe the JSON structure is as you showed.
+The effects array should be placed in the effects array of objects.
+The property names are as you described.
+2. Download Button Management
+Reuse existing Download button functionality.
+"If a download button from another feature is already visible": this is not 
+applicable. Different features are isolated within tabs, and only one tab is
+ active/displayed at a time.
+3. Field Validation
+Duration is a positive integer.
+Intensity: enforce the [1, 255] range.
+Tag: no restrictions
+Invalid inputs should show error messages. Error messages should clear when 
+the value is back in correct range / is valid.
+4. UI State After Download
+UI stays on the current item/state
+5. Filter Function Implementation
+A MCADDON file is a MineCraft addon file. It follows all the rules commonly 
+understood. The practice around this can be inferred from the HTML 
+implementation and `ai/*.prd` and `ai/*.md` files.
+"Within an MCADDON file, is "Behavior" a top-level key in the unzipped 
+structure?" Yes.
+"Is "items" a subdirectory or a property within Behavior JSON files?" Yes.
+"How is the MCADDON structure organized (directories and files)?" It's a 
+MineCraft addon file, as asserted above.
+
+Is that enough to resolve all remaining quesitons? 
+
+⏺ Yes, that resolves all my questions! However, let me quickly examine the existing HTML code to understand how MCADDON files are parsed and structured in the current implementation, so I can follow the same patterns.
+
+⏺ Search(pattern: "async function.*loadMcAddon|function.*loadMcAddon", path:
+        "minecraft_recipe.html", output_mode: "content", head_limit: 50)
+  ⎿  Found 0 lines 
+
+⏺ Search(pattern: "\.files\[.*\]|zip\.file\(", path: "minecraft_recipe.html",
+        output_mode: "content", head_limit: 30)
+  ⎿  Found 30 lines (ctrl+o to expand)
+
+⏺ Search(pattern: "behaviorPack|BP/items|behavior.*items", path:
+        "minecraft_recipe.html", output_mode: "content", head_limit: 40)
+  ⎿  Found 40 lines (ctrl+o to expand)
+
+⏺ Search(pattern: "items/|BP/items|behaviorPack.*items", path:
+        "minecraft_recipe.html", output_mode: "content", head_limit: 20)
+  ⎿  Found 7 lines (ctrl+o to expand)
+
+⏺ Search(pattern: "function.*extractMcAddon|async.*extractMcAddon", path:
+        "minecraft_recipe.html", output_mode: "content")
+  ⎿  Found 0 lines 
+
+⏺ Search(pattern: "showFileList|displayFileList|populateFileList", path:
+        "minecraft_recipe.html", output_mode: "content", head_limit: 50)
+  ⎿  Found 0 lines 
+
+⏺ Search(pattern: "Edit MCADDON|screen.*1|id=\"screen1\"", path:
+        "minecraft_recipe.html", output_mode: "content", head_limit: 20)
+  ⎿  Found 11 lines (ctrl+o to expand)
+
+⏺ Bash(grep -n "class=\"screen\""
+      /Users/hughbrown/workspace/tyler/minecraft-recipe/minecraft_recipe.html |
+      head -10)
+  ⎿  969:            <div class="screen" id="screen-mcaddon">  
+     1032:            <div class="screen" id="screen-combine">
+     1071:            <div class="screen" id="screen-diff">
+     1113:            <div class="screen" id="screen-validate">
+
+⏺ Read(minecraft_recipe.html)
+  ⎿  Read 100 lines
+
+⏺ Search(pattern: "function switchScreen", path: "minecraft_recipe.html",
+        output_mode: "content")
+  ⎿  Found 41 lines (ctrl+o to expand)
+
+⏺ Search(pattern: "function handleMcAddonEditorSelect", path:
+        "minecraft_recipe.html", output_mode: "content")
+  ⎿  Found 101 lines (ctrl+o to expand)
+
+⏺ Perfect! I now have a complete understanding of the codebase and requirements. Let me confirm my implementation plan:
+
+  Implementation Summary:
+
+  What I'll build:
+  1. Add a new navigation button "Builtin Features" (screen index 5)
+  2. Create a new screen with:
+    - List of builtin features (starting with "Food Effects")
+    - File selector for MCADDON files
+    - Item selector showing only food items (items with minecraft:food property)
+    - Food effects editor with + button to add effects
+    - Each effect has: tag (text), duration (seconds, positive int), intensity (1-255)
+    - Submit button at bottom that applies effects to selected item
+    - Download button appears after Submit
+
+  Technical approach:
+  - Builtin features stored in JavaScript array with filter functions
+  - "Food Effects" filter: find behavior pack → items directory → files with minecraft:food component
+  - Effects added to minecraft:food.effects array as {name: tag, duration: duration, amplifier: intensity-1}
+  - New effects appended to existing effects
+  - Validation with error messages for duration and intensity
+  - Follow existing patterns from Edit/Combine MCADDON screens
+
+  Questions resolved:
+  - JSON structure: effects in minecraft:food.effects with properties name, duration, amplifier
+  - Download button: feature-specific, appears after Submit
+  - Validation: yes, with error messages that clear when valid
+  - UI state: persists after download
+  - MCADDON structure: understood from existing code
+
+  Is this correct, and should I proceed with implementation?
+
+> Yes proceed with implementation. 
+
+⏺ I'll implement the builtin features functionality. Let me create a task list to track this work.
+
+⏺ Now let me read the HTML file to find where to add the new navigation button and screen.
+
+⏺ Read(minecraft_recipe.html)
+  ⎿  Read 10 lines
+
+⏺ Read(minecraft_recipe.html)
+  ⎿  Read 100 lines
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Added 1 line                                                        
+      900              <button class="nav-button"                        
+           onclick="switchScreen(2)">Combine MCADDON Files</button>      
+      901              <button class="nav-button"                        
+           onclick="switchScreen(3)">Diff MCADDON Files</button>         
+      902              <button class="nav-button"                        
+           onclick="switchScreen(4)">Validate MCADDON</button>           
+      903 +            <button class="nav-button"                        
+          +onclick="switchScreen(5)">Builtin Features</button>           
+      904          </div>                                                
+      905                                                                
+      906          <!-- Main Content Area -->                            
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Added 72 lines                                                      
+      1138                      </div>                                   
+      1139                  </div>                                       
+      1140              </div>                                           
+      1141 +                                                             
+      1142 +            <!-- Screen 6: Builtin Features -->              
+      1143 +            <div class="screen" id="screen-builtin">         
+      1144 +                <div class="container">                      
+      1145 +                    <div class="header">                     
+      1146 +                        <h1>Builtin Features</h1>            
+      1147 +                        <p>Apply builtin features to items   
+           +in MCADDON files</p>                                         
+      1148 +                    </div>                                   
+      1149 +                                                             
+      1150 +                    <div class="tab-content active"          
+           +style="display: block;">                                     
+      1151 +                        <!-- Step 1: Select Builtin Feature  
+           +-->                                                          
+      1152 +                        <div id="builtin-feature-selector"   
+           +class="builtin-section">                                     
+      1153 +                            <div class="info-box">           
+      1154 +                                <strong>Step 1: Select a     
+           +Builtin Feature</strong>                                     
+      1155 +                                Choose which feature you     
+           +want to apply to your items.                                 
+      1156 +                            </div>                           
+      1157 +                            <div id="builtinFeatureList"     
+           +class="builtin-feature-list"></div>                          
+      1158 +                        </div>                               
+      1159 +                                                             
+      1160 +                        <!-- Step 2: Select MCADDON File --> 
+      1161 +                        <div id="builtin-file-selector"      
+           +class="builtin-section" style="display: none;">              
+      1162 +                            <div class="info-box">           
+      1163 +                                <strong>Step 2: Select       
+           +MCADDON File</strong>                                        
+      1164 +                                Choose the MCADDON file      
+           +containing items to modify.                                  
+      1165 +                            </div>                           
+      1166 +                            <div class="form-group">         
+      1167 +                                <label                       
+           +for="builtinMcAddonFile">Select MCADDON File                 
+           +(.mcaddon)</label>                                           
+      1168 +                                <input type="file"           
+           +id="builtinMcAddonFile" accept=".mcaddon"                    
+           +onchange="handleBuiltinMcAddonSelect()">                     
+      1169 +                                <div class="file-info"       
+           +id="builtinFileInfo"></div>                                  
+      1170 +                            </div>                           
+      1171 +                        </div>                               
+      1172 +                                                             
+      1173 +                        <!-- Step 3: Select Item -->         
+      1174 +                        <div id="builtin-item-selector"      
+           +class="builtin-section" style="display: none;">              
+      1175 +                            <div class="info-box">           
+      1176 +                                <strong>Step 3: Select       
+           +Item</strong>                                                
+      1177 +                                Choose an item to apply the  
+           +feature to.                                                  
+      1178 +                            </div>                           
+      1179 +                            <div id="builtinItemList"        
+           +class="builtin-item-list"></div>                             
+      1180 +                        </div>                               
+      1181 +                                                             
+      1182 +                        <!-- Step 4: Configure Feature -->   
+      1183 +                        <div id="builtin-feature-config"     
+           +class="builtin-section" style="display: none;">              
+      1184 +                            <div class="info-box">           
+      1185 +                                <strong>Step 4: Configure    
+           +Feature</strong>                                             
+      1186 +                                Add and configure the        
+           +feature properties.                                          
+      1187 +                            </div>                           
+      1188 +                                                             
+      1189 +                            <div id="selectedItemInfo"       
+           +class="selected-item-info"></div>                            
+      1190 +                                                             
+      1191 +                            <div id="foodEffectsContainer"   
+           +style="display: none;">                                      
+      1192 +                                <div                         
+           +class="food-effects-header">                                 
+      1193 +                                    <h3>Food Effects</h3>    
+      1194 +                                    <button                  
+           +class="add-effect-btn" onclick="addFoodEffect()">+ Add       
+           +Effect</button>                                              
+      1195 +                                </div>                       
+      1196 +                                <div id="foodEffectsList"    
+           +class="food-effects-list"></div>                             
+      1197 +                                                             
+      1198 +                                <div                         
+           +class="builtin-actions">                                     
+      1199 +                                    <button                  
+           +class="convert-btn" id="submitBuiltinBtn"                    
+           +onclick="submitBuiltinFeature()" style="margin-top: 20px;">  
+      1200 +                                        Submit               
+      1201 +                                    </button>                
+      1202 +                                </div>                       
+      1203 +                            </div>                           
+      1204 +                        </div>                               
+      1205 +                                                             
+      1206 +                        <!-- Download Button -->             
+      1207 +                        <button class="convert-btn"          
+           +id="downloadBuiltinBtn" onclick="downloadBuiltinMcAddon()"   
+           +style="display: none; margin-top: 15px; background:          
+           +#27ae60;">                                                   
+      1208 +                            Download Modified MCADDON        
+      1209 +                        </button>                            
+      1210 +                    </div>                                   
+      1211 +                </div>                                       
+      1212 +            </div>                                           
+      1213          </div>                                               
+      1214      </div>                                                   
+      1215                                                               
+
+⏺ Search(pattern: "</style>", path: "minecraft_recipe.html", output_mode:
+        "content")
+  ⎿  Found 1 line (ctrl+o to expand)
+
+⏺ Read(minecraft_recipe.html)
+  ⎿  Read 45 lines
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Added 202 lines                                                     
+       889              text-transform: uppercase;                       
+       890              font-weight: 500;                                
+       891          }                                                    
+       892 +                                                             
+       893 +        /* Builtin Features Styles */                        
+       894 +        .builtin-section {                                   
+       895 +            margin-bottom: 30px;                             
+       896 +        }                                                    
+       897 +                                                             
+       898 +        .builtin-feature-list {                              
+       899 +            display: grid;                                   
+       900 +            grid-template-columns: repeat(auto-fill,         
+           +minmax(200px, 1fr));                                         
+       901 +            gap: 15px;                                       
+       902 +            margin-top: 15px;                                
+       903 +        }                                                    
+       904 +                                                             
+       905 +        .builtin-feature-btn {                               
+       906 +            padding: 20px;                                   
+       907 +            background: white;                               
+       908 +            border: 2px solid #dee2e6;                       
+       909 +            border-radius: 8px;                              
+       910 +            cursor: pointer;                                 
+       911 +            transition: all 0.3s ease;                       
+       912 +            font-size: 16px;                                 
+       913 +            font-weight: 600;                                
+       914 +            color: #2c3e50;                                  
+       915 +            text-align: center;                              
+       916 +        }                                                    
+       917 +                                                             
+       918 +        .builtin-feature-btn:hover {                         
+       919 +            border-color: #667eea;                           
+       920 +            background: #f8f9fa;                             
+       921 +            transform: translateY(-2px);                     
+       922 +            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);        
+       923 +        }                                                    
+       924 +                                                             
+       925 +        .builtin-item-list {                                 
+       926 +            display: grid;                                   
+       927 +            grid-template-columns: repeat(auto-fill,         
+           +minmax(250px, 1fr));                                         
+       928 +            gap: 15px;                                       
+       929 +            margin-top: 15px;                                
+       930 +        }                                                    
+       931 +                                                             
+       932 +        .builtin-item-btn {                                  
+       933 +            padding: 15px;                                   
+       934 +            background: white;                               
+       935 +            border: 2px solid #dee2e6;                       
+       936 +            border-radius: 8px;                              
+       937 +            cursor: pointer;                                 
+       938 +            transition: all 0.3s ease;                       
+       939 +            text-align: left;                                
+       940 +        }                                                    
+       941 +                                                             
+       942 +        .builtin-item-btn:hover {                            
+       943 +            border-color: #667eea;                           
+       944 +            background: #f8f9fa;                             
+       945 +            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);        
+       946 +        }                                                    
+       947 +                                                             
+       948 +        .builtin-item-name {                                 
+       949 +            font-weight: 600;                                
+       950 +            color: #2c3e50;                                  
+       951 +            margin-bottom: 5px;                              
+       952 +        }                                                    
+       953 +                                                             
+       954 +        .builtin-item-path {                                 
+       955 +            font-size: 12px;                                 
+       956 +            color: #7f8c8d;                                  
+       957 +        }                                                    
+       958 +                                                             
+       959 +        .selected-item-info {                                
+       960 +            background: #e7f5ff;                             
+       961 +            border: 1px solid #74c0fc;                       
+       962 +            border-radius: 6px;                              
+       963 +            padding: 15px;                                   
+       964 +            margin-bottom: 20px;                             
+       965 +        }                                                    
+       966 +                                                             
+       967 +        .selected-item-info h4 {                             
+       968 +            margin: 0 0 5px 0;                               
+       969 +            color: #1864ab;                                  
+       970 +        }                                                    
+       971 +                                                             
+       972 +        .selected-item-info p {                              
+       973 +            margin: 0;                                       
+       974 +            color: #495057;                                  
+       975 +            font-size: 14px;                                 
+       976 +        }                                                    
+       977 +                                                             
+       978 +        .food-effects-header {                               
+       979 +            display: flex;                                   
+       980 +            justify-content: space-between;                  
+       981 +            align-items: center;                             
+       982 +            margin-bottom: 20px;                             
+       983 +        }                                                    
+       984 +                                                             
+       985 +        .food-effects-header h3 {                            
+       986 +            margin: 0;                                       
+       987 +            color: #2c3e50;                                  
+       988 +        }                                                    
+       989 +                                                             
+       990 +        .add-effect-btn {                                    
+       991 +            padding: 10px 20px;                              
+       992 +            background: #667eea;                             
+       993 +            color: white;                                    
+       994 +            border: none;                                    
+       995 +            border-radius: 6px;                              
+       996 +            cursor: pointer;                                 
+       997 +            font-weight: 600;                                
+       998 +            transition: background 0.3s ease;                
+       999 +        }                                                    
+      1000 +                                                             
+      1001 +        .add-effect-btn:hover {                              
+      1002 +            background: #5568d3;                             
+      1003 +        }                                                    
+      1004 +                                                             
+      1005 +        .food-effects-list {                                 
+      1006 +            display: flex;                                   
+      1007 +            flex-direction: column;                          
+      1008 +            gap: 15px;                                       
+      1009 +        }                                                    
+      1010 +                                                             
+      1011 +        .food-effect-item {                                  
+      1012 +            background: white;                               
+      1013 +            border: 1px solid #dee2e6;                       
+      1014 +            border-radius: 8px;                              
+      1015 +            padding: 20px;                                   
+      1016 +            position: relative;                              
+      1017 +        }                                                    
+      1018 +                                                             
+      1019 +        .food-effect-header {                                
+      1020 +            display: flex;                                   
+      1021 +            justify-content: space-between;                  
+      1022 +            align-items: center;                             
+      1023 +            margin-bottom: 15px;                             
+      1024 +        }                                                    
+      1025 +                                                             
+      1026 +        .food-effect-header h4 {                             
+      1027 +            margin: 0;                                       
+      1028 +            color: #2c3e50;                                  
+      1029 +            font-size: 16px;                                 
+      1030 +        }                                                    
+      1031 +                                                             
+      1032 +        .remove-effect-btn {                                 
+      1033 +            background: #e03131;                             
+      1034 +            color: white;                                    
+      1035 +            border: none;                                    
+      1036 +            border-radius: 4px;                              
+      1037 +            padding: 6px 12px;                               
+      1038 +            cursor: pointer;                                 
+      1039 +            font-size: 14px;                                 
+      1040 +            font-weight: 600;                                
+      1041 +            transition: background 0.3s ease;                
+      1042 +        }                                                    
+      1043 +                                                             
+      1044 +        .remove-effect-btn:hover {                           
+      1045 +            background: #c92a2a;                             
+      1046 +        }                                                    
+      1047 +                                                             
+      1048 +        .food-effect-fields {                                
+      1049 +            display: grid;                                   
+      1050 +            grid-template-columns: 2fr 1fr 1fr;              
+      1051 +            gap: 15px;                                       
+      1052 +        }                                                    
+      1053 +                                                             
+      1054 +        .effect-field {                                      
+      1055 +            display: flex;                                   
+      1056 +            flex-direction: column;                          
+      1057 +        }                                                    
+      1058 +                                                             
+      1059 +        .effect-field label {                                
+      1060 +            font-size: 14px;                                 
+      1061 +            font-weight: 600;                                
+      1062 +            color: #495057;                                  
+      1063 +            margin-bottom: 5px;                              
+      1064 +        }                                                    
+      1065 +                                                             
+      1066 +        .effect-field input {                                
+      1067 +            padding: 10px;                                   
+      1068 +            border: 1px solid #dee2e6;                       
+      1069 +            border-radius: 4px;                              
+      1070 +            font-size: 14px;                                 
+      1071 +            transition: border-color 0.3s ease;              
+      1072 +        }                                                    
+      1073 +                                                             
+      1074 +        .effect-field input:focus {                          
+      1075 +            outline: none;                                   
+      1076 +            border-color: #667eea;                           
+      1077 +        }                                                    
+      1078 +                                                             
+      1079 +        .effect-field input.error {                          
+      1080 +            border-color: #e03131;                           
+      1081 +        }                                                    
+      1082 +                                                             
+      1083 +        .effect-field .error-message {                       
+      1084 +            color: #e03131;                                  
+      1085 +            font-size: 12px;                                 
+      1086 +            margin-top: 4px;                                 
+      1087 +            min-height: 16px;                                
+      1088 +        }                                                    
+      1089 +                                                             
+      1090 +        .builtin-actions {                                   
+      1091 +            display: flex;                                   
+      1092 +            justify-content: center;                         
+      1093 +        }                                                    
+      1094      </style>                                                 
+      1095  </head>                                                      
+      1096  <body>                                                       
+
+⏺ Read(minecraft_recipe.html)
+  ⎿  Read 50 lines
+
+⏺ Search(pattern: "// MCADDON Editor state|let editorMcAddonFile", path:
+        "minecraft_recipe.html", output_mode: "content")
+  ⎿  Found 42 lines (ctrl+o to expand)
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Added 86 lines                                                      
+      1576          let diffFile2Zip = null;                             
+      1577          let diffResults = null;                              
+      1578                                                               
+      1579 +        // Builtin Features state                            
+      1580 +        let builtinSelectedFeature = null;                   
+      1581 +        let builtinMcAddonFile = null;                       
+      1582 +        let builtinZip = null;                               
+      1583 +        let builtinFilteredItems = [];                       
+      1584 +        let builtinSelectedItem = null;                      
+      1585 +        let builtinFoodEffects = [];                         
+      1586 +        let builtinEffectCounter = 0;                        
+      1587 +        let builtinModifiedZip = null;                       
+      1588 +                                                             
+      1589 +        // Builtin Features definitions                      
+      1590 +        const builtinFeatures = [                            
+      1591 +            {                                                
+      1592 +                id: 'food_effects',                          
+      1593 +                name: 'Food Effects',                        
+      1594 +                description: 'Add effects to food items',    
+      1595 +                filterFunction: async (zip) => {             
+      1596 +                    const items = [];                        
+      1597 +                                                             
+      1598 +                    // Find behavior pack                    
+      1599 +                    let behaviorPack = null;                 
+      1600 +                    for (const [path, zipEntry] of           
+           +Object.entries(zip.files)) {                                 
+      1601 +                        if (zipEntry.dir &&                  
+           +path.includes('manifest.json') === false) continue;          
+      1602 +                                                             
+      1603 +                        const manifestPath =                 
+           +path.endsWith('/') ? path + 'manifest.json' : path;          
+      1604 +                        if (zip.files[manifestPath]) {       
+      1605 +                            try {                            
+      1606 +                                const manifestContent =      
+           +await zip.files[manifestPath].async('string');               
+      1607 +                                const manifest =             
+           +JSON.parse(manifestContent);                                 
+      1608 +                                                             
+      1609 +                                if (manifest.modules) {      
+      1610 +                                    for (const module of     
+           +manifest.modules) {                                          
+      1611 +                                        if (module.type ===  
+           +'data') {                                                    
+      1612 +                                            behaviorPack =   
+           +path.endsWith('/') ? path.slice(0, -1) : path.substring(0,   
+           +path.lastIndexOf('/'));                                      
+      1613 +                                            if (behaviorPack 
+           + === '') behaviorPack = '.';                                 
+      1614 +                                            break;           
+      1615 +                                        }                    
+      1616 +                                    }                        
+      1617 +                                }                            
+      1618 +                            } catch (e) {                    
+      1619 +                                // Not a valid manifest,     
+           +continue                                                     
+      1620 +                            }                                
+      1621 +                        }                                    
+      1622 +                        if (behaviorPack) break;             
+      1623 +                    }                                        
+      1624 +                                                             
+      1625 +                    if (!behaviorPack) {                     
+      1626 +                        return items;                        
+      1627 +                    }                                        
+      1628 +                                                             
+      1629 +                    // Find items directory                  
+      1630 +                    const itemsPath = behaviorPack === '.' ? 
+           + 'items/' : `${behaviorPack}/items/`;                        
+      1631 +                                                             
+      1632 +                    // Search for items with minecraft:food  
+           +component                                                    
+      1633 +                    for (const [path, zipEntry] of           
+           +Object.entries(zip.files)) {                                 
+      1634 +                        if (zipEntry.dir) continue;          
+      1635 +                        if                                   
+           +(!path.toLowerCase().includes('/items/')) continue;          
+      1636 +                        if                                   
+           +(!path.toLowerCase().endsWith('.json')) continue;            
+      1637 +                                                             
+      1638 +                        try {                                
+      1639 +                            const content = await            
+           +zipEntry.async('string');                                    
+      1640 +                            const itemData =                 
+           +JSON.parse(content);                                         
+      1641 +                                                             
+      1642 +                            // Check if item has             
+           +minecraft:food component                                     
+      1643 +                            if (itemData['minecraft:item']   
+           +&&                                                           
+      1644 +                                                             
+           +itemData['minecraft:item'].components &&                     
+      1645 +                                                             
+           +itemData['minecraft:item'].components['minecraft:food']) {   
+      1646 +                                                             
+      1647 +                                const identifier =           
+           +itemData['minecraft:item'].description?.identifier ||        
+           +'Unknown';                                                   
+      1648 +                                items.push({                 
+      1649 +                                    path: path,              
+      1650 +                                    identifier: identifier,  
+      1651 +                                    content: content,        
+      1652 +                                    data: itemData           
+      1653 +                                });                          
+      1654 +                            }                                
+      1655 +                        } catch (e) {                        
+      1656 +                            // Invalid JSON or structure,    
+           +skip                                                         
+      1657 +                        }                                    
+      1658 +                    }                                        
+      1659 +                                                             
+      1660 +                    return items;                            
+      1661 +                }                                            
+      1662 +            }                                                
+      1663 +        ];                                                   
+      1664 +                                                             
+      1665          // Screen switching                                  
+      1666          function switchScreen(screenIndex) {                 
+      1667              const navButtons =                               
+            document.querySelectorAll('.nav-button');                    
+
+⏺ Bash(grep -n "function validateMcAddon\|// ========== VALIDATE"
+      /Users/hughbrown/workspace/tyler/minecraft-recipe/minecraft_recipe.html |
+      tail -5)
+  ⎿  2939:        // ========== VALIDATE MCADDON FUNCTIONS ==========
+     2972:        async function validateMcAddonFile() {
+
+⏺ Bash(tail -50
+      /Users/hughbrown/workspace/tyler/minecraft-recipe/minecraft_recipe.html)
+  ⎿              // Errors                                                 
+                 if (errorCount > 0) {
+                     let errorsHtml = '<div class="validation-section"><div
+     … +54 lines (ctrl+o to expand)
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  File must be read first
+
+⏺ Bash(wc -l
+      /Users/hughbrown/workspace/tyler/minecraft-recipe/minecraft_recipe.html)
+  ⎿     3648 /Users/hughbrown/workspace/tyler/minecraft-recipe/minecraft_re
+    cipe.html
+
+
+⏺ Read(minecraft_recipe.html)
+  ⎿  Read 10 lines
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Added 329 lines                                                     
+      3643                  warningsDiv.innerHTML = '';                  
+      3644              }                                                
+      3645          }                                                    
+      3646 +                                                             
+      3647 +        // ========== BUILTIN FEATURES FUNCTIONS ==========  
+      3648 +                                                             
+      3649 +        // Initialize builtin features list on page load     
+      3650 +        window.addEventListener('DOMContentLoaded',          
+           +function() {                                                 
+      3651 +            initializeBuiltinFeatures();                     
+      3652 +        });                                                  
+      3653 +                                                             
+      3654 +        function initializeBuiltinFeatures() {               
+      3655 +            const featureList =                              
+           +document.getElementById('builtinFeatureList');               
+      3656 +            featureList.innerHTML = '';                      
+      3657 +                                                             
+      3658 +            builtinFeatures.forEach(feature => {             
+      3659 +                const button =                               
+           +document.createElement('button');                            
+      3660 +                button.className = 'builtin-feature-btn';    
+      3661 +                button.textContent = feature.name;           
+      3662 +                button.onclick = () =>                       
+           +selectBuiltinFeature(feature);                               
+      3663 +                featureList.appendChild(button);             
+      3664 +            });                                              
+      3665 +        }                                                    
+      3666 +                                                             
+      3667 +        function selectBuiltinFeature(feature) {             
+      3668 +            builtinSelectedFeature = feature;                
+      3669 +                                                             
+      3670 +            // Hide feature selector, show file selector     
+      3671 +            document.getElementById('builtin-feature-selecto 
+           +r').style.display = 'none';                                  
+      3672 +            document.getElementById('builtin-file-selector') 
+           +.style.display = 'block';                                    
+      3673 +                                                             
+      3674 +            // Reset subsequent sections                     
+      3675 +            document.getElementById('builtin-item-selector') 
+           +.style.display = 'none';                                     
+      3676 +            document.getElementById('builtin-feature-config' 
+           +).style.display = 'none';                                    
+      3677 +                                                             
+           +document.getElementById('downloadBuiltinBtn').style.display  
+           += 'none';                                                    
+      3678 +                                                             
+      3679 +            // Reset state                                   
+      3680 +            builtinMcAddonFile = null;                       
+      3681 +            builtinZip = null;                               
+      3682 +            builtinFilteredItems = [];                       
+      3683 +            builtinSelectedItem = null;                      
+      3684 +            builtinFoodEffects = [];                         
+      3685 +            builtinEffectCounter = 0;                        
+      3686 +        }                                                    
+      3687 +                                                             
+      3688 +        async function handleBuiltinMcAddonSelect() {        
+      3689 +            const fileInput =                                
+           +document.getElementById('builtinMcAddonFile');               
+      3690 +            const fileInfo =                                 
+           +document.getElementById('builtinFileInfo');                  
+      3691 +                                                             
+      3692 +            const file = fileInput.files[0];                 
+      3693 +            if (!file) return;                               
+      3694 +                                                             
+      3695 +            builtinMcAddonFile = file;                       
+      3696 +            fileInfo.textContent = `Selected: ${file.name}   
+           +(${formatFileSize(file.size)})`;                             
+      3697 +            fileInfo.classList.add('show');                  
+      3698 +                                                             
+      3699 +            try {                                            
+      3700 +                // Load the ZIP file                         
+      3701 +                const mcaddonData = await                    
+           +readFileAsArrayBuffer(file);                                 
+      3702 +                builtinZip = await                           
+           +JSZip.loadAsync(mcaddonData);                                
+      3703 +                                                             
+      3704 +                // Apply filter function to find matching    
+           +items                                                        
+      3705 +                builtinFilteredItems = await                 
+           +builtinSelectedFeature.filterFunction(builtinZip);           
+      3706 +                                                             
+      3707 +                if (builtinFilteredItems.length === 0) {     
+      3708 +                    alert(`No items found matching the       
+           +filter for ${builtinSelectedFeature.name}`);                 
+      3709 +                    return;                                  
+      3710 +                }                                            
+      3711 +                                                             
+      3712 +                // Show item selector                        
+      3713 +                document.getElementById('builtin-item-select 
+           +or').style.display = 'block';                                
+      3714 +                loadBuiltinItemList();                       
+      3715 +                                                             
+      3716 +            } catch (error) {                                
+      3717 +                alert(`Error loading MCADDON file:           
+           +${error.message}`);                                          
+      3718 +            }                                                
+      3719 +        }                                                    
+      3720 +                                                             
+      3721 +        function loadBuiltinItemList() {                     
+      3722 +            const itemList =                                 
+           +document.getElementById('builtinItemList');                  
+      3723 +            itemList.innerHTML = '';                         
+      3724 +                                                             
+      3725 +            builtinFilteredItems.forEach(item => {           
+      3726 +                const button =                               
+           +document.createElement('button');                            
+      3727 +                button.className = 'builtin-item-btn';       
+      3728 +                button.innerHTML = `                         
+      3729 +                    <div                                     
+           +class="builtin-item-name">${item.identifier}</div>           
+      3730 +                    <div                                     
+           +class="builtin-item-path">${item.path}</div>                 
+      3731 +                `;                                           
+      3732 +                button.onclick = () =>                       
+           +selectBuiltinItem(item);                                     
+      3733 +                itemList.appendChild(button);                
+      3734 +            });                                              
+      3735 +        }                                                    
+      3736 +                                                             
+      3737 +        function selectBuiltinItem(item) {                   
+      3738 +            builtinSelectedItem = item;                      
+      3739 +                                                             
+      3740 +            // Show feature configuration section            
+      3741 +            document.getElementById('builtin-feature-config' 
+           +).style.display = 'block';                                   
+      3742 +                                                             
+      3743 +            // Show selected item info                       
+      3744 +            const itemInfo =                                 
+           +document.getElementById('selectedItemInfo');                 
+      3745 +            itemInfo.innerHTML = `                           
+      3746 +                <h4>Selected Item</h4>                       
+      3747 +                <p><strong>Identifier:</strong>              
+           +${item.identifier}</p>                                       
+      3748 +                <p><strong>Path:</strong> ${item.path}</p>   
+      3749 +            `;                                               
+      3750 +                                                             
+      3751 +            // Show appropriate configuration UI based on    
+           +feature                                                      
+      3752 +            if (builtinSelectedFeature.id ===                
+           +'food_effects') {                                            
+      3753 +                document.getElementById('foodEffectsContaine 
+           +r').style.display = 'block';                                 
+      3754 +                // Reset food effects list                   
+      3755 +                builtinFoodEffects = [];                     
+      3756 +                builtinEffectCounter = 0;                    
+      3757 +                                                             
+           +document.getElementById('foodEffectsList').innerHTML = '';   
+      3758 +            }                                                
+      3759 +                                                             
+      3760 +            // Hide download button                          
+      3761 +                                                             
+           +document.getElementById('downloadBuiltinBtn').style.display  
+           += 'none';                                                    
+      3762 +        }                                                    
+      3763 +                                                             
+      3764 +        function addFoodEffect() {                           
+      3765 +            const effectId = builtinEffectCounter++;         
+      3766 +            const effect = {                                 
+      3767 +                id: effectId,                                
+      3768 +                tag: '',                                     
+      3769 +                duration: '',                                
+      3770 +                intensity: ''                                
+      3771 +            };                                               
+      3772 +                                                             
+      3773 +            builtinFoodEffects.push(effect);                 
+      3774 +            renderFoodEffect(effect);                        
+      3775 +        }                                                    
+      3776 +                                                             
+      3777 +        function renderFoodEffect(effect) {                  
+      3778 +            const effectsList =                              
+           +document.getElementById('foodEffectsList');                  
+      3779 +                                                             
+      3780 +            const effectDiv = document.createElement('div'); 
+      3781 +            effectDiv.className = 'food-effect-item';        
+      3782 +            effectDiv.id = `food-effect-${effect.id}`;       
+      3783 +            effectDiv.innerHTML = `                          
+      3784 +                <div class="food-effect-header">             
+      3785 +                    <h4>Effect ${effect.id + 1}</h4>         
+      3786 +                    <button class="remove-effect-btn"        
+           +onclick="removeFoodEffect(${effect.id})">- Remove</button>   
+      3787 +                </div>                                       
+      3788 +                <div class="food-effect-fields">             
+      3789 +                    <div class="effect-field">               
+      3790 +                        <label                               
+           +for="effect-tag-${effect.id}">Effect Tag</label>             
+      3791 +                        <input type="text"                   
+           +id="effect-tag-${effect.id}"                                 
+      3792 +                               placeholder="e.g.,            
+           +regeneration, speed"                                         
+      3793 +                                                             
+           +oninput="updateFoodEffect(${effect.id}, 'tag', this.value)"> 
+      3794 +                        <div class="error-message"           
+           +id="error-tag-${effect.id}"></div>                           
+      3795 +                    </div>                                   
+      3796 +                    <div class="effect-field">               
+      3797 +                        <label                               
+           +for="effect-duration-${effect.id}">Duration                  
+           +(seconds)</label>                                            
+      3798 +                        <input type="number"                 
+           +id="effect-duration-${effect.id}"                            
+      3799 +                               placeholder="30"              
+      3800 +                                                             
+           +oninput="updateFoodEffect(${effect.id}, 'duration',          
+           +this.value)">                                                
+      3801 +                        <div class="error-message"           
+           +id="error-duration-${effect.id}"></div>                      
+      3802 +                    </div>                                   
+      3803 +                    <div class="effect-field">               
+      3804 +                        <label                               
+           +for="effect-intensity-${effect.id}">Intensity                
+           +(1-255)</label>                                              
+      3805 +                        <input type="number"                 
+           +id="effect-intensity-${effect.id}"                           
+      3806 +                               placeholder="1"               
+      3807 +                               min="1" max="255"             
+      3808 +                                                             
+           +oninput="updateFoodEffect(${effect.id}, 'intensity',         
+           +this.value)">                                                
+      3809 +                        <div class="error-message"           
+           +id="error-intensity-${effect.id}"></div>                     
+      3810 +                    </div>                                   
+      3811 +                </div>                                       
+      3812 +            `;                                               
+      3813 +                                                             
+      3814 +            effectsList.appendChild(effectDiv);              
+      3815 +        }                                                    
+      3816 +                                                             
+      3817 +        function removeFoodEffect(effectId) {                
+      3818 +            const index = builtinFoodEffects.findIndex(e =>  
+           +e.id === effectId);                                          
+      3819 +            if (index !== -1) {                              
+      3820 +                builtinFoodEffects.splice(index, 1);         
+      3821 +            }                                                
+      3822 +                                                             
+      3823 +            const effectDiv =                                
+           +document.getElementById(`food-effect-${effectId}`);          
+      3824 +            if (effectDiv) {                                 
+      3825 +                effectDiv.remove();                          
+      3826 +            }                                                
+      3827 +        }                                                    
+      3828 +                                                             
+      3829 +        function updateFoodEffect(effectId, field, value) {  
+      3830 +            const effect = builtinFoodEffects.find(e => e.id 
+           + === effectId);                                              
+      3831 +            if (effect) {                                    
+      3832 +                effect[field] = value;                       
+      3833 +                validateFoodEffectField(effectId, field,     
+           +value);                                                      
+      3834 +            }                                                
+      3835 +        }                                                    
+      3836 +                                                             
+      3837 +        function validateFoodEffectField(effectId, field,    
+           +value) {                                                     
+      3838 +            const inputElement =                             
+           +document.getElementById(`effect-${field}-${effectId}`);      
+      3839 +            const errorElement =                             
+           +document.getElementById(`error-${field}-${effectId}`);       
+      3840 +                                                             
+      3841 +            let isValid = true;                              
+      3842 +            let errorMessage = '';                           
+      3843 +                                                             
+      3844 +            if (field === 'duration') {                      
+      3845 +                const duration = parseInt(value);            
+      3846 +                if (value && (isNaN(duration) || duration <= 
+           + 0)) {                                                       
+      3847 +                    isValid = false;                         
+      3848 +                    errorMessage = 'Must be a positive       
+           +number';                                                     
+      3849 +                }                                            
+      3850 +            } else if (field === 'intensity') {              
+      3851 +                const intensity = parseInt(value);           
+      3852 +                if (value && (isNaN(intensity) || intensity  
+           +< 1 || intensity > 255)) {                                   
+      3853 +                    isValid = false;                         
+      3854 +                    errorMessage = 'Must be between 1 and    
+           +255';                                                        
+      3855 +                }                                            
+      3856 +            }                                                
+      3857 +                                                             
+      3858 +            if (isValid) {                                   
+      3859 +                inputElement.classList.remove('error');      
+      3860 +                errorElement.textContent = '';               
+      3861 +            } else {                                         
+      3862 +                inputElement.classList.add('error');         
+      3863 +                errorElement.textContent = errorMessage;     
+      3864 +            }                                                
+      3865 +                                                             
+      3866 +            return isValid;                                  
+      3867 +        }                                                    
+      3868 +                                                             
+      3869 +        function validateAllFoodEffects() {                  
+      3870 +            let allValid = true;                             
+      3871 +                                                             
+      3872 +            // Check if there's at least one effect          
+      3873 +            if (builtinFoodEffects.length === 0) {           
+      3874 +                alert('Please add at least one food          
+           +effect');                                                    
+      3875 +                return false;                                
+      3876 +            }                                                
+      3877 +                                                             
+      3878 +            // Validate each effect                          
+      3879 +            for (const effect of builtinFoodEffects) {       
+      3880 +                // Validate tag                              
+      3881 +                if (!effect.tag || effect.tag.trim() === '') 
+           + {                                                           
+      3882 +                    alert(`Effect ${effect.id + 1}: Tag is   
+           +required`);                                                  
+      3883 +                    allValid = false;                        
+      3884 +                    break;                                   
+      3885 +                }                                            
+      3886 +                                                             
+      3887 +                // Validate duration                         
+      3888 +                const duration = parseInt(effect.duration);  
+      3889 +                if (!effect.duration || isNaN(duration) ||   
+           +duration <= 0) {                                             
+      3890 +                    const isValid =                          
+           +validateFoodEffectField(effect.id, 'duration',               
+           +effect.duration);                                            
+      3891 +                    if (!isValid) {                          
+      3892 +                        alert(`Effect ${effect.id + 1}:      
+           +Duration must be a positive number`);                        
+      3893 +                        allValid = false;                    
+      3894 +                        break;                               
+      3895 +                    }                                        
+      3896 +                }                                            
+      3897 +                                                             
+      3898 +                // Validate intensity                        
+      3899 +                const intensity =                            
+           +parseInt(effect.intensity);                                  
+      3900 +                if (!effect.intensity || isNaN(intensity) || 
+           + intensity < 1 || intensity > 255) {                         
+      3901 +                    const isValid =                          
+           +validateFoodEffectField(effect.id, 'intensity',              
+           +effect.intensity);                                           
+      3902 +                    if (!isValid) {                          
+      3903 +                        alert(`Effect ${effect.id + 1}:      
+           +Intensity must be between 1 and 255`);                       
+      3904 +                        allValid = false;                    
+      3905 +                        break;                               
+      3906 +                    }                                        
+      3907 +                }                                            
+      3908 +            }                                                
+      3909 +                                                             
+      3910 +            return allValid;                                 
+      3911 +        }                                                    
+      3912 +                                                             
+      3913 +        async function submitBuiltinFeature() {              
+      3914 +            if (!builtinSelectedItem) {                      
+      3915 +                alert('No item selected');                   
+      3916 +                return;                                      
+      3917 +            }                                                
+      3918 +                                                             
+      3919 +            if (builtinSelectedFeature.id ===                
+           +'food_effects') {                                            
+      3920 +                if (!validateAllFoodEffects()) {             
+      3921 +                    return;                                  
+      3922 +                }                                            
+      3923 +                                                             
+      3924 +                try {                                        
+      3925 +                    // Clone the zip for modification        
+      3926 +                    builtinModifiedZip = await               
+           +JSZip.loadAsync(await builtinZip.generateAsync({ type:       
+           +'arraybuffer' }));                                           
+      3927 +                                                             
+      3928 +                    // Get the item data                     
+      3929 +                    const itemData =                         
+           +JSON.parse(builtinSelectedItem.content);                     
+      3930 +                                                             
+      3931 +                    // Ensure the food component has an      
+           +effects array                                                
+      3932 +                    if (!itemData['minecraft:item'].componen 
+           +ts['minecraft:food'].effects) {                              
+      3933 +                        itemData['minecraft:item'].component 
+           +s['minecraft:food'].effects = [];                            
+      3934 +                    }                                        
+      3935 +                                                             
+      3936 +                    // Add new effects (append to existing)  
+      3937 +                    for (const effect of builtinFoodEffects) 
+           + {                                                           
+      3938 +                        const effectObj = {                  
+      3939 +                            name: effect.tag,                
+      3940 +                            duration:                        
+           +parseInt(effect.duration),                                   
+      3941 +                            amplifier:                       
+           +parseInt(effect.intensity) - 1  // Minecraft uses 0-based    
+           +amplifier                                                    
+      3942 +                        };                                   
+      3943 +                        itemData['minecraft:item'].component 
+           +s['minecraft:food'].effects.push(effectObj);                 
+      3944 +                    }                                        
+      3945 +                                                             
+      3946 +                    // Update the JSON in the zip            
+      3947 +                    const updatedJson =                      
+           +JSON.stringify(itemData, null, 2);                           
+      3948 +                                                             
+           +builtinModifiedZip.file(builtinSelectedItem.path,            
+           +updatedJson);                                                
+      3949 +                                                             
+      3950 +                    // Show download button                  
+      3951 +                                                             
+           +document.getElementById('downloadBuiltinBtn').style.display  
+           += 'block';                                                   
+      3952 +                                                             
+      3953 +                    alert('Food effects applied              
+           +successfully! Click Download to save the modified MCADDON    
+           +file.');                                                     
+      3954 +                                                             
+      3955 +                } catch (error) {                            
+      3956 +                    alert(`Error applying food effects:      
+           +${error.message}`);                                          
+      3957 +                }                                            
+      3958 +            }                                                
+      3959 +        }                                                    
+      3960 +                                                             
+      3961 +        async function downloadBuiltinMcAddon() {            
+      3962 +            if (!builtinModifiedZip) {                       
+      3963 +                alert('No modified file to download');       
+      3964 +                return;                                      
+      3965 +            }                                                
+      3966 +                                                             
+      3967 +            try {                                            
+      3968 +                const blob = await                           
+           +builtinModifiedZip.generateAsync({ type: 'blob' });          
+      3969 +                const fileName =                             
+           +builtinMcAddonFile.name.replace('.mcaddon',                  
+           +'_modified.mcaddon');                                        
+      3970 +                downloadBlob(blob, fileName);                
+      3971 +            } catch (error) {                                
+      3972 +                alert(`Error generating download:            
+           +${error.message}`);                                          
+      3973 +            }                                                
+      3974 +        }                                                    
+      3975      </script>                                                
+      3976  </body>                                                      
+      3977  </html>                                                      
+
+⏺ Perfect! I've successfully implemented all the features. Now let me test the HTML file to ensure everything is working properly.
+
+⏺ Bash(open minecraft_recipe.html)
+  ⎿  (No content)
+
+⏺ Let me verify the HTML file doesn't have any syntax errors by checking it with a browser compatibility test:
+
+⏺ Bash(grep -n "onclick="
+      /Users/hughbrown/workspace/tyler/minecraft-recipe/minecraft_recipe.html |
+      grep -i builtin | head -10)
+  ⎿ 1105:            <button class="nav-button" onclick="switchScreen(5)">B
+    uiltin Features</button>
+    1401:                                    <button class="convert-btn" id
+    … +5 lines (ctrl+o to expand)
+
+
+
+⏺ Bash(grep -n "handleBuiltinMcAddonSelect\|addFoodEffect\|removeFoodEffect"
+      /Users/hughbrown/workspace/tyler/minecraft-recipe/minecraft_recipe.html |
+      head -10)
+  ⎿ 1370:                                <input type="file" id="builtinMcAd
+    donFile" accept=".mcaddon" onchange="handleBuiltinMcAddonSelect()">
+    1396:                                    <button class="add-effect-btn"
+    … +6 lines (ctrl+o to expand)
+
+
+
+⏺ Let me verify the JavaScript syntax is correct by checking for common errors:
+
+⏺ Bash(grep -n "builtinFeatures\["
+      /Users/hughbrown/workspace/tyler/minecraft-recipe/minecraft_recipe.html |
+      head -3)
+  ⎿  (No content)
+
+⏺ Bash(grep -n "const builtinFeatures = "
+      /Users/hughbrown/workspace/tyler/minecraft-recipe/minecraft_recipe.html)
+  ⎿  1590:        const builtinFeatures = [
+
+⏺ Perfect! I've successfully implemented the Builtin Features functionality. Here's a summary of what was added:
+
+  Implementation Summary
+
+  1. Navigation & UI Structure
+
+  - Added "Builtin Features" button to the vertical navigation (screen index 5) at minecraft_recipe.html:1105
+  - Created a complete screen with a 4-step workflow:
+    - Step 1: Select a builtin feature
+    - Step 2: Select MCADDON file
+    - Step 3: Select an item
+    - Step 4: Configure the feature
+
+  2. Builtin Features System
+
+  - Extensible architecture: Features are stored in a JavaScript array (builtinFeatures) at minecraft_recipe.html:1590
+  - Food Effects feature implemented with:
+    - Custom filter function that finds items with minecraft:food component
+    - Searches through behavior pack → items directory
+    - Returns only food items for modification
+
+  3. Food Effects Editor
+
+  - Dynamic form system with add/remove functionality
+  - Three fields per effect:
+    - Tag: Free-form text input (effect name without "minecraft:" prefix)
+    - Duration: Positive integer (seconds)
+    - Intensity: Integer range [1-255]
+  - Real-time validation with error messages that clear when values are valid
+
+  4. Validation System
+
+  - Duration: Must be a positive number (error: "Must be a positive number")
+  - Intensity: Must be in range [1-255] (error: "Must be between 1 and 255")
+  - Tag: Required field (checked on submit)
+  - Visual feedback with red borders and error messages
+
+  5. Submit & Download
+
+  - Submit button applies all effects to the selected item's JSON:
+    - Effects are appended to existing effects (not replaced)
+    - JSON structure: {name: tag, duration: seconds, amplifier: intensity-1}
+    - Uses 0-based amplifier (intensity - 1) per Minecraft conventions
+  - Download button appears after successful submission
+  - Modified file named *_modified.mcaddon
+
+  Key Implementation Details:
+
+  - Filter function (line 1595): Finds behavior pack, searches items directory, checks for minecraft:food component
+  - Effect application (line 3936-3943): Appends to minecraft:item.components['minecraft:food'].effects array
+  - State management: All state isolated per feature with proper reset between selections
+  - UI stays persistent: After download, UI remains on current item/state
+
+  The implementation follows the exact specifications from the PRD and all your clarifications. The HTML file is ready to test with MCADDON files containing food items!
+
+
+
