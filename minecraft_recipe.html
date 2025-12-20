@@ -1596,38 +1596,10 @@
                     const items = [];
 
                     // Find behavior pack
-                    let behaviorPack = null;
-                    for (const [path, zipEntry] of Object.entries(zip.files)) {
-                        if (zipEntry.dir && path.includes('manifest.json') === false) continue;
-
-                        const manifestPath = path.endsWith('/') ? path + 'manifest.json' : path;
-                        if (zip.files[manifestPath]) {
-                            try {
-                                const manifestContent = await zip.files[manifestPath].async('string');
-                                const manifest = JSON.parse(manifestContent);
-
-                                if (manifest.modules) {
-                                    for (const module of manifest.modules) {
-                                        if (module.type === 'data') {
-                                            behaviorPack = path.endsWith('/') ? path.slice(0, -1) : path.substring(0, path.lastIndexOf('/'));
-                                            if (behaviorPack === '') behaviorPack = '.';
-                                            break;
-                                        }
-                                    }
-                                }
-                            } catch (e) {
-                                // Not a valid manifest, continue
-                            }
-                        }
-                        if (behaviorPack) break;
-                    }
-
+                    const behaviorPack = await findBehaviorPack(zip);
                     if (!behaviorPack) {
                         return items;
                     }
-
-                    // Find items directory
-                    const itemsPath = behaviorPack === '.' ? 'items/' : `${behaviorPack}/items/`;
 
                     // Search for items with minecraft:food component
                     for (const [path, zipEntry] of Object.entries(zip.files)) {
@@ -1800,44 +1772,17 @@
                 parser.parse();
                 const recipeJson = parser.toJson();
 
-                // Read the base mcaddon file
-                const mcaddonData = await readFileAsArrayBuffer(mcaddonFile);
-                const zip = await JSZip.loadAsync(mcaddonData);
+                // Load MCADDON file
+                const zip = await loadMcAddonZip(mcaddonFile);
 
                 // Find behavior pack directory
-                let behaviorPack = null;
-                for (const [path, zipEntry] of Object.entries(zip.files)) {
-                    if (zipEntry.dir && path.includes('manifest.json') === false) continue;
-
-                    const manifestPath = path.endsWith('/') ? path + 'manifest.json' : path;
-                    if (zip.files[manifestPath]) {
-                        try {
-                            const manifestContent = await zip.files[manifestPath].async('string');
-                            const manifest = JSON.parse(manifestContent);
-
-                            // Check if this is a behavior pack
-                            if (manifest.modules) {
-                                for (const module of manifest.modules) {
-                                    if (module.type === 'data') {
-                                        behaviorPack = path.endsWith('/') ? path.slice(0, -1) : path.substring(0, path.lastIndexOf('/'));
-                                        if (behaviorPack === '') behaviorPack = '.';
-                                        break;
-                                    }
-                                }
-                            }
-                        } catch (e) {
-                            // Not a valid manifest, continue
-                        }
-                    }
-                    if (behaviorPack) break;
-                }
-
+                const behaviorPack = await findBehaviorPack(zip);
                 if (!behaviorPack) {
                     throw new Error('Could not find behavior pack in McAddon file');
                 }
 
                 // Create recipes directory path
-                const recipesPath = behaviorPack === '.' ? 'recipes/' : `${behaviorPack}/recipes/`;
+                const recipesPath = constructPackPath(behaviorPack, 'recipes');
 
                 // Add recipe to zip
                 const recipeFileName = txtFile2.name.replace(/\.txt$/i, '.json');
@@ -1903,6 +1848,118 @@
             return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
         }
 
+        // ========== MCADDON ZIP UTILITIES ==========
+
+        /**
+         * Load an MCADDON file as a JSZip object
+         */
+        async function loadMcAddonZip(file) {
+            const data = await readFileAsArrayBuffer(file);
+            return await JSZip.loadAsync(data);
+        }
+
+        /**
+         * Find the behavior pack folder in an MCADDON ZIP
+         * Returns the folder path or null if not found
+         */
+        async function findBehaviorPack(zip) {
+            for (const [path, zipEntry] of Object.entries(zip.files)) {
+                if (zipEntry.dir && path.includes('manifest.json') === false) continue;
+
+                const manifestPath = path.endsWith('/') ? path + 'manifest.json' : path;
+                if (zip.files[manifestPath]) {
+                    try {
+                        const manifestContent = await zip.files[manifestPath].async('string');
+                        const manifest = JSON.parse(manifestContent);
+
+                        if (manifest.modules) {
+                            for (const module of manifest.modules) {
+                                if (module.type === 'data') {
+                                    let behaviorPack = path.endsWith('/') ? path.slice(0, -1) : path.substring(0, path.lastIndexOf('/'));
+                                    if (behaviorPack === '') behaviorPack = '.';
+                                    return behaviorPack;
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        // Not a valid manifest, continue
+                    }
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Find the resources pack folder in an MCADDON ZIP
+         * Returns the folder path or null if not found
+         */
+        async function findResourcesPack(zip) {
+            for (const [path, zipEntry] of Object.entries(zip.files)) {
+                if (zipEntry.dir && path.includes('manifest.json') === false) continue;
+
+                const manifestPath = path.endsWith('/') ? path + 'manifest.json' : path;
+                if (zip.files[manifestPath]) {
+                    try {
+                        const manifestContent = await zip.files[manifestPath].async('string');
+                        const manifest = JSON.parse(manifestContent);
+
+                        if (manifest.modules) {
+                            for (const module of manifest.modules) {
+                                if (module.type === 'resources') {
+                                    let resourcesPack = path.endsWith('/') ? path.slice(0, -1) : path.substring(0, path.lastIndexOf('/'));
+                                    if (resourcesPack === '') resourcesPack = '.';
+                                    return resourcesPack;
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        // Not a valid manifest, continue
+                    }
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Extract JSON files from a ZIP, optionally filtered by path pattern
+         * @param {JSZip} zip - The ZIP object
+         * @param {Function} pathFilter - Optional function to filter paths (returns true to include)
+         * @returns {Array} Array of {path, content, parsed} objects
+         */
+        async function extractJsonFiles(zip, pathFilter = null) {
+            const jsonFiles = [];
+
+            for (const [path, entry] of Object.entries(zip.files)) {
+                if (!entry.dir && path.toLowerCase().endsWith('.json')) {
+                    if (pathFilter && !pathFilter(path)) continue;
+
+                    try {
+                        const content = await entry.async('string');
+                        const parsed = JSON.parse(content);
+                        jsonFiles.push({
+                            path: path,
+                            content: content,
+                            parsed: parsed
+                        });
+                    } catch (e) {
+                        // Skip invalid JSON files
+                    }
+                }
+            }
+
+            return jsonFiles;
+        }
+
+        /**
+         * Construct a path within the behavior pack
+         * @param {string} behaviorPack - The behavior pack base path
+         * @param {string} subPath - The sub-path (e.g., 'recipes', 'items')
+         * @returns {string} The full path
+         */
+        function constructPackPath(behaviorPack, subPath) {
+            return behaviorPack === '.' ? subPath + '/' : `${behaviorPack}/${subPath}/`;
+        }
+
         function showResult(tabNum, type, title, message) {
             const result = document.getElementById(`result${tabNum}`);
             result.className = `result ${type} show`;
@@ -1933,21 +1990,15 @@
 
             try {
                 // Load the ZIP file
-                const mcaddonData = await readFileAsArrayBuffer(file);
-                editorZip = await JSZip.loadAsync(mcaddonData);
+                editorZip = await loadMcAddonZip(file);
 
                 // Extract all JSON files
-                jsonFiles = [];
-                for (const [path, zipEntry] of Object.entries(editorZip.files)) {
-                    if (!zipEntry.dir && path.toLowerCase().endsWith('.json')) {
-                        const content = await zipEntry.async('string');
-                        jsonFiles.push({
-                            path: path,
-                            content: content,
-                            size: content.length
-                        });
-                    }
-                }
+                const extractedFiles = await extractJsonFiles(editorZip);
+                jsonFiles = extractedFiles.map(f => ({
+                    path: f.path,
+                    content: f.content,
+                    size: f.content.length
+                }));
 
                 if (jsonFiles.length === 0) {
                     throw new Error('No JSON files found in the MCADDON package.');
@@ -2500,11 +2551,8 @@
                 `;
 
                 // Load both MCADDON files
-                const sourceData = await readFileAsArrayBuffer(combineSourceFile);
-                const destData = await readFileAsArrayBuffer(combineDestFile);
-
-                const sourceZip = await JSZip.loadAsync(sourceData);
-                const destZip = await JSZip.loadAsync(destData);
+                const sourceZip = await loadMcAddonZip(combineSourceFile);
+                const destZip = await loadMcAddonZip(combineDestFile);
 
                 // Validate structure of both files
                 const sourceStructure = validateAndFindMcAddonStructure(sourceZip, combineSourceFile.name);
@@ -2638,30 +2686,6 @@
         }
 
         /**
-         * Extract all JSON files from a ZIP
-         */
-        async function extractJsonFilesFromZip(zip) {
-            const jsonFiles = {};
-
-            for (const [path, entry] of Object.entries(zip.files)) {
-                if (!entry.dir && path.toLowerCase().endsWith('.json')) {
-                    try {
-                        const content = await entry.async('string');
-                        const parsed = JSON.parse(content);
-                        jsonFiles[path] = {
-                            content: content,
-                            parsed: parsed
-                        };
-                    } catch (e) {
-                        // Skip invalid JSON files
-                    }
-                }
-            }
-
-            return jsonFiles;
-        }
-
-        /**
          * Compare two MCADDON files
          */
         async function diffMcAddonFiles() {
@@ -2678,20 +2702,28 @@
                 `;
 
                 // Load both MCADDON files
-                const file1Data = await readFileAsArrayBuffer(diffFile1);
-                const file2Data = await readFileAsArrayBuffer(diffFile2);
-
-                diffFile1Zip = await JSZip.loadAsync(file1Data);
-                diffFile2Zip = await JSZip.loadAsync(file2Data);
+                diffFile1Zip = await loadMcAddonZip(diffFile1);
+                diffFile2Zip = await loadMcAddonZip(diffFile2);
 
                 resultDiv.innerHTML = `
                     <div class="result-title">Processing...</div>
                     <div class="result-message">Extracting and comparing JSON files...</div>
                 `;
 
-                // Extract JSON files from both
-                const file1Json = await extractJsonFilesFromZip(diffFile1Zip);
-                const file2Json = await extractJsonFilesFromZip(diffFile2Zip);
+                // Extract JSON files from both and convert to object format
+                const file1Array = await extractJsonFiles(diffFile1Zip);
+                const file2Array = await extractJsonFiles(diffFile2Zip);
+
+                const file1Json = {};
+                const file2Json = {};
+
+                file1Array.forEach(f => {
+                    file1Json[f.path] = { content: f.content, parsed: f.parsed };
+                });
+
+                file2Array.forEach(f => {
+                    file2Json[f.path] = { content: f.content, parsed: f.parsed };
+                });
 
                 // Compare
                 diffResults = {
@@ -2992,8 +3024,7 @@
                 warningsDiv.innerHTML = '';
 
                 // Load the ZIP file
-                const fileData = await readFileAsArrayBuffer(validateFile);
-                validateZip = await JSZip.loadAsync(fileData);
+                validateZip = await loadMcAddonZip(validateFile);
 
                 // Run all validation checks
                 await validateStructure();
@@ -3698,8 +3729,7 @@
 
             try {
                 // Load the ZIP file
-                const mcaddonData = await readFileAsArrayBuffer(file);
-                builtinZip = await JSZip.loadAsync(mcaddonData);
+                builtinZip = await loadMcAddonZip(file);
 
                 // Apply filter function to find matching items
                 builtinFilteredItems = await builtinSelectedFeature.filterFunction(builtinZip);
