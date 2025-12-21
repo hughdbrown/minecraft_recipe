@@ -2062,6 +2062,174 @@
             return input ? input.files[0] : null;
         }
 
+        // ========== MCADDON STRUCTURE VALIDATION UTILITIES ==========
+
+        /**
+         * Find top-level folders in a ZIP file
+         * @param {JSZip} zip - The ZIP object
+         * @returns {Object} Map of folder names to boolean (isDir)
+         */
+        function findTopLevelFolders(zip) {
+            const topLevelItems = {};
+
+            for (const [path, entry] of Object.entries(zip.files)) {
+                const pathParts = path.split('/').filter(p => p.length > 0);
+                if (pathParts.length === 0) continue;
+
+                const topLevelName = pathParts[0];
+
+                if (!topLevelItems[topLevelName]) {
+                    topLevelItems[topLevelName] = {
+                        isDir: entry.dir || pathParts.length > 1,
+                        isFile: pathParts.length === 1 && !entry.dir
+                    };
+                }
+            }
+
+            return topLevelItems;
+        }
+
+        /**
+         * Validate MCADDON structure and return results
+         * @param {JSZip} zip - The ZIP object
+         * @param {string} fileName - The file name for error messages
+         * @param {Object} options - Validation options
+         * @returns {Object} Validation results with errors, warnings, behaviorFolder, resourcesFolder
+         */
+        function validateMcAddonStructure(zip, fileName, options = {}) {
+            const {
+                throwOnError = false,
+                extraFoldersAsError = false
+            } = options;
+
+            const results = {
+                errors: [],
+                warnings: [],
+                behaviorFolder: null,
+                resourcesFolder: null,
+                valid: true
+            };
+
+            const topLevelItems = findTopLevelFolders(zip);
+
+            // Check for top-level files
+            for (const [name, info] of Object.entries(topLevelItems)) {
+                if (info.isFile) {
+                    const error = {
+                        title: 'Invalid Structure',
+                        details: extraFoldersAsError
+                            ? `Top-level files are not allowed. Found file: ${name}`
+                            : 'Top-level files are not allowed in MCADDON packages.',
+                        path: name
+                    };
+
+                    if (throwOnError) {
+                        throw new Error(`Invalid structure in "${fileName}": ${error.details}`);
+                    }
+
+                    results.errors.push(error);
+                    results.valid = false;
+                }
+            }
+
+            // Find Behavior folder
+            const behaviorFolders = Object.keys(topLevelItems).filter(name =>
+                name.endsWith('Behavior')
+            );
+
+            if (behaviorFolders.length === 0) {
+                const error = {
+                    title: 'Missing Behavior Pack',
+                    details: 'No folder ending with "Behavior" found at top level.',
+                    path: null
+                };
+
+                if (throwOnError) {
+                    throw new Error(`Invalid structure in "${fileName}": ${error.details}`);
+                }
+
+                results.errors.push(error);
+                results.valid = false;
+            } else if (behaviorFolders.length > 1) {
+                const error = {
+                    title: 'Multiple Behavior Packs',
+                    details: `Multiple folders ending with "Behavior" found: ${behaviorFolders.join(', ')}`,
+                    path: null
+                };
+
+                if (throwOnError) {
+                    throw new Error(`Invalid structure in "${fileName}": ${error.details}`);
+                }
+
+                results.errors.push(error);
+                results.valid = false;
+            } else {
+                results.behaviorFolder = behaviorFolders[0];
+            }
+
+            // Find Resources folder
+            const resourcesFolders = Object.keys(topLevelItems).filter(name =>
+                name.endsWith('Resources')
+            );
+
+            if (resourcesFolders.length === 0) {
+                const error = {
+                    title: 'Missing Resources Pack',
+                    details: 'No folder ending with "Resources" found at top level.',
+                    path: null
+                };
+
+                if (throwOnError) {
+                    throw new Error(`Invalid structure in "${fileName}": ${error.details}`);
+                }
+
+                results.errors.push(error);
+                results.valid = false;
+            } else if (resourcesFolders.length > 1) {
+                const error = {
+                    title: 'Multiple Resources Packs',
+                    details: `Multiple folders ending with "Resources" found: ${resourcesFolders.join(', ')}`,
+                    path: null
+                };
+
+                if (throwOnError) {
+                    throw new Error(`Invalid structure in "${fileName}": ${error.details}`);
+                }
+
+                results.errors.push(error);
+                results.valid = false;
+            } else {
+                results.resourcesFolder = resourcesFolders[0];
+            }
+
+            // Check for extra top-level folders
+            const extraFolders = Object.keys(topLevelItems).filter(name =>
+                !name.endsWith('Behavior') && !name.endsWith('Resources')
+            );
+
+            if (extraFolders.length > 0) {
+                const issue = {
+                    title: extraFoldersAsError ? 'Extra Top-Level Folders' : 'Extra Top-Level Folders',
+                    details: extraFoldersAsError
+                        ? `Extra top-level folders found: ${extraFolders.join(', ')}. Only Behavior and Resources folders are allowed.`
+                        : `Found unexpected top-level folders: ${extraFolders.join(', ')}`,
+                    path: null
+                };
+
+                if (extraFoldersAsError) {
+                    if (throwOnError) {
+                        throw new Error(`Invalid structure in "${fileName}": ${issue.details}`);
+                    }
+                    results.errors.push(issue);
+                    results.valid = false;
+                } else {
+                    results.warnings.push(issue);
+                }
+            }
+
+            return results;
+        }
+
         // ========== MCADDON EDITOR FUNCTIONS ==========
 
         async function handleMcAddonEditorSelect() {
@@ -2427,65 +2595,14 @@
          * Returns: { behaviorFolder: string, resourcesFolder: string } or throws error
          */
         function validateAndFindMcAddonStructure(zip, fileName) {
-            const topLevelItems = {};
-
-            // Find all top-level items
-            for (const [path, entry] of Object.entries(zip.files)) {
-                // Check if this is a top-level item (no slashes except trailing)
-                const pathParts = path.split('/').filter(p => p.length > 0);
-
-                if (pathParts.length === 0) continue; // Root
-
-                const topLevelName = pathParts[0];
-
-                if (pathParts.length === 1 && !entry.dir) {
-                    // Top-level file - not allowed
-                    throw new Error(`Invalid structure in "${fileName}": Top-level files are not allowed. Found file: ${topLevelName}`);
-                }
-
-                if (!topLevelItems[topLevelName]) {
-                    topLevelItems[topLevelName] = entry.dir;
-                }
-            }
-
-            // Find Behavior folder
-            const behaviorFolders = Object.keys(topLevelItems).filter(name =>
-                name.endsWith('Behavior')
-            );
-
-            if (behaviorFolders.length === 0) {
-                throw new Error(`Invalid structure in "${fileName}": No folder ending with "Behavior" found at top level.`);
-            }
-
-            if (behaviorFolders.length > 1) {
-                throw new Error(`Invalid structure in "${fileName}": Multiple folders ending with "Behavior" found: ${behaviorFolders.join(', ')}`);
-            }
-
-            // Find Resources folder
-            const resourcesFolders = Object.keys(topLevelItems).filter(name =>
-                name.endsWith('Resources')
-            );
-
-            if (resourcesFolders.length === 0) {
-                throw new Error(`Invalid structure in "${fileName}": No folder ending with "Resources" found at top level.`);
-            }
-
-            if (resourcesFolders.length > 1) {
-                throw new Error(`Invalid structure in "${fileName}": Multiple folders ending with "Resources" found: ${resourcesFolders.join(', ')}`);
-            }
-
-            // Check for extra top-level folders
-            const extraFolders = Object.keys(topLevelItems).filter(name =>
-                !name.endsWith('Behavior') && !name.endsWith('Resources')
-            );
-
-            if (extraFolders.length > 0) {
-                throw new Error(`Invalid structure in "${fileName}": Extra top-level folders found: ${extraFolders.join(', ')}. Only Behavior and Resources folders are allowed.`);
-            }
+            const results = validateMcAddonStructure(zip, fileName, {
+                throwOnError: true,
+                extraFoldersAsError: true
+            });
 
             return {
-                behaviorFolder: behaviorFolders[0],
-                resourcesFolder: resourcesFolders[0]
+                behaviorFolder: results.behaviorFolder,
+                resourcesFolder: results.resourcesFolder
             };
         }
 
@@ -3060,78 +3177,14 @@
          * Validate MCADDON structure (mandatory check)
          */
         async function validateStructure() {
-            const topLevelItems = {};
+            const results = validateMcAddonStructure(validateZip, validateFile.name, {
+                throwOnError: false,
+                extraFoldersAsError: false
+            });
 
-            // Find all top-level items
-            for (const [path, entry] of Object.entries(validateZip.files)) {
-                const pathParts = path.split('/').filter(p => p.length > 0);
-                if (pathParts.length === 0) continue;
-
-                const topLevelName = pathParts[0];
-
-                if (pathParts.length === 1 && !entry.dir) {
-                    validationResults.errors.push({
-                        title: 'Invalid Structure',
-                        details: 'Top-level files are not allowed in MCADDON packages.',
-                        path: topLevelName
-                    });
-                }
-
-                if (!topLevelItems[topLevelName]) {
-                    topLevelItems[topLevelName] = entry.dir;
-                }
-            }
-
-            // Check for Behavior folder
-            const behaviorFolders = Object.keys(topLevelItems).filter(name =>
-                name.endsWith('Behavior')
-            );
-
-            if (behaviorFolders.length === 0) {
-                validationResults.errors.push({
-                    title: 'Missing Behavior Pack',
-                    details: 'No folder ending with "Behavior" found at top level.',
-                    path: null
-                });
-            } else if (behaviorFolders.length > 1) {
-                validationResults.errors.push({
-                    title: 'Multiple Behavior Packs',
-                    details: `Found multiple folders ending with "Behavior": ${behaviorFolders.join(', ')}`,
-                    path: null
-                });
-            }
-
-            // Check for Resources folder
-            const resourcesFolders = Object.keys(topLevelItems).filter(name =>
-                name.endsWith('Resources')
-            );
-
-            if (resourcesFolders.length === 0) {
-                validationResults.errors.push({
-                    title: 'Missing Resources Pack',
-                    details: 'No folder ending with "Resources" found at top level.',
-                    path: null
-                });
-            } else if (resourcesFolders.length > 1) {
-                validationResults.errors.push({
-                    title: 'Multiple Resources Packs',
-                    details: `Found multiple folders ending with "Resources": ${resourcesFolders.join(', ')}`,
-                    path: null
-                });
-            }
-
-            // Check for extra top-level folders
-            const extraFolders = Object.keys(topLevelItems).filter(name =>
-                !name.endsWith('Behavior') && !name.endsWith('Resources')
-            );
-
-            if (extraFolders.length > 0) {
-                validationResults.warnings.push({
-                    title: 'Extra Top-Level Folders',
-                    details: `Found unexpected top-level folders: ${extraFolders.join(', ')}`,
-                    path: null
-                });
-            }
+            // Add errors and warnings to validationResults
+            validationResults.errors.push(...results.errors);
+            validationResults.warnings.push(...results.warnings);
         }
 
         /**
