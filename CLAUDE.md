@@ -57,11 +57,13 @@ A web-based tool for creating and managing Minecraft Bedrock Edition recipes and
 - **Implementation Details**:
   - Filter function: Finds behavior pack → items directory → items with `minecraft:food` component
   - Effects appended to existing effects (non-destructive)
-  - JSON structure: `{name: tag, duration: seconds, amplifier: intensity-1}`
+  - JSON structure: `{name: "minecraft:tag", duration: ticks, amplifier: intensity-1}`
   - Real-time validation with error messages
-  - Duration: positive integer (seconds)
+  - Duration: positive integer (seconds, converted to ticks automatically: seconds × 20)
   - Intensity: 1-255 range
-  - Tag: free-form text (without "minecraft:" prefix)
+  - Tag: free-form text ("minecraft:" prefix added automatically if not present)
+  - **Format Version**: Automatically changed to 1.16.100 (required for food effects to work)
+  - Both behavior pack AND resource pack item files are updated to format_version 1.16.100
 
 - **Location**:
   - HTML: Lines 1344-1412
@@ -150,10 +152,67 @@ if (builtinSelectedFeature.id === 'your_feature_id') {
 - Identifies behavior packs via `modules[].type === 'data'`
 - Behavior pack path used as base for item/recipe/block paths
 
+### Resource Pack Detection
+- Searches for `manifest.json` files
+- Identifies resource packs via `modules[].type === 'resources'`
+- Resource pack path used for textures, models, and visual components
+
 ### Common Paths
 - Items: `{behaviorPack}/items/*.json`
 - Recipes: `{behaviorPack}/recipes/*.json`
 - Blocks: `{behaviorPack}/blocks/*.json`
+
+### Format Version Conversion System
+
+The food effects feature includes an intelligent conversion system that handles downgrading from any format version to 1.16.100:
+
+**Why Conversion is Necessary:**
+- MCPE-180398 bug: Food effects don't work in format_version 1.20.50+
+- Simply changing the version number isn't enough - structure must be compatible
+- Newer versions have components that crash or are ignored in 1.16.100
+
+**Conversion Process (`convertToFormat1_16_100` function):**
+
+1. **Detection Phase:**
+   - Captures original `format_version`
+   - Identifies incompatible components
+   - Prepares deep clone for modification
+
+2. **Component Removal:**
+   - `menu_category` (description): Doesn't exist in 1.16.100
+   - `minecraft:use_modifiers`: Added in 1.20.50+
+   - `minecraft:custom_components`: Script-based, not supported
+   - `minecraft:repairable`, `minecraft:enchantable`, `minecraft:damage`: 1.20+ only
+
+3. **Structure Conversion:**
+   - `minecraft:tags`: Converts from object `{tags: [...]}` to direct array `[...]`
+
+4. **Tracking & Reporting:**
+   - Records all removed components
+   - Generates user-friendly warnings
+   - Explains consequences of changes
+
+**User Notification Example:**
+```
+Food effects applied successfully!
+
+⚠️ REMOVED INCOMPATIBLE COMPONENTS:
+  • menu_category (from description)
+  • minecraft:use_modifiers
+
+📋 CHANGES MADE:
+  • Format version downgraded: 1.21.0 → 1.16.100
+  • (Required for food effects to work - MCPE-180398 bug)
+  • Items will appear under generic "Items" category in Creative Mode
+  • Custom use duration and movement modifiers removed
+
+Click Download to save the modified MCADDON file.
+```
+
+**Both BP and RP Files Updated:**
+- Behavior pack item: Structure converted, effects added
+- Resource pack item: Structure converted (visual components only)
+- Ensures compatibility across entire MCADDON package
 
 ## Important Patterns
 
@@ -208,10 +267,10 @@ downloadBlob(blob, 'filename.mcaddon');
 10. Click Download
 11. Verify modified MCADDON contains updated food item JSON
 
-### Expected Minecraft Item JSON Structure
+### Expected Minecraft Item JSON Structure (After Food Effects Applied)
 ```json
 {
-  "format_version": "1.20.0",
+  "format_version": "1.16.100",
   "minecraft:item": {
     "description": {
       "identifier": "namespace:item_name"
@@ -221,8 +280,8 @@ downloadBlob(blob, 'filename.mcaddon');
         "nutrition": 4,
         "effects": [
           {
-            "name": "regeneration",
-            "duration": 30,
+            "name": "minecraft:regeneration",
+            "duration": 600,
             "amplifier": 1
           }
         ]
@@ -231,8 +290,44 @@ downloadBlob(blob, 'filename.mcaddon');
   }
 }
 ```
+**Note**: Duration is in ticks (600 ticks = 30 seconds). Format version is 1.16.100 due to MCPE-180398 bug.
 
 ## Recent Changes
+
+### 2025-12-21: Food Effects Bug Fix (Enhanced Version Conversion)
+- **Fixed**: Food effects not working in Minecraft (MCPE-180398 bug)
+- **Root Cause**: Format versions 1.20.50+ have a confirmed bug where `effects` property in `minecraft:food` doesn't work
+- **Solution**: Intelligent format_version conversion from ANY version to 1.16.100 for both BP and RP item files
+
+- **New Conversion System**:
+  - Added `convertToFormat1_16_100()` function that properly converts item JSON structure
+  - Detects original format_version and tracks what changed
+  - **Removes incompatible components** that don't work in 1.16.100:
+    - `menu_category` (from description)
+    - `minecraft:use_modifiers` (movement_modifier, use_duration)
+    - `minecraft:custom_components`
+    - `minecraft:repairable`, `minecraft:enchantable`, `minecraft:damage`
+  - **Converts component formats**:
+    - `minecraft:tags` from 1.20.50+ object format to 1.16.100 array format
+  - Provides detailed user feedback about all changes made
+
+- **Enhanced User Notifications**:
+  - Shows original → new format version
+  - Lists all removed incompatible components
+  - Explains consequences (e.g., "Items will appear under generic 'Items' category")
+  - Separate tracking for BP and RP changes
+
+- **Food Effects Processing**:
+  - Added automatic "minecraft:" prefix to effect names
+  - Convert duration from seconds to ticks (× 20) for proper Minecraft format
+  - Search and update corresponding resource pack item file (if exists)
+
+- **New Helper Functions**:
+  - `convertToFormat1_16_100()`: Comprehensive format conversion (Lines 1945-2016)
+  - `findResourcePackItemFile()`: Locate RP items by identifier (Lines 1913-1943)
+
+- Files modified: `minecraft_recipe.html`, `CLAUDE.md`
+- Lines added/modified: ~200+ lines
 
 ### 2025-12-20: Builtin Features Implementation
 - Added complete Builtin Features system (Screen 5)
