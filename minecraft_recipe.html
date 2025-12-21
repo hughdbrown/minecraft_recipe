@@ -1943,73 +1943,107 @@
         }
 
         /**
-         * Convert an item JSON to format_version 1.16.100 compatible structure
-         * Removes incompatible components and warns about changes
+         * Convert an item JSON to format_version 1.10 with split BP/RP structure
+         * Format 1.10 requires items to be split into two files: one in BP (functional) and one in RP (visual)
          * @param {Object} itemData - The item JSON object
-         * @param {string} itemType - "behavior" or "resource" for appropriate handling
-         * @returns {Object} { convertedData, originalVersion, removedComponents }
+         * @returns {Object} { behaviorPackData, resourcePackData, originalVersion, removedComponents, warnings }
          */
-        function convertToFormat1_16_100(itemData, itemType = 'behavior') {
+        function convertToFormat1_10(itemData) {
             const result = {
-                convertedData: JSON.parse(JSON.stringify(itemData)), // Deep clone
+                behaviorPackData: null,
+                resourcePackData: null,
                 originalVersion: itemData.format_version,
                 removedComponents: [],
                 warnings: []
             };
 
-            // Set format_version to 1.16.100
-            result.convertedData.format_version = "1.16.100";
-
-            if (!result.convertedData['minecraft:item']) {
+            if (!itemData['minecraft:item']) {
                 return result;
             }
 
-            const item = result.convertedData['minecraft:item'];
+            // Lists of components by category
+            const functionalComponents = [
+                'minecraft:food',
+                'minecraft:max_stack_size',
+                'minecraft:hand_equipped',
+                'minecraft:stacked_by_data',
+                'minecraft:foil',
+                'minecraft:allow_off_hand',
+                'minecraft:should_despawn',
+                'minecraft:liquid_clipped',
+                'minecraft:durability',
+                'minecraft:on_use',
+                'minecraft:on_use_on'
+            ];
 
-            // Remove incompatible description properties (1.20.50+)
-            if (item.description) {
-                // menu_category doesn't work in 1.16.100
-                if (item.description.menu_category) {
-                    result.removedComponents.push('menu_category (from description)');
-                    result.warnings.push('Items will appear under generic "Items" category in Creative Mode');
-                    delete item.description.menu_category;
+            const visualComponents = [
+                'minecraft:icon'
+            ];
+
+            const item = itemData['minecraft:item'];
+
+            // Create Behavior Pack item (functional components only)
+            result.behaviorPackData = {
+                format_version: "1.10",
+                "minecraft:item": {
+                    description: {
+                        identifier: item.description?.identifier || 'unknown:item'
+                    },
+                    components: {}
+                }
+            };
+
+            // Create Resource Pack item (visual components only)
+            result.resourcePackData = {
+                format_version: "1.10",
+                "minecraft:item": {
+                    description: {
+                        identifier: item.description?.identifier || 'unknown:item'
+                    },
+                    components: {}
+                }
+            };
+
+            // Process components from original item
+            if (item.components) {
+                for (const [componentName, componentValue] of Object.entries(item.components)) {
+                    if (functionalComponents.includes(componentName)) {
+                        // Add to BP file
+                        result.behaviorPackData['minecraft:item'].components[componentName] =
+                            JSON.parse(JSON.stringify(componentValue)); // Deep clone
+                    } else if (visualComponents.includes(componentName)) {
+                        // Add to RP file
+                        result.resourcePackData['minecraft:item'].components[componentName] =
+                            JSON.parse(JSON.stringify(componentValue)); // Deep clone
+                    } else {
+                        // Component not supported in format 1.10
+                        result.removedComponents.push(componentName);
+                    }
                 }
             }
 
-            // Remove incompatible components
-            if (item.components) {
-                // minecraft:use_modifiers (introduced in 1.20.50+)
-                if (item.components['minecraft:use_modifiers']) {
-                    result.removedComponents.push('minecraft:use_modifiers');
-                    result.warnings.push('Custom use duration and movement modifiers removed');
-                    delete item.components['minecraft:use_modifiers'];
+            // Handle tags - needs special conversion
+            if (item.components?.['minecraft:tags']) {
+                const tags = item.components['minecraft:tags'];
+                if (tags.tags && Array.isArray(tags.tags)) {
+                    // Convert from 1.20.50+ object format to 1.10 array format
+                    result.behaviorPackData['minecraft:item'].components['minecraft:tags'] = tags.tags;
+                } else if (Array.isArray(tags)) {
+                    // Already in correct format
+                    result.behaviorPackData['minecraft:item'].components['minecraft:tags'] = tags;
                 }
+            }
 
-                // minecraft:tags format change (1.20.50+ uses object, older uses array)
-                if (item.components['minecraft:tags']) {
-                    const tags = item.components['minecraft:tags'];
-                    if (tags.tags && Array.isArray(tags.tags)) {
-                        // Convert from 1.20.50+ format to 1.16.100 format
-                        // In 1.16.100, it's just an array of strings directly
-                        result.convertedData['minecraft:item'].components['minecraft:tags'] = tags.tags;
-                        result.warnings.push('Tags format converted to 1.16.100 structure');
-                    }
-                }
+            // Add warnings
+            if (result.originalVersion && result.originalVersion !== "1.10") {
+                result.warnings.push(`Format version changed: ${result.originalVersion} → 1.10`);
+                result.warnings.push('Using vanilla Enchanted Golden Apple format (split BP/RP files)');
+            }
 
-                // Remove any other known 1.20+ components
-                const incompatible1_20Components = [
-                    'minecraft:custom_components',
-                    'minecraft:repairable',
-                    'minecraft:enchantable',
-                    'minecraft:damage'
-                ];
+            result.warnings.push('Items will appear under generic "Items" category in Creative Mode');
 
-                for (const component of incompatible1_20Components) {
-                    if (item.components[component]) {
-                        result.removedComponents.push(component);
-                        delete item.components[component];
-                    }
-                }
+            if (result.removedComponents.length > 0) {
+                result.warnings.push(`Removed ${result.removedComponents.length} incompatible component(s)`);
             }
 
             return result;
@@ -4143,32 +4177,29 @@
                     // Get the item data
                     const itemData = JSON.parse(builtinSelectedItem.content);
 
-                    // CRITICAL FIX: Convert to format_version 1.16.100 because format_version 1.20.50+ has a bug
-                    // where the effects property in minecraft:food doesn't work (MCPE-180398)
-                    const conversionResult = convertToFormat1_16_100(itemData, 'behavior');
-                    const convertedItemData = conversionResult.convertedData;
+                    // CRITICAL FIX: Convert to format_version 1.10 with split BP/RP files
+                    // Format 1.10 is the last version where food effects work (vanilla Enchanted Golden Apple approach)
+                    // This requires splitting the item into two files: one in BP (functional) and one in RP (visual)
+                    const conversionResult = convertToFormat1_10(itemData);
+                    const bpItemData = conversionResult.behaviorPackData;
+                    const rpItemData = conversionResult.resourcePackData;
 
                     // Track changes for user notification
                     const allWarnings = [];
                     const allRemovedComponents = [];
 
-                    // Build warning message if downgrading from newer version
-                    if (conversionResult.originalVersion && conversionResult.originalVersion !== "1.16.100") {
-                        allWarnings.push(`Format version downgraded: ${conversionResult.originalVersion} → 1.16.100`);
-                        allWarnings.push('(Required for food effects to work - MCPE-180398 bug)');
+                    // Add conversion warnings
+                    if (conversionResult.warnings.length > 0) {
+                        allWarnings.push(...conversionResult.warnings);
                     }
 
                     if (conversionResult.removedComponents.length > 0) {
                         allRemovedComponents.push(...conversionResult.removedComponents);
                     }
 
-                    if (conversionResult.warnings.length > 0) {
-                        allWarnings.push(...conversionResult.warnings);
-                    }
-
                     // Ensure the food component has an effects array
-                    if (!convertedItemData['minecraft:item'].components['minecraft:food'].effects) {
-                        convertedItemData['minecraft:item'].components['minecraft:food'].effects = [];
+                    if (!bpItemData['minecraft:item'].components['minecraft:food'].effects) {
+                        bpItemData['minecraft:item'].components['minecraft:food'].effects = [];
                     }
 
                     // Add new effects (append to existing)
@@ -4184,45 +4215,41 @@
                             duration: parseInt(effect.duration) * 20,  // Convert seconds to ticks (20 ticks = 1 second)
                             amplifier: parseInt(effect.intensity) - 1  // Minecraft uses 0-based amplifier
                         };
-                        convertedItemData['minecraft:item'].components['minecraft:food'].effects.push(effectObj);
+                        bpItemData['minecraft:item'].components['minecraft:food'].effects.push(effectObj);
                     }
 
                     // Update the behavior pack item JSON in the zip
-                    const updatedJson = JSON.stringify(convertedItemData, null, 2);
-                    builtinModifiedZip.file(builtinSelectedItem.path, updatedJson);
+                    const updatedBpJson = JSON.stringify(bpItemData, null, 2);
+                    builtinModifiedZip.file(builtinSelectedItem.path, updatedBpJson);
 
-                    // Find and update the corresponding resource pack item file (if it exists)
-                    // In format version 1.16.100 and earlier, items are split between BP and RP
-                    const itemIdentifier = convertedItemData['minecraft:item'].description?.identifier;
+                    // Find or create the corresponding resource pack item file
+                    // In format version 1.10, items MUST be split between BP and RP
+                    const itemIdentifier = bpItemData['minecraft:item'].description?.identifier;
                     if (itemIdentifier) {
                         const resourcesPack = await findResourcesPack(builtinModifiedZip);
                         if (resourcesPack) {
-                            // Search for the resource pack item file
-                            const rpItemPath = await findResourcePackItemFile(builtinModifiedZip, resourcesPack, itemIdentifier);
-                            if (rpItemPath) {
-                                try {
-                                    const rpItemContent = await builtinModifiedZip.file(rpItemPath).async('string');
-                                    const rpItemData = JSON.parse(rpItemContent);
+                            // Search for existing resource pack item file
+                            let rpItemPath = await findResourcePackItemFile(builtinModifiedZip, resourcesPack, itemIdentifier);
 
-                                    // Convert resource pack item to 1.16.100
-                                    const rpConversionResult = convertToFormat1_16_100(rpItemData, 'resource');
-
-                                    // Track RP-specific changes
-                                    if (rpConversionResult.removedComponents.length > 0) {
-                                        allRemovedComponents.push(...rpConversionResult.removedComponents.map(c => c + ' (RP)'));
-                                    }
-                                    if (rpConversionResult.warnings.length > 0) {
-                                        allWarnings.push(...rpConversionResult.warnings.map(w => w + ' (RP)'));
-                                    }
-
-                                    // Update the resource pack item in the zip
-                                    const updatedRpJson = JSON.stringify(rpConversionResult.convertedData, null, 2);
-                                    builtinModifiedZip.file(rpItemPath, updatedRpJson);
-                                } catch (e) {
-                                    console.warn('Could not update resource pack item:', e);
-                                    allWarnings.push('Warning: Could not update resource pack file');
-                                }
+                            if (!rpItemPath) {
+                                // Create new RP item file if it doesn't exist
+                                // Extract filename from BP path
+                                const bpFilename = builtinSelectedItem.path.split('/').pop();
+                                rpItemPath = `${resourcesPack}/items/${bpFilename}`;
+                                allWarnings.push('Created new resource pack item file (required for format 1.10)');
                             }
+
+                            try {
+                                // Write the resource pack item to the zip
+                                const updatedRpJson = JSON.stringify(rpItemData, null, 2);
+                                builtinModifiedZip.file(rpItemPath, updatedRpJson);
+                                allWarnings.push('Updated both BP and RP item files (format 1.10 requires split files)');
+                            } catch (e) {
+                                console.warn('Could not create/update resource pack item:', e);
+                                allWarnings.push('Warning: Could not create/update resource pack file');
+                            }
+                        } else {
+                            allWarnings.push('Warning: No resource pack found - RP item file not created');
                         }
                     }
 
