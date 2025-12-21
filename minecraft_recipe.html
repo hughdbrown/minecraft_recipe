@@ -2062,6 +2062,38 @@
             return input ? input.files[0] : null;
         }
 
+        // ========== DOWNLOAD UTILITIES ==========
+
+        /**
+         * Generate a modified filename with a suffix before the extension
+         * @param {string} originalFileName - The original file name
+         * @param {string} suffix - The suffix to add (e.g., '_web', '_edited')
+         * @returns {string} The modified filename
+         */
+        function generateModifiedFileName(originalFileName, suffix) {
+            return originalFileName.replace(/\.mcaddon$/i, `${suffix}.mcaddon`);
+        }
+
+        /**
+         * Download MCADDON file and show success message
+         * @param {JSZip} zip - The ZIP object to download
+         * @param {string} originalFileName - The original file name
+         * @param {string} suffix - The suffix to add to the filename
+         * @param {string} resultContainerId - Optional result container to show success message
+         * @returns {Promise<string>} The output filename
+         */
+        async function downloadMcAddon(zip, originalFileName, suffix, resultContainerId = null) {
+            const blob = await zip.generateAsync({ type: 'blob' });
+            const outputFileName = generateModifiedFileName(originalFileName, suffix);
+            downloadBlob(blob, outputFileName);
+
+            if (resultContainerId) {
+                showSuccess(resultContainerId, `"${outputFileName}" has been downloaded.`, 'Downloaded!');
+            }
+
+            return outputFileName;
+        }
+
         // ========== MCADDON STRUCTURE VALIDATION UTILITIES ==========
 
         /**
@@ -2784,13 +2816,7 @@
             if (!combinedZip) return;
 
             try {
-                const blob = await combinedZip.generateAsync({ type: 'blob' });
-                const baseName = combineDestFile.name.replace(/\.mcaddon$/i, '');
-                const outputFileName = `${baseName}_combined.mcaddon`;
-
-                downloadBlob(blob, outputFileName);
-
-                showSuccess('combineResult', `"${outputFileName}" has been downloaded.`, 'Downloaded!');
+                await downloadMcAddon(combinedZip, combineDestFile.name, '_combined', 'combineResult');
             } catch (error) {
                 showError('combineResult', `Failed to download: ${error.message}`);
             }
@@ -4049,9 +4075,7 @@
             }
 
             try {
-                const blob = await builtinModifiedZip.generateAsync({ type: 'blob' });
-                const fileName = builtinMcAddonFile.name.replace('.mcaddon', '_modified.mcaddon');
-                downloadBlob(blob, fileName);
+                await downloadMcAddon(builtinModifiedZip, builtinMcAddonFile.name, '_modified');
             } catch (error) {
                 alert(`Error generating download: ${error.message}`);
             }
