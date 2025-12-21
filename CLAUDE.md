@@ -62,8 +62,9 @@ A web-based tool for creating and managing Minecraft Bedrock Edition recipes and
   - Duration: positive integer (seconds, converted to ticks automatically: seconds × 20)
   - Intensity: 1-255 range
   - Tag: free-form text ("minecraft:" prefix added automatically if not present)
-  - **Format Version**: Automatically changed to 1.16.100 (required for food effects to work)
-  - Both behavior pack AND resource pack item files are updated to format_version 1.16.100
+  - **Format Version**: Automatically changed to 1.10 (vanilla Enchanted Golden Apple format)
+  - Items are split into TWO files: behavior pack (functional) and resource pack (visual)
+  - Creates RP item file if it doesn't exist
 
 - **Location**:
   - HTML: Lines 1344-1412
@@ -164,55 +165,59 @@ if (builtinSelectedFeature.id === 'your_feature_id') {
 
 ### Format Version Conversion System
 
-The food effects feature includes an intelligent conversion system that handles downgrading from any format version to 1.16.100:
+The food effects feature uses format version 1.10 with split BP/RP files (the vanilla Enchanted Golden Apple approach):
 
-**Why Conversion is Necessary:**
-- MCPE-180398 bug: Food effects don't work in format_version 1.20.50+
-- Simply changing the version number isn't enough - structure must be compatible
-- Newer versions have components that crash or are ignored in 1.16.100
+**Why Format 1.10 is Used:**
+- Format 1.10 is confirmed working for food effects in the community
+- Uses the same approach as Mojang's vanilla Enchanted Golden Apple
+- Format versions 1.16.100+ and 1.20.50+ have bugs/issues with food effects
 
-**Conversion Process (`convertToFormat1_16_100` function):**
+**Conversion Process (`convertToFormat1_10` function):**
 
 1. **Detection Phase:**
    - Captures original `format_version`
-   - Identifies incompatible components
-   - Prepares deep clone for modification
+   - Identifies functional vs. visual components
 
-2. **Component Removal:**
-   - `menu_category` (description): Doesn't exist in 1.16.100
-   - `minecraft:use_modifiers`: Added in 1.20.50+
-   - `minecraft:custom_components`: Script-based, not supported
-   - `minecraft:repairable`, `minecraft:enchantable`, `minecraft:damage`: 1.20+ only
+2. **File Splitting:**
+   - **Behavior Pack file** gets functional components:
+     - `minecraft:food` (with effects)
+     - `minecraft:max_stack_size`
+     - `minecraft:hand_equipped`
+     - Other gameplay-related components
+   - **Resource Pack file** gets visual components:
+     - `minecraft:icon`
+     - Texture references
 
-3. **Structure Conversion:**
-   - `minecraft:tags`: Converts from object `{tags: [...]}` to direct array `[...]`
+3. **Component Handling:**
+   - Removes incompatible 1.20+ components
+   - Converts `minecraft:tags` from object to array format (if needed)
 
-4. **Tracking & Reporting:**
-   - Records all removed components
-   - Generates user-friendly warnings
-   - Explains consequences of changes
+4. **File Creation:**
+   - Updates existing BP item file
+   - Creates or updates RP item file
+   - Both files use same identifier
 
 **User Notification Example:**
 ```
 Food effects applied successfully!
 
 ⚠️ REMOVED INCOMPATIBLE COMPONENTS:
-  • menu_category (from description)
   • minecraft:use_modifiers
+  • minecraft:custom_components
 
 📋 CHANGES MADE:
-  • Format version downgraded: 1.21.0 → 1.16.100
-  • (Required for food effects to work - MCPE-180398 bug)
+  • Format version changed: 1.21.0 → 1.10
+  • Using vanilla Enchanted Golden Apple format (split BP/RP files)
   • Items will appear under generic "Items" category in Creative Mode
-  • Custom use duration and movement modifiers removed
+  • Updated both BP and RP item files (format 1.10 requires split files)
 
 Click Download to save the modified MCADDON file.
 ```
 
-**Both BP and RP Files Updated:**
-- Behavior pack item: Structure converted, effects added
-- Resource pack item: Structure converted (visual components only)
-- Ensures compatibility across entire MCADDON package
+**Split File Structure:**
+- Behavior pack item: Functional components + effects
+- Resource pack item: Visual components only
+- Both files required for format 1.10 to work properly
 
 ## Important Patterns
 
@@ -268,9 +273,11 @@ downloadBlob(blob, 'filename.mcaddon');
 11. Verify modified MCADDON contains updated food item JSON
 
 ### Expected Minecraft Item JSON Structure (After Food Effects Applied)
+
+**Behavior Pack File** (`BP/items/item_name.json`):
 ```json
 {
-  "format_version": "1.16.100",
+  "format_version": "1.10",
   "minecraft:item": {
     "description": {
       "identifier": "namespace:item_name"
@@ -290,44 +297,63 @@ downloadBlob(blob, 'filename.mcaddon');
   }
 }
 ```
-**Note**: Duration is in ticks (600 ticks = 30 seconds). Format version is 1.16.100 due to MCPE-180398 bug.
+
+**Resource Pack File** (`RP/items/item_name.json`):
+```json
+{
+  "format_version": "1.10",
+  "minecraft:item": {
+    "description": {
+      "identifier": "namespace:item_name"
+    },
+    "components": {
+      "minecraft:icon": "item_texture_name"
+    }
+  }
+}
+```
+
+**Note**: Duration is in ticks (600 ticks = 30 seconds). Format version 1.10 uses split BP/RP files (vanilla Enchanted Golden Apple format).
 
 ## Recent Changes
 
-### 2025-12-21: Food Effects Bug Fix (Enhanced Version Conversion)
-- **Fixed**: Food effects not working in Minecraft (MCPE-180398 bug)
-- **Root Cause**: Format versions 1.20.50+ have a confirmed bug where `effects` property in `minecraft:food` doesn't work
-- **Solution**: Intelligent format_version conversion from ANY version to 1.16.100 for both BP and RP item files
+### 2025-12-21: Food Effects Bug Fix (Format 1.10 with Split Files)
+- **Fixed**: Food effects not working in Minecraft
+- **Root Cause**: Format versions 1.16.100+ and 1.20.50+ have issues with food effects
+- **Solution**: Use format version 1.10 with split BP/RP files (vanilla Enchanted Golden Apple approach)
 
 - **New Conversion System**:
-  - Added `convertToFormat1_16_100()` function that properly converts item JSON structure
-  - Detects original format_version and tracks what changed
-  - **Removes incompatible components** that don't work in 1.16.100:
-    - `menu_category` (from description)
-    - `minecraft:use_modifiers` (movement_modifier, use_duration)
-    - `minecraft:custom_components`
-    - `minecraft:repairable`, `minecraft:enchantable`, `minecraft:damage`
+  - Added `convertToFormat1_10()` function that splits items into BP and RP files
+  - Detects original format_version and creates two separate JSON files
+  - **Splits components properly**:
+    - **BP file** gets functional components (`minecraft:food`, `minecraft:max_stack_size`, etc.)
+    - **RP file** gets visual components (`minecraft:icon`)
+  - **Removes incompatible components** that don't work in format 1.10:
+    - `menu_category`, `minecraft:use_modifiers`, `minecraft:custom_components`
+    - Any 1.20+ components
   - **Converts component formats**:
-    - `minecraft:tags` from 1.20.50+ object format to 1.16.100 array format
+    - `minecraft:tags` from 1.20.50+ object format to 1.10 array format
+  - Creates RP item file if it doesn't exist
   - Provides detailed user feedback about all changes made
 
 - **Enhanced User Notifications**:
-  - Shows original → new format version
+  - Shows original → new format version (1.10)
   - Lists all removed incompatible components
-  - Explains consequences (e.g., "Items will appear under generic 'Items' category")
-  - Separate tracking for BP and RP changes
+  - Explains that files are split into BP and RP
+  - Warns that items appear under generic "Items" category
 
 - **Food Effects Processing**:
   - Added automatic "minecraft:" prefix to effect names
   - Convert duration from seconds to ticks (× 20) for proper Minecraft format
-  - Search and update corresponding resource pack item file (if exists)
+  - Effects added to BP file only (functional component)
+  - RP file contains visual components only
 
 - **New Helper Functions**:
-  - `convertToFormat1_16_100()`: Comprehensive format conversion (Lines 1945-2016)
+  - `convertToFormat1_10()`: Splits items into BP/RP format 1.10 structure (Lines 1945-2050)
   - `findResourcePackItemFile()`: Locate RP items by identifier (Lines 1913-1943)
 
 - Files modified: `minecraft_recipe.html`, `CLAUDE.md`
-- Lines added/modified: ~200+ lines
+- Lines added/modified: ~250+ lines
 
 ### 2025-12-20: Builtin Features Implementation
 - Added complete Builtin Features system (Screen 5)
