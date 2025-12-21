@@ -1911,6 +1911,111 @@
         }
 
         /**
+         * Find a resource pack item file by identifier
+         * @param {JSZip} zip - The MCADDON ZIP object
+         * @param {string} resourcesPack - The resource pack folder path
+         * @param {string} identifier - The item identifier (e.g., "namespace:item_name")
+         * @returns {string|null} The path to the resource pack item file, or null if not found
+         */
+        async function findResourcePackItemFile(zip, resourcesPack, identifier) {
+            // Search in the resource pack's items directory
+            for (const [path, zipEntry] of Object.entries(zip.files)) {
+                if (zipEntry.dir) continue;
+                if (!path.toLowerCase().includes('/items/')) continue;
+                if (!path.toLowerCase().endsWith('.json')) continue;
+
+                // Check if this path is within the resource pack
+                if (!path.startsWith(resourcesPack)) continue;
+
+                try {
+                    const content = await zipEntry.async('string');
+                    const itemData = JSON.parse(content);
+
+                    // Check if this item matches the identifier
+                    if (itemData['minecraft:item']?.description?.identifier === identifier) {
+                        return path;
+                    }
+                } catch (e) {
+                    // Invalid JSON or structure, skip
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Convert an item JSON to format_version 1.16.100 compatible structure
+         * Removes incompatible components and warns about changes
+         * @param {Object} itemData - The item JSON object
+         * @param {string} itemType - "behavior" or "resource" for appropriate handling
+         * @returns {Object} { convertedData, originalVersion, removedComponents }
+         */
+        function convertToFormat1_16_100(itemData, itemType = 'behavior') {
+            const result = {
+                convertedData: JSON.parse(JSON.stringify(itemData)), // Deep clone
+                originalVersion: itemData.format_version,
+                removedComponents: [],
+                warnings: []
+            };
+
+            // Set format_version to 1.16.100
+            result.convertedData.format_version = "1.16.100";
+
+            if (!result.convertedData['minecraft:item']) {
+                return result;
+            }
+
+            const item = result.convertedData['minecraft:item'];
+
+            // Remove incompatible description properties (1.20.50+)
+            if (item.description) {
+                // menu_category doesn't work in 1.16.100
+                if (item.description.menu_category) {
+                    result.removedComponents.push('menu_category (from description)');
+                    result.warnings.push('Items will appear under generic "Items" category in Creative Mode');
+                    delete item.description.menu_category;
+                }
+            }
+
+            // Remove incompatible components
+            if (item.components) {
+                // minecraft:use_modifiers (introduced in 1.20.50+)
+                if (item.components['minecraft:use_modifiers']) {
+                    result.removedComponents.push('minecraft:use_modifiers');
+                    result.warnings.push('Custom use duration and movement modifiers removed');
+                    delete item.components['minecraft:use_modifiers'];
+                }
+
+                // minecraft:tags format change (1.20.50+ uses object, older uses array)
+                if (item.components['minecraft:tags']) {
+                    const tags = item.components['minecraft:tags'];
+                    if (tags.tags && Array.isArray(tags.tags)) {
+                        // Convert from 1.20.50+ format to 1.16.100 format
+                        // In 1.16.100, it's just an array of strings directly
+                        result.convertedData['minecraft:item'].components['minecraft:tags'] = tags.tags;
+                        result.warnings.push('Tags format converted to 1.16.100 structure');
+                    }
+                }
+
+                // Remove any other known 1.20+ components
+                const incompatible1_20Components = [
+                    'minecraft:custom_components',
+                    'minecraft:repairable',
+                    'minecraft:enchantable',
+                    'minecraft:damage'
+                ];
+
+                for (const component of incompatible1_20Components) {
+                    if (item.components[component]) {
+                        result.removedComponents.push(component);
+                        delete item.components[component];
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        /**
          * Extract JSON files from a ZIP, optionally filtered by path pattern
          * @param {JSZip} zip - The ZIP object
          * @param {Function} pathFilter - Optional function to filter paths (returns true to include)
@@ -4038,29 +4143,114 @@
                     // Get the item data
                     const itemData = JSON.parse(builtinSelectedItem.content);
 
+                    // CRITICAL FIX: Convert to format_version 1.16.100 because format_version 1.20.50+ has a bug
+                    // where the effects property in minecraft:food doesn't work (MCPE-180398)
+                    const conversionResult = convertToFormat1_16_100(itemData, 'behavior');
+                    const convertedItemData = conversionResult.convertedData;
+
+                    // Track changes for user notification
+                    const allWarnings = [];
+                    const allRemovedComponents = [];
+
+                    // Build warning message if downgrading from newer version
+                    if (conversionResult.originalVersion && conversionResult.originalVersion !== "1.16.100") {
+                        allWarnings.push(`Format version downgraded: ${conversionResult.originalVersion} → 1.16.100`);
+                        allWarnings.push('(Required for food effects to work - MCPE-180398 bug)');
+                    }
+
+                    if (conversionResult.removedComponents.length > 0) {
+                        allRemovedComponents.push(...conversionResult.removedComponents);
+                    }
+
+                    if (conversionResult.warnings.length > 0) {
+                        allWarnings.push(...conversionResult.warnings);
+                    }
+
                     // Ensure the food component has an effects array
-                    if (!itemData['minecraft:item'].components['minecraft:food'].effects) {
-                        itemData['minecraft:item'].components['minecraft:food'].effects = [];
+                    if (!convertedItemData['minecraft:item'].components['minecraft:food'].effects) {
+                        convertedItemData['minecraft:item'].components['minecraft:food'].effects = [];
                     }
 
                     // Add new effects (append to existing)
                     for (const effect of builtinFoodEffects) {
+                        // Add "minecraft:" prefix if not present
+                        let effectName = effect.tag.trim();
+                        if (!effectName.startsWith('minecraft:')) {
+                            effectName = 'minecraft:' + effectName;
+                        }
+
                         const effectObj = {
-                            name: effect.tag,
-                            duration: parseInt(effect.duration),
+                            name: effectName,
+                            duration: parseInt(effect.duration) * 20,  // Convert seconds to ticks (20 ticks = 1 second)
                             amplifier: parseInt(effect.intensity) - 1  // Minecraft uses 0-based amplifier
                         };
-                        itemData['minecraft:item'].components['minecraft:food'].effects.push(effectObj);
+                        convertedItemData['minecraft:item'].components['minecraft:food'].effects.push(effectObj);
                     }
 
-                    // Update the JSON in the zip
-                    const updatedJson = JSON.stringify(itemData, null, 2);
+                    // Update the behavior pack item JSON in the zip
+                    const updatedJson = JSON.stringify(convertedItemData, null, 2);
                     builtinModifiedZip.file(builtinSelectedItem.path, updatedJson);
+
+                    // Find and update the corresponding resource pack item file (if it exists)
+                    // In format version 1.16.100 and earlier, items are split between BP and RP
+                    const itemIdentifier = convertedItemData['minecraft:item'].description?.identifier;
+                    if (itemIdentifier) {
+                        const resourcesPack = await findResourcesPack(builtinModifiedZip);
+                        if (resourcesPack) {
+                            // Search for the resource pack item file
+                            const rpItemPath = await findResourcePackItemFile(builtinModifiedZip, resourcesPack, itemIdentifier);
+                            if (rpItemPath) {
+                                try {
+                                    const rpItemContent = await builtinModifiedZip.file(rpItemPath).async('string');
+                                    const rpItemData = JSON.parse(rpItemContent);
+
+                                    // Convert resource pack item to 1.16.100
+                                    const rpConversionResult = convertToFormat1_16_100(rpItemData, 'resource');
+
+                                    // Track RP-specific changes
+                                    if (rpConversionResult.removedComponents.length > 0) {
+                                        allRemovedComponents.push(...rpConversionResult.removedComponents.map(c => c + ' (RP)'));
+                                    }
+                                    if (rpConversionResult.warnings.length > 0) {
+                                        allWarnings.push(...rpConversionResult.warnings.map(w => w + ' (RP)'));
+                                    }
+
+                                    // Update the resource pack item in the zip
+                                    const updatedRpJson = JSON.stringify(rpConversionResult.convertedData, null, 2);
+                                    builtinModifiedZip.file(rpItemPath, updatedRpJson);
+                                } catch (e) {
+                                    console.warn('Could not update resource pack item:', e);
+                                    allWarnings.push('Warning: Could not update resource pack file');
+                                }
+                            }
+                        }
+                    }
 
                     // Show download button
                     document.getElementById('downloadBuiltinBtn').style.display = 'block';
 
-                    alert('Food effects applied successfully! Click Download to save the modified MCADDON file.');
+                    // Build comprehensive user notification
+                    let message = 'Food effects applied successfully!\n\n';
+
+                    if (allRemovedComponents.length > 0) {
+                        message += '⚠️ REMOVED INCOMPATIBLE COMPONENTS:\n';
+                        allRemovedComponents.forEach(comp => {
+                            message += `  • ${comp}\n`;
+                        });
+                        message += '\n';
+                    }
+
+                    if (allWarnings.length > 0) {
+                        message += '📋 CHANGES MADE:\n';
+                        allWarnings.forEach(warning => {
+                            message += `  • ${warning}\n`;
+                        });
+                        message += '\n';
+                    }
+
+                    message += 'Click Download to save the modified MCADDON file.';
+
+                    alert(message);
 
                 } catch (error) {
                     alert(`Error applying food effects: ${error.message}`);
