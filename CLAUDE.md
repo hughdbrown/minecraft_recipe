@@ -1,7 +1,7 @@
 # Minecraft Recipe Generator - Project Documentation
 
 ## Project Overview
-A web-based tool for creating and managing Minecraft Bedrock Edition recipes and MCADDON files. The application provides multiple features for working with Minecraft content creation, including recipe generation, MCADDON editing, file combination, diffing, validation, and applying builtin features to items.
+A web-based tool for creating and managing Minecraft Bedrock Edition recipes and MCADDON files. The application provides multiple features for working with Minecraft content creation, including recipe generation, MCADDON editing, file combination, diffing, validation, applying builtin features to items, and PNG asset management.
 
 ## Current Features
 
@@ -40,7 +40,7 @@ A web-based tool for creating and managing Minecraft Bedrock Edition recipes and
   - File type-specific validation
 - **Location**: Lines 1315-1340 (HTML), Lines 2939-3645 (JavaScript)
 
-### 6. Builtin Features (Screen 5) **[NEWLY IMPLEMENTED]**
+### 6. Builtin Features (Screen 5)
 - Apply predefined features to items in MCADDON files
 - Currently supports: **Food Effects**
 - Extensible architecture for adding more builtin features
@@ -72,16 +72,86 @@ A web-based tool for creating and managing Minecraft Bedrock Edition recipes and
   - JavaScript State: Lines 1579-1663
   - JavaScript Functions: Lines 3647-3974
 
+### 7. Edit PNGs (Screen 6) **[NEWLY IMPLEMENTED]**
+- Delete, add, replace, or download PNG files within MCADDON packages
+- Four independent operations (no chaining)
+- Tree-based file browser matching existing UI patterns
+- Non-destructive operations with download
+
+#### Operations
+
+**Delete PNG:**
+- Browse PNG files in hierarchical tree view
+- Select a PNG file to delete
+- Confirm deletion
+- Download modified MCADDON with deleted file removed
+- **Workflow**: Select MCADDON → Choose "Delete PNG" → Browse/select file → Confirm → Download
+
+**Add PNG:**
+- Select PNG file from local file system
+- Browse folders in MCADDON virtual file structure
+- Select destination folder (or root)
+- Confirm to add file with original filename
+- Download modified MCADDON with new file added
+- **Workflow**: Select MCADDON → Choose "Add PNG" → Select local file → Browse/select folder → Confirm → Download
+
+**Replace PNG:**
+- Select PNG file from local file system
+- Browse PNG files in MCADDON
+- Select PNG file to replace
+- Confirm replacement (keeps original path/filename, replaces content)
+- Download modified MCADDON with replaced file
+- **Workflow**: Select MCADDON → Choose "Replace PNG" → Select local file → Browse/select PNG to replace → Confirm → Download
+
+**Download PNG:**
+- Browse PNG files in hierarchical tree view
+- Select a PNG file to extract
+- Confirm download
+- Individual PNG file is downloaded (not MCADDON)
+- **Workflow**: Select MCADDON → Choose "Download PNG" → Browse/select file → Confirm → Download PNG
+
+#### Implementation Details
+- **File Browser**: Reuses existing tree view pattern from Edit MCADDON screen
+  - Expandable/collapsible folders with ▶ icons
+  - File count badges on folders
+  - File size display
+  - Only shows PNG files and their parent folders
+- **No Operation Chaining**: Each operation completes independently and ends with download
+- **Standard File Inputs**: Uses native browser file picker for local file selection
+- **Modified MCADDON Naming**: Adds `_modified` suffix to downloaded MCADDON files
+- **Tree Rendering**: Flexible `renderPngTree()` function supports:
+  - Showing/hiding files (for folder-only selection)
+  - Making folders clickable (for Add operation)
+  - Custom click handlers per operation type
+
+#### State Management
+```javascript
+let pngMcAddonFile = null;        // Selected MCADDON file
+let pngZip = null;                // Loaded JSZip instance
+let pngCurrentOperation = null;   // Current operation: 'delete', 'add', 'replace', 'download'
+let pngFiles = [];                // Array of PNG files in MCADDON
+let pngSelectedPath = null;       // Selected file/folder path
+let pngLocalFile = null;          // Local PNG file (for add/replace)
+let pngLocalFileData = null;      // ArrayBuffer of local file
+let pngModifiedZip = null;        // Modified ZIP for download
+```
+
+- **Location**:
+  - HTML: Lines 1417-1589
+  - CSS: Lines 1095-1171
+  - JavaScript State: Lines 1841-1849
+  - JavaScript Functions: Lines 4563-5020
+
 ## Architecture
 
 ### File Structure
-- **Single HTML file**: `minecraft_recipe.html` (3,978 lines)
+- **Single HTML file**: `minecraft_recipe.html` (~5,025 lines)
 - Self-contained with embedded CSS and JavaScript
 - Uses JSZip library (CDN) for MCADDON manipulation
 
 ### Screen System
 - Screens managed by `switchScreen(index)` function (Line 1665)
-- 6 screens total (0-5)
+- 7 screens total (0-6)
 - Each screen has dedicated state variables
 - Navigation via vertical nav panel on left
 
@@ -97,6 +167,16 @@ let builtinSelectedItem = null;
 let builtinFoodEffects = [];
 let builtinEffectCounter = 0;
 let builtinModifiedZip = null;
+
+// Example from PNG Editor:
+let pngMcAddonFile = null;
+let pngZip = null;
+let pngCurrentOperation = null;
+let pngFiles = [];
+let pngSelectedPath = null;
+let pngLocalFile = null;
+let pngLocalFileData = null;
+let pngModifiedZip = null;
 ```
 
 ### Common Utilities
@@ -315,7 +395,100 @@ downloadBlob(blob, 'filename.mcaddon');
 
 **Note**: Duration is in ticks (600 ticks = 30 seconds). Format version 1.10 uses split BP/RP files (vanilla Enchanted Golden Apple format).
 
+### Manual Testing Workflow for PNG Editor
+
+**General Setup:**
+1. Open `minecraft_recipe.html` in browser
+2. Click "Edit PNGs" in nav
+3. Select a valid MCADDON file with PNG files
+
+**Testing Delete PNG:**
+1. Click "Delete PNG" button
+2. Expand folders to locate PNG files
+3. Click on a PNG file to select it
+4. Verify the selected file path is displayed
+5. Click "Confirm Delete" button
+6. Verify success message appears
+7. Click "Download Modified MCADDON" button
+8. Extract and verify the PNG was removed
+
+**Testing Add PNG:**
+1. Click "Add PNG" button
+2. Select a PNG file from your computer
+3. Verify file info is displayed
+4. Click on a folder to select as destination (or use root)
+5. Verify selected folder path is displayed
+6. Click "Confirm Add" button
+7. Verify success message with target path
+8. Click "Download Modified MCADDON" button
+9. Extract and verify the PNG was added to the correct location
+
+**Testing Replace PNG:**
+1. Click "Replace PNG" button
+2. Select a PNG file from your computer
+3. Verify file info is displayed
+4. Expand folders and click on a PNG file to replace
+5. Verify selected file path is displayed
+6. Click "Confirm Replace" button
+7. Verify success message appears
+8. Click "Download Modified MCADDON" button
+9. Extract and verify the PNG was replaced (same filename, new content)
+
+**Testing Download PNG:**
+1. Click "Download PNG" button
+2. Expand folders to locate PNG files
+3. Click on a PNG file to select it
+4. Verify the selected file path is displayed
+5. Click "Confirm Download" button
+6. Verify the PNG file downloads to your computer
+7. Open the downloaded PNG to confirm it's valid
+
+**Cancel Operation Testing:**
+- In any operation, click "Cancel" button
+- Verify it returns to operation selector
+- Verify state is reset
+
 ## Recent Changes
+
+### 2025-12-30: Edit PNGs Feature Implementation
+- **Added**: Complete PNG file editing system (Screen 6)
+- **Four Operations**:
+  - **Delete PNG**: Remove PNG files from MCADDON
+  - **Add PNG**: Add local PNG files to any folder in MCADDON
+  - **Replace PNG**: Replace existing PNG files with local files
+  - **Download PNG**: Extract individual PNG files from MCADDON
+
+- **Key Features**:
+  - Tree-based file browser matching existing UI patterns
+  - Expandable/collapsible folder navigation with file counts
+  - No operation chaining - each operation completes independently
+  - Modified MCADDON files saved with `_modified` suffix
+  - Flexible tree rendering for different operation needs
+  - Standard HTML file inputs for local file selection
+
+- **Implementation**:
+  - Reused existing tree view component from Edit MCADDON screen
+  - Added specialized `renderPngTree()` with configurable behavior:
+    - Show/hide files (for folder-only selection in Add operation)
+    - Make folders clickable (for Add operation)
+    - Custom click handlers per operation type
+  - PNG-specific filtering: only shows PNG files and their parent folders
+  - Each operation has isolated UI section with confirm/cancel workflow
+
+- **State Management**:
+  - 8 new state variables for PNG editor functionality
+  - Isolated from other feature states following existing patterns
+  - Clean state reset between operations
+
+- **User Experience**:
+  - Clear step-by-step workflow for each operation
+  - Visual feedback on file selection
+  - Confirmation dialogs before destructive actions
+  - Informative success messages
+
+- Files modified: `minecraft_recipe.html`, `CLAUDE.md`
+- Lines added: ~600 (HTML, CSS, JavaScript)
+- New navigation button, complete UI, and full operation logic
 
 ### 2025-12-21: Food Effects Bug Fix (Format 1.10 with Split Files)
 - **Fixed**: Food effects not working in Minecraft
@@ -373,6 +546,7 @@ downloadBlob(blob, 'filename.mcaddon');
 ### CSS Organization
 - Global styles: Lines 9-892
 - Builtin Features styles: Lines 893-1093
+- PNG Editor styles: Lines 1095-1171
 - Well-structured with clear class naming
 - Consistent spacing and transitions
 
@@ -387,7 +561,7 @@ downloadBlob(blob, 'filename.mcaddon');
 - Feature isolation: Each screen has its own state and functions
 - Reusable utilities: File I/O, ZIP handling, validation
 - Consistent patterns: All features follow same workflow structure
-- Clear naming conventions: Feature prefixes (e.g., `builtin*`, `combine*`, `diff*`)
+- Clear naming conventions: Feature prefixes (e.g., `builtin*`, `combine*`, `diff*`, `png*`)
 
 ## Future Enhancement Opportunities
 
@@ -398,12 +572,22 @@ downloadBlob(blob, 'filename.mcaddon');
 - Entity Spawn Eggs (filter for spawn eggs)
 - Potion Effects (filter for potions)
 
+### PNG Editor Enhancements
+- Batch operations: delete/replace multiple PNGs at once
+- PNG preview thumbnails in file browser
+- Rename PNG files (change filename while keeping in same location)
+- Move PNGs between folders
+- Image validation (check dimensions, file integrity)
+- Convert image formats (JPG → PNG, etc.)
+- Resize/compress PNGs before adding to MCADDON
+
 ### UI Improvements
 - Multi-item selection for batch operations
 - Undo/Redo functionality
 - Preview changes before download
 - Export/Import feature configurations
 - Keyboard shortcuts
+- Drag-and-drop file uploads
 
 ### Technical Improvements
 - Error handling with toast notifications instead of alerts

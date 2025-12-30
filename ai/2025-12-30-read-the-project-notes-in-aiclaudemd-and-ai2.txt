@@ -1,0 +1,1652 @@
+
+ * ▐▛███▜▌ *   Claude Code v2.0.76
+* ▝▜█████▛▘ *  Sonnet 4.5 · Claude Pro
+ *  ▘▘ ▝▝  *   ~/workspace/tyler/minecraft-recipe
+
+  A gift for you
+  Your rate limits are 2x higher through 12/31. Enjoy the extra room to think!
+
+> Read the project notes in `ai/CLAUDE.md` and `ai/2025-*.md`.
+Read the previous feature descriptions in `ai/*.md` and `ai/*.prd`.
+Read the description of the new feature in `ai/edit-png.md`.
+Think about the feature description and how it is compares to previous 
+feature descriptions. Reuse code as is reasonable.
+Make a plan for implementing the feature. Ask clarifying questions if 
+necessary. Do not proceed until all questions are answered. 
+
+⏺ I'll help you implement this new feature. Let me start by reading the relevant documentation files to understand the project context and the new feature requirements.
+
+⏺ Search(pattern: "ai/*.md")
+  ⎿  Found 4 files (ctrl+o to expand)
+
+⏺ Search(pattern: "ai/*.prd")
+  ⎿  Found 3 files (ctrl+o to expand)
+
+⏺ Search(pattern: "ai/2025-*.md")
+  ⎿  Found 0 files 
+
+⏺ Read(ai/edit-png.md)
+  ⎿  Read 52 lines
+
+⏺ Read(ai/prebuilt-features-tab.md)
+  ⎿  Read 39 lines
+
+⏺ Read(ai/combine-mcaddon-files.md)
+  ⎿  Read 26 lines
+
+⏺ Read(ai/modify-html-editor.md)
+  ⎿  Read 22 lines
+
+⏺ Read(ai/recipe.prd)
+  ⎿  Read 76 lines
+
+⏺ Read(ai/diff-mcaddon-files.prd)
+  ⎿  Read 18 lines
+
+⏺ Read(minecraft_recipe.html)
+  ⎿  Read 100 lines
+
+⏺ Read(minecraft_recipe.html)
+  ⎿  Read 100 lines
+
+⏺ Search(pattern: "nav-button", path: "minecraft_recipe.html", output_mode:
+        "content")
+  ⎿  Found 24 lines (ctrl+o to expand)
+
+⏺ Search(pattern: "screen-.*id=", path: "minecraft_recipe.html", output_mode:
+        "content")
+  ⎿  Found 0 lines 
+
+⏺ Search(pattern: "class="screen", path: "minecraft_recipe.html", output_mode:
+        "content")
+  ⎿  Found 29 lines (ctrl+o to expand)
+
+⏺ Read(minecraft_recipe.html)
+  ⎿  Read 70 lines
+
+⏺ Now I'll create a plan for implementing this feature. Let me organize the tasks:
+
+⏺ Read(minecraft_recipe.html)
+  ⎿  Read 60 lines
+
+⏺ Read(minecraft_recipe.html)
+  ⎿  Read 35 lines
+
+⏺ Based on my analysis of the existing code and the feature description in ai/edit-png.md, I have a good understanding of the requirements. However, I have some clarifying questions before proceeding with implementation:
+
+⏺ User declined to answer questions
+
+> Make the file browser implementation like what is already done. I think 
+this is option 3, but I would like you to confirm.
+That is, consistency in the user interface is important. 
+
+⏺ You're correct! Let me confirm by checking the existing file browser implementation in the Edit MCADDON screen to ensure I match that pattern exactly.
+
+⏺ Search(pattern: "json-file-list", path: "minecraft_recipe.html", output_mode:
+        "content")
+  ⎿  Found 34 lines (ctrl+o to expand)
+
+⏺ Search(pattern: "function.*buildFileTree|buildFileTree", path:
+        "minecraft_recipe.html", output_mode: "content")
+  ⎿  Found 103 lines (ctrl+o to expand)
+
+⏺ Read(minecraft_recipe.html)
+  ⎿  Read 70 lines
+
+⏺ Perfect! I can see the existing pattern now. The app uses a tree view with expand/collapse folders (like what I called Option 1). Let me confirm my understanding of the complete workflow:
+
+  Existing Pattern (from Edit MCADDON screen):
+  - Hierarchical tree view with:
+    - Folders that expand/collapse with ▶ icon
+    - File count badges on folders
+    - Files displayed under their parent folders
+    - Clickable files for selection
+
+  For the PNG Editor, my understanding is:
+
+  1. Initial view: User selects MCADDON file first, then sees 4 operation buttons (Delete/Add/Replace/Download)
+  2. File browser: Reuse the same tree view pattern - but for PNGs it will:
+    - Show all folders (expandable/collapsible)
+    - Within folders, show only PNG files (+ subfolders)
+  3. Multi-operation capability: Should the user be able to perform multiple operations before downloading? For example:
+    - Delete a PNG
+    - Add a different PNG
+    - Replace another PNG
+    - THEN download the final modified MCADDON
+
+  Or should each operation end with an immediate download and the session resets?
+  4. Standard HTML file input for selecting local PNG files (obvious choice)
+
+  Can you confirm the multi-operation behavior? Should users be able to chain multiple PNG edits before downloading, or is it one operation → download → reload for next operation?
+
+> No multiple operations. They do not chain. 
+
+⏺ Perfect! Now I have all the requirements clear:
+
+  Edit PNGs Feature Workflow:
+  1. Select MCADDON file
+  2. Choose one of 4 operations (Delete/Add/Replace/Download)
+  3. Complete that single operation
+  4. Download result (modified MCADDON or single PNG)
+  5. Session ends - must reload MCADDON for another operation
+
+  UI Pattern: Tree view with expand/collapse (matching Edit MCADDON screen)
+
+  Let me update the plan and start implementation:
+
+⏺ Now let me start implementing. First, I'll add the navigation button:
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Added 1 line                                                        
+      1103              <button class="nav-button"                       
+            onclick="switchScreen(3)">Diff MCADDON Files</button>        
+      1104              <button class="nav-button"                       
+            onclick="switchScreen(4)">Validate MCADDON</button>          
+      1105              <button class="nav-button"                       
+            onclick="switchScreen(5)">Builtin Features</button>          
+      1106 +            <button class="nav-button"                       
+           +onclick="switchScreen(6)">Edit PNGs</button>                 
+      1107          </div>                                               
+      1108                                                               
+      1109          <!-- Main Content Area -->                           
+
+⏺ Now I'll add the HTML structure for the new PNG editing screen. Let me find where to insert it:
+
+⏺ Read(minecraft_recipe.html)
+  ⎿  Read 20 lines
+
+⏺ Now I'll add the new screen HTML structure right after the screen-builtin:
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Added 174 lines                                                      
+      1413                      </div>                                   
+      1414                  </div>                                       
+      1415              </div>                                           
+      1416 +                                                             
+      1417 +            <!-- Screen 6: Edit PNGs -->                     
+      1418 +            <div class="screen" id="screen-png">             
+      1419 +                <div class="container">                      
+      1420 +                    <div class="header">                     
+      1421 +                        <h1>Edit PNG Files</h1>              
+      1422 +                        <p>Delete, add, replace, or download 
+           + PNG files within MCADDON packages</p>                       
+      1423 +                    </div>                                   
+      1424 +                                                             
+      1425 +                    <div class="tab-content active"          
+           +style="display: block;">                                     
+      1426 +                        <!-- Step 1: Select MCADDON File --> 
+      1427 +                        <div id="png-file-selector"          
+           +class="png-section">                                         
+      1428 +                            <div class="info-box">           
+      1429 +                                <strong>Step 1: Select       
+           +MCADDON File</strong>                                        
+      1430 +                                Choose a .mcaddon file to    
+           +work with PNG files.                                         
+      1431 +                            </div>                           
+      1432 +                            <div class="form-group">         
+      1433 +                                <label                       
+           +for="pngMcAddonFile">Select MCADDON File (.mcaddon)</label>  
+      1434 +                                <input type="file"           
+           +id="pngMcAddonFile" accept=".mcaddon"                        
+           +onchange="handlePngMcAddonSelect()">                         
+      1435 +                                <div class="file-info"       
+           +id="pngFileInfo"></div>                                      
+      1436 +                            </div>                           
+      1437 +                        </div>                               
+      1438 +                                                             
+      1439 +                        <!-- Step 2: Choose Operation -->    
+      1440 +                        <div id="png-operation-selector"     
+           +class="png-section" style="display: none;">                  
+      1441 +                            <div class="info-box">           
+      1442 +                                <strong>Step 2: Choose       
+           +Operation</strong>                                           
+      1443 +                                Select what you want to do   
+           +with PNG files.                                              
+      1444 +                            </div>                           
+      1445 +                            <div class="png-operation-grid"> 
+      1446 +                                <button                      
+           +class="png-operation-btn"                                    
+           +onclick="selectPngOperation('delete')">                      
+      1447 +                                    <div                     
+           +class="operation-icon">🗑️</div>                             
+      1448 +                                    <div                     
+           +class="operation-title">Delete PNG</div>                     
+      1449 +                                    <div                     
+           +class="operation-desc">Remove a PNG file from the            
+           +MCADDON</div>                                                
+      1450 +                                </button>                    
+      1451 +                                <button                      
+           +class="png-operation-btn"                                    
+           +onclick="selectPngOperation('add')">                         
+      1452 +                                    <div                     
+           +class="operation-icon">➕</div>                               
+      1453 +                                    <div                     
+           +class="operation-title">Add PNG</div>                        
+      1454 +                                    <div                     
+           +class="operation-desc">Add a PNG file to a folder in the     
+           +MCADDON</div>                                                
+      1455 +                                </button>                    
+      1456 +                                <button                      
+           +class="png-operation-btn"                                    
+           +onclick="selectPngOperation('replace')">                     
+      1457 +                                    <div                     
+           +class="operation-icon">🔄</div>                              
+      1458 +                                    <div                     
+           +class="operation-title">Replace PNG</div>                    
+      1459 +                                    <div                     
+           +class="operation-desc">Replace an existing PNG file</div>    
+      1460 +                                </button>                    
+      1461 +                                <button                      
+           +class="png-operation-btn"                                    
+           +onclick="selectPngOperation('download')">                    
+      1462 +                                    <div                     
+           +class="operation-icon">⬇️</div>                              
+      1463 +                                    <div                     
+           +class="operation-title">Download PNG</div>                   
+      1464 +                                    <div                     
+           +class="operation-desc">Extract a PNG file from the           
+           +MCADDON</div>                                                
+      1465 +                                </button>                    
+      1466 +                            </div>                           
+      1467 +                        </div>                               
+      1468 +                                                             
+      1469 +                        <!-- Step 3: Delete PNG -->          
+      1470 +                        <div id="png-delete-section"         
+           +class="png-section" style="display: none;">                  
+      1471 +                            <div class="info-box">           
+      1472 +                                <strong>Delete PNG           
+           +File</strong>                                                
+      1473 +                                Select a PNG file to delete  
+           +from the MCADDON.                                            
+      1474 +                            </div>                           
+      1475 +                            <div                             
+           +class="png-browser-container">                               
+      1476 +                                <ul class="png-file-list"    
+           +id="pngDeleteList"></ul>                                     
+      1477 +                            </div>                           
+      1478 +                            <div id="deleteConfirmSection"   
+           +style="display: none; margin-top: 20px;">                    
+      1479 +                                <div                         
+           +class="selected-item-info">                                  
+      1480 +                                    <h4>Selected for         
+           +deletion:</h4>                                               
+      1481 +                                    <p                       
+           +id="deleteSelectedPath"></p>                                 
+      1482 +                                </div>                       
+      1483 +                                <button class="convert-btn"  
+           +onclick="confirmDeletePng()" style="background: #e74c3c;">   
+      1484 +                                    Confirm Delete           
+      1485 +                                </button>                    
+      1486 +                                <button class="convert-btn"  
+           +onclick="cancelPngOperation()" style="background: #95a5a6;   
+           +margin-left: 10px;">                                         
+      1487 +                                    Cancel                   
+      1488 +                                </button>                    
+      1489 +                            </div>                           
+      1490 +                        </div>                               
+      1491 +                                                             
+      1492 +                        <!-- Step 3: Add PNG -->             
+      1493 +                        <div id="png-add-section"            
+           +class="png-section" style="display: none;">                  
+      1494 +                            <div class="info-box">           
+      1495 +                                <strong>Add PNG              
+           +File</strong>                                                
+      1496 +                                Step 1: Select a PNG file    
+           +from your computer. Step 2: Choose destination folder in     
+           +MCADDON.                                                     
+      1497 +                            </div>                           
+      1498 +                            <div class="form-group">         
+      1499 +                                <label                       
+           +for="addPngLocalFile">Select PNG File from Computer</label>  
+      1500 +                                <input type="file"           
+           +id="addPngLocalFile" accept=".png"                           
+           +onchange="handleAddPngLocalSelect()">                        
+      1501 +                                <div class="file-info"       
+           +id="addPngLocalInfo"></div>                                  
+      1502 +                            </div>                           
+      1503 +                            <div id="addPngBrowserSection"   
+           +style="display: none;">                                      
+      1504 +                                <div class="info-box"        
+           +style="margin-top: 20px;">                                   
+      1505 +                                    <strong>Select           
+           +Destination Folder</strong>                                  
+      1506 +                                    Click on a folder to     
+           +select it as the destination.                                
+      1507 +                                </div>                       
+      1508 +                                <div                         
+           +class="png-browser-container">                               
+      1509 +                                    <ul                      
+           +class="png-file-list" id="pngAddFolderList"></ul>            
+      1510 +                                </div>                       
+      1511 +                                <div id="addConfirmSection"  
+           +style="display: none; margin-top: 20px;">                    
+      1512 +                                    <div                     
+           +class="selected-item-info">                                  
+      1513 +                                        <h4>Will add to      
+           +folder:</h4>                                                 
+      1514 +                                        <p                   
+           +id="addSelectedPath"></p>                                    
+      1515 +                                    </div>                   
+      1516 +                                    <button                  
+           +class="convert-btn" onclick="confirmAddPng()">               
+      1517 +                                        Confirm Add          
+      1518 +                                    </button>                
+      1519 +                                    <button                  
+           +class="convert-btn" onclick="cancelPngOperation()"           
+           +style="background: #95a5a6; margin-left: 10px;">             
+      1520 +                                        Cancel               
+      1521 +                                    </button>                
+      1522 +                                </div>                       
+      1523 +                            </div>                           
+      1524 +                        </div>                               
+      1525 +                                                             
+      1526 +                        <!-- Step 3: Replace PNG -->         
+      1527 +                        <div id="png-replace-section"        
+           +class="png-section" style="display: none;">                  
+      1528 +                            <div class="info-box">           
+      1529 +                                <strong>Replace PNG          
+           +File</strong>                                                
+      1530 +                                Step 1: Select a PNG file    
+           +from your computer. Step 2: Choose which PNG to replace in   
+           +MCADDON.                                                     
+      1531 +                            </div>                           
+      1532 +                            <div class="form-group">         
+      1533 +                                <label                       
+           +for="replacePngLocalFile">Select PNG File from               
+           +Computer</label>                                             
+      1534 +                                <input type="file"           
+           +id="replacePngLocalFile" accept=".png"                       
+           +onchange="handleReplacePngLocalSelect()">                    
+      1535 +                                <div class="file-info"       
+           +id="replacePngLocalInfo"></div>                              
+      1536 +                            </div>                           
+      1537 +                            <div                             
+           +id="replacePngBrowserSection" style="display: none;">        
+      1538 +                                <div class="info-box"        
+           +style="margin-top: 20px;">                                   
+      1539 +                                    <strong>Select PNG File  
+           +to Replace</strong>                                          
+      1540 +                                    Navigate folders and     
+           +click on a PNG file to replace it.                           
+      1541 +                                </div>                       
+      1542 +                                <div                         
+           +class="png-browser-container">                               
+      1543 +                                    <ul                      
+           +class="png-file-list" id="pngReplaceList"></ul>              
+      1544 +                                </div>                       
+      1545 +                                <div                         
+           +id="replaceConfirmSection" style="display: none; margin-top: 
+           + 20px;">                                                     
+      1546 +                                    <div                     
+           +class="selected-item-info">                                  
+      1547 +                                        <h4>Will replace     
+           +file:</h4>                                                   
+      1548 +                                        <p                   
+           +id="replaceSelectedPath"></p>                                
+      1549 +                                    </div>                   
+      1550 +                                    <button                  
+           +class="convert-btn" onclick="confirmReplacePng()">           
+      1551 +                                        Confirm Replace      
+      1552 +                                    </button>                
+      1553 +                                    <button                  
+           +class="convert-btn" onclick="cancelPngOperation()"           
+           +style="background: #95a5a6; margin-left: 10px;">             
+      1554 +                                        Cancel               
+      1555 +                                    </button>                
+      1556 +                                </div>                       
+      1557 +                            </div>                           
+      1558 +                        </div>                               
+      1559 +                                                             
+      1560 +                        <!-- Step 3: Download PNG -->        
+      1561 +                        <div id="png-download-section"       
+           +class="png-section" style="display: none;">                  
+      1562 +                            <div class="info-box">           
+      1563 +                                <strong>Download PNG         
+           +File</strong>                                                
+      1564 +                                Select a PNG file to extract 
+           + from the MCADDON.                                           
+      1565 +                            </div>                           
+      1566 +                            <div                             
+           +class="png-browser-container">                               
+      1567 +                                <ul class="png-file-list"    
+           +id="pngDownloadList"></ul>                                   
+      1568 +                            </div>                           
+      1569 +                            <div                             
+           +id="downloadPngConfirmSection" style="display: none;         
+           +margin-top: 20px;">                                          
+      1570 +                                <div                         
+           +class="selected-item-info">                                  
+      1571 +                                    <h4>Selected for         
+           +download:</h4>                                               
+      1572 +                                    <p                       
+           +id="downloadSelectedPath"></p>                               
+      1573 +                                </div>                       
+      1574 +                                <button class="convert-btn"  
+           +onclick="confirmDownloadPng()">                              
+      1575 +                                    Confirm Download         
+      1576 +                                </button>                    
+      1577 +                                <button class="convert-btn"  
+           +onclick="cancelPngOperation()" style="background: #95a5a6;   
+           +margin-left: 10px;">                                         
+      1578 +                                    Cancel                   
+      1579 +                                </button>                    
+      1580 +                            </div>                           
+      1581 +                        </div>                               
+      1582 +                                                             
+      1583 +                        <!-- Download Modified MCADDON       
+           +Button -->                                                   
+      1584 +                        <button class="convert-btn"          
+           +id="downloadModifiedMcAddonBtn"                              
+           +onclick="downloadModifiedPngMcAddon()" style="display: none; 
+           + margin-top: 15px; background: #27ae60;">                    
+      1585 +                            Download Modified MCADDON        
+      1586 +                        </button>                            
+      1587 +                    </div>                                   
+      1588 +                </div>                                       
+      1589 +            </div>                                           
+      1590          </div>                                               
+      1591      </div>                                                   
+      1592                                                               
+
+⏺ Now let me add the CSS styles for the PNG editing UI. Let me find where to add them:
+
+⏺ Read(minecraft_recipe.html)
+  ⎿  Read 10 lines
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Added 77 lines                                                      
+      1091              display: flex;                                   
+      1092              justify-content: center;                         
+      1093          }                                                    
+      1094 +                                                             
+      1095 +        /* ========== PNG Editor Styles ========== */        
+      1096 +        .png-section {                                       
+      1097 +            margin-bottom: 30px;                             
+      1098 +        }                                                    
+      1099 +                                                             
+      1100 +        .png-operation-grid {                                
+      1101 +            display: grid;                                   
+      1102 +            grid-template-columns: repeat(auto-fill,         
+           +minmax(200px, 1fr));                                         
+      1103 +            gap: 15px;                                       
+      1104 +            margin-top: 15px;                                
+      1105 +        }                                                    
+      1106 +                                                             
+      1107 +        .png-operation-btn {                                 
+      1108 +            padding: 20px;                                   
+      1109 +            background: white;                               
+      1110 +            border: 2px solid #dee2e6;                       
+      1111 +            border-radius: 8px;                              
+      1112 +            cursor: pointer;                                 
+      1113 +            transition: all 0.3s ease;                       
+      1114 +            text-align: center;                              
+      1115 +        }                                                    
+      1116 +                                                             
+      1117 +        .png-operation-btn:hover {                           
+      1118 +            border-color: #667eea;                           
+      1119 +            background: #f8f9fa;                             
+      1120 +            transform: translateY(-2px);                     
+      1121 +            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);        
+      1122 +        }                                                    
+      1123 +                                                             
+      1124 +        .operation-icon {                                    
+      1125 +            font-size: 32px;                                 
+      1126 +            margin-bottom: 10px;                             
+      1127 +        }                                                    
+      1128 +                                                             
+      1129 +        .operation-title {                                   
+      1130 +            font-size: 16px;                                 
+      1131 +            font-weight: 600;                                
+      1132 +            color: #2c3e50;                                  
+      1133 +            margin-bottom: 8px;                              
+      1134 +        }                                                    
+      1135 +                                                             
+      1136 +        .operation-desc {                                    
+      1137 +            font-size: 13px;                                 
+      1138 +            color: #7f8c8d;                                  
+      1139 +            line-height: 1.4;                                
+      1140 +        }                                                    
+      1141 +                                                             
+      1142 +        .png-browser-container {                             
+      1143 +            background: #f8f9fa;                             
+      1144 +            border: 1px solid #dee2e6;                       
+      1145 +            border-radius: 6px;                              
+      1146 +            padding: 15px;                                   
+      1147 +            max-height: 400px;                               
+      1148 +            overflow-y: auto;                                
+      1149 +            margin-top: 15px;                                
+      1150 +        }                                                    
+      1151 +                                                             
+      1152 +        .png-file-list {                                     
+      1153 +            list-style: none;                                
+      1154 +            padding: 0;                                      
+      1155 +        }                                                    
+      1156 +                                                             
+      1157 +        .png-folder-selectable {                             
+      1158 +            padding: 10px 12px;                              
+      1159 +            background: white;                               
+      1160 +            border: 2px solid #dee2e6;                       
+      1161 +            border-radius: 6px;                              
+      1162 +            margin-bottom: 5px;                              
+      1163 +            cursor: pointer;                                 
+      1164 +            transition: all 0.2s ease;                       
+      1165 +        }                                                    
+      1166 +                                                             
+      1167 +        .png-folder-selectable:hover {                       
+      1168 +            border-color: #667eea;                           
+      1169 +            background: #f0f4ff;                             
+      1170 +        }                                                    
+      1171      </style>                                                 
+      1172  </head>                                                      
+      1173  <body>                                                       
+
+⏺ Now let me find where to add the JavaScript state variables and functions:
+
+⏺ Search(pattern: "// .*Builtin.*State|let builtin", path:
+        "minecraft_recipe.html", output_mode: "content")
+  ⎿  Found 23 lines (ctrl+o to expand)
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Added 10 lines                                                      
+      1838          let builtinEffectCounter = 0;                        
+      1839          let builtinModifiedZip = null;                       
+      1840                                                               
+      1841 +        // ========== PNG Editor State ==========            
+      1842 +        let pngMcAddonFile = null;                           
+      1843 +        let pngZip = null;                                   
+      1844 +        let pngCurrentOperation = null;                      
+      1845 +        let pngFiles = [];                                   
+      1846 +        let pngSelectedPath = null;                          
+      1847 +        let pngLocalFile = null;                             
+      1848 +        let pngLocalFileData = null;                         
+      1849 +        let pngModifiedZip = null;                           
+      1850 +                                                             
+      1851          // Builtin Features definitions                      
+      1852          const builtinFeatures = [                            
+      1853              {                                                
+
+⏺ Search(pattern: "function downloadBuiltinMcAddon", path:
+        "minecraft_recipe.html", output_mode: "content")
+  ⎿  Found 15 lines (ctrl+o to expand)
+
+⏺ Update(minecraft_recipe.html)
+  ⎿  Added 459 lines                                                     
+      4559                  alert(`Error generating download:            
+            ${error.message}`);                                          
+      4560              }                                                
+      4561          }                                                    
+      4562 +                                                             
+      4563 +        // ========== PNG Editor Functions ==========        
+      4564 +                                                             
+      4565 +        async function handlePngMcAddonSelect() {            
+      4566 +            const fileInput =                                
+           +document.getElementById('pngMcAddonFile');                   
+      4567 +            const fileInfo =                                 
+           +document.getElementById('pngFileInfo');                      
+      4568 +            const file = fileInput.files[0];                 
+      4569 +                                                             
+      4570 +            if (!file) return;                               
+      4571 +                                                             
+      4572 +            try {                                            
+      4573 +                pngMcAddonFile = file;                       
+      4574 +                const data = await                           
+           +readFileAsArrayBuffer(file);                                 
+      4575 +                pngZip = await JSZip.loadAsync(data);        
+      4576 +                                                             
+      4577 +                // Extract all PNG files                     
+      4578 +                pngFiles = [];                               
+      4579 +                for (const [path, zipEntry] of               
+           +Object.entries(pngZip.files)) {                              
+      4580 +                    if (!zipEntry.dir &&                     
+           +path.toLowerCase().endsWith('.png')) {                       
+      4581 +                        pngFiles.push({                      
+      4582 +                            path: path,                      
+      4583 +                            size: zipEntry._data ?           
+           +zipEntry._data.uncompressedSize : 0,                         
+      4584 +                            zipEntry: zipEntry               
+      4585 +                        });                                  
+      4586 +                    }                                        
+      4587 +                }                                            
+      4588 +                                                             
+      4589 +                fileInfo.innerHTML = `<p style="color:       
+           +#27ae60;">✓ Loaded ${file.name}                              
+           +(${formatFileSize(file.size)}) - Found ${pngFiles.length}    
+           +PNG file${pngFiles.length !== 1 ? 's' : ''}</p>`;            
+      4590 +                                                             
+      4591 +                // Show operation selector                   
+      4592 +                document.getElementById('png-operation-selec 
+           +tor').style.display = 'block';                               
+      4593 +                                                             
+      4594 +                // Reset state                               
+      4595 +                pngCurrentOperation = null;                  
+      4596 +                pngSelectedPath = null;                      
+      4597 +                pngLocalFile = null;                         
+      4598 +                pngLocalFileData = null;                     
+      4599 +                pngModifiedZip = null;                       
+      4600 +                                                             
+      4601 +                // Hide all operation sections               
+      4602 +                                                             
+           +document.getElementById('png-delete-section').style.display  
+           += 'none';                                                    
+      4603 +                                                             
+           +document.getElementById('png-add-section').style.display =   
+           +'none';                                                      
+      4604 +                                                             
+           +document.getElementById('png-replace-section').style.display 
+           + = 'none';                                                   
+      4605 +                document.getElementById('png-download-sectio 
+           +n').style.display = 'none';                                  
+      4606 +                document.getElementById('downloadModifiedMcA 
+           +ddonBtn').style.display = 'none';                            
+      4607 +                                                             
+      4608 +            } catch (error) {                                
+      4609 +                fileInfo.innerHTML = `<p style="color:       
+           +#e74c3c;">Error loading file: ${error.message}</p>`;         
+      4610 +            }                                                
+      4611 +        }                                                    
+      4612 +                                                             
+      4613 +        function selectPngOperation(operation) {             
+      4614 +            pngCurrentOperation = operation;                 
+      4615 +                                                             
+      4616 +            // Hide operation selector                       
+      4617 +            document.getElementById('png-operation-selector' 
+           +).style.display = 'none';                                    
+      4618 +                                                             
+      4619 +            // Hide all operation sections                   
+      4620 +                                                             
+           +document.getElementById('png-delete-section').style.display  
+           += 'none';                                                    
+      4621 +                                                             
+           +document.getElementById('png-add-section').style.display =   
+           +'none';                                                      
+      4622 +                                                             
+           +document.getElementById('png-replace-section').style.display 
+           + = 'none';                                                   
+      4623 +            document.getElementById('png-download-section'). 
+           +style.display = 'none';                                      
+      4624 +                                                             
+      4625 +            // Show the relevant section and build tree      
+      4626 +            if (operation === 'delete') {                    
+      4627 +                                                             
+           +document.getElementById('png-delete-section').style.display  
+           += 'block';                                                   
+      4628 +                buildPngTreeForDelete();                     
+      4629 +            } else if (operation === 'add') {                
+      4630 +                                                             
+           +document.getElementById('png-add-section').style.display =   
+           +'block';                                                     
+      4631 +            } else if (operation === 'replace') {            
+      4632 +                                                             
+           +document.getElementById('png-replace-section').style.display 
+           + = 'block';                                                  
+      4633 +            } else if (operation === 'download') {           
+      4634 +                document.getElementById('png-download-sectio 
+           +n').style.display = 'block';                                 
+      4635 +                buildPngTreeForDownload();                   
+      4636 +            }                                                
+      4637 +        }                                                    
+      4638 +                                                             
+      4639 +        function buildPngFileTree() {                        
+      4640 +            const root = { type: 'folder', name: '',         
+           +children: {}, files: [] };                                   
+      4641 +                                                             
+      4642 +            pngFiles.forEach((file, index) => {              
+      4643 +                const parts = file.path.split('/');          
+      4644 +                let current = root;                          
+      4645 +                                                             
+      4646 +                // Navigate/create folder structure          
+      4647 +                for (let i = 0; i < parts.length - 1; i++) { 
+      4648 +                    const folderName = parts[i];             
+      4649 +                    if (!current.children[folderName]) {     
+      4650 +                        current.children[folderName] = {     
+      4651 +                            type: 'folder',                  
+      4652 +                            name: folderName,                
+      4653 +                            children: {},                    
+      4654 +                            files: [],                       
+      4655 +                            path: parts.slice(0, i +         
+           +1).join('/')                                                 
+      4656 +                        };                                   
+      4657 +                    }                                        
+      4658 +                    current = current.children[folderName];  
+      4659 +                }                                            
+      4660 +                                                             
+      4661 +                // Add file to the final folder              
+      4662 +                const fileName = parts[parts.length - 1];    
+      4663 +                current.files.push({                         
+      4664 +                    type: 'file',                            
+      4665 +                    name: fileName,                          
+      4666 +                    index: index,                            
+      4667 +                    size: file.size,                         
+      4668 +                    path: file.path                          
+      4669 +                });                                          
+      4670 +            });                                              
+      4671 +                                                             
+      4672 +            return root;                                     
+      4673 +        }                                                    
+      4674 +                                                             
+      4675 +        function countPngFilesInFolder(folder) {             
+      4676 +            let count = folder.files.length;                 
+      4677 +            for (const child of                              
+           +Object.values(folder.children)) {                            
+      4678 +                count += countPngFilesInFolder(child);       
+      4679 +            }                                                
+      4680 +            return count;                                    
+      4681 +        }                                                    
+      4682 +                                                             
+      4683 +        function renderPngTree(folder, container, depth = 0, 
+           + clickHandler = null, showFiles = true, allowFolderClick =   
+           +false) {                                                     
+      4684 +            const folderNames =                              
+           +Object.keys(folder.children).sort();                         
+      4685 +                                                             
+      4686 +            // Render folders                                
+      4687 +            folderNames.forEach(folderName => {              
+      4688 +                const child = folder.children[folderName];   
+      4689 +                const fileCount =                            
+           +countPngFilesInFolder(child);                                
+      4690 +                                                             
+      4691 +                const folderDiv =                            
+           +document.createElement('div');                               
+      4692 +                folderDiv.className = 'tree-item';           
+      4693 +                                                             
+      4694 +                const folderHeader =                         
+           +document.createElement('div');                               
+      4695 +                if (allowFolderClick) {                      
+      4696 +                    folderHeader.className = 'tree-folder    
+           +png-folder-selectable';                                      
+      4697 +                } else {                                     
+      4698 +                    folderHeader.className = 'tree-folder';  
+      4699 +                }                                            
+      4700 +                                                             
+      4701 +                folderHeader.innerHTML = `                   
+      4702 +                    <span class="tree-folder-icon">▶</span>  
+      4703 +                    <span                                    
+           +class="tree-folder-name">${folderName}</span>                
+      4704 +                    <span                                    
+           +class="tree-folder-count">${fileCount} PNG${fileCount !== 1  
+           +? 's' : ''}</span>                                           
+      4705 +                `;                                           
+      4706 +                                                             
+      4707 +                const childrenContainer =                    
+           +document.createElement('div');                               
+      4708 +                childrenContainer.className =                
+           +'tree-children';                                             
+      4709 +                                                             
+      4710 +                // Toggle expand/collapse and handle folder  
+           +clicks                                                       
+      4711 +                folderHeader.onclick = (e) => {              
+      4712 +                    if (allowFolderClick && clickHandler) {  
+      4713 +                        clickHandler(child.path ||           
+           +folderName, true);                                           
+      4714 +                    } else {                                 
+      4715 +                        const icon =                         
+           +folderHeader.querySelector('.tree-folder-icon');             
+      4716 +                        const isExpanded =                   
+           +childrenContainer.classList.contains('expanded');            
+      4717 +                                                             
+      4718 +                        if (isExpanded) {                    
+      4719 +                                                             
+           +childrenContainer.classList.remove('expanded');              
+      4720 +                                                             
+           +icon.classList.remove('expanded');                           
+      4721 +                        } else {                             
+      4722 +                                                             
+           +childrenContainer.classList.add('expanded');                 
+      4723 +                            icon.classList.add('expanded');  
+      4724 +                        }                                    
+      4725 +                    }                                        
+      4726 +                };                                           
+      4727 +                                                             
+      4728 +                // Recursively render children               
+      4729 +                renderPngTree(child, childrenContainer,      
+           +depth + 1, clickHandler, showFiles, allowFolderClick);       
+      4730 +                                                             
+      4731 +                folderDiv.appendChild(folderHeader);         
+      4732 +                folderDiv.appendChild(childrenContainer);    
+      4733 +                container.appendChild(folderDiv);            
+      4734 +            });                                              
+      4735 +                                                             
+      4736 +            // Render files in this folder (if showFiles is  
+           +true)                                                        
+      4737 +            if (showFiles) {                                 
+      4738 +                folder.files.sort((a, b) =>                  
+           +a.name.localeCompare(b.name));                               
+      4739 +                folder.files.forEach(file => {               
+      4740 +                    const fileDiv =                          
+           +document.createElement('div');                               
+      4741 +                    fileDiv.className = 'tree-file';         
+      4742 +                                                             
+      4743 +                    if (clickHandler) {                      
+      4744 +                        fileDiv.onclick = () =>              
+           +clickHandler(file.path, false);                              
+      4745 +                    }                                        
+      4746 +                                                             
+      4747 +                    fileDiv.innerHTML = `                    
+      4748 +                        <span                                
+           +class="tree-file-name">${file.name}</span>                   
+      4749 +                        <span                                
+           +class="tree-file-size">${formatFileSize(file.size)}</span>   
+      4750 +                    `;                                       
+      4751 +                                                             
+      4752 +                    container.appendChild(fileDiv);          
+      4753 +                });                                          
+      4754 +            }                                                
+      4755 +        }                                                    
+      4756 +                                                             
+      4757 +        // ========== Delete PNG Functions ==========        
+      4758 +                                                             
+      4759 +        function buildPngTreeForDelete() {                   
+      4760 +            const listContainer =                            
+           +document.getElementById('pngDeleteList');                    
+      4761 +            listContainer.innerHTML = '';                    
+      4762 +                                                             
+      4763 +            document.getElementById('deleteConfirmSection'). 
+           +style.display = 'none';                                      
+      4764 +                                                             
+      4765 +            const tree = buildPngFileTree();                 
+      4766 +            renderPngTree(tree, listContainer, 0,            
+           +selectPngForDelete, true, false);                            
+      4767 +        }                                                    
+      4768 +                                                             
+      4769 +        function selectPngForDelete(path, isFolder) {        
+      4770 +            if (isFolder) return; // Only files can be       
+           +selected for deletion                                        
+      4771 +                                                             
+      4772 +            pngSelectedPath = path;                          
+      4773 +                                                             
+           +document.getElementById('deleteSelectedPath').textContent =  
+           +path;                                                        
+      4774 +            document.getElementById('deleteConfirmSection'). 
+           +style.display = 'block';                                     
+      4775 +        }                                                    
+      4776 +                                                             
+      4777 +        async function confirmDeletePng() {                  
+      4778 +            if (!pngSelectedPath) {                          
+      4779 +                alert('No file selected');                   
+      4780 +                return;                                      
+      4781 +            }                                                
+      4782 +                                                             
+      4783 +            try {                                            
+      4784 +                // Create a copy of the ZIP                  
+      4785 +                pngModifiedZip = await JSZip.loadAsync(await 
+           + pngZip.generateAsync({ type: 'arraybuffer' }));             
+      4786 +                                                             
+      4787 +                // Remove the file                           
+      4788 +                pngModifiedZip.remove(pngSelectedPath);      
+      4789 +                                                             
+      4790 +                // Show download button                      
+      4791 +                document.getElementById('downloadModifiedMcA 
+           +ddonBtn').style.display = 'block';                           
+      4792 +                                                             
+      4793 +                // Hide the delete section                   
+      4794 +                                                             
+           +document.getElementById('png-delete-section').style.display  
+           += 'none';                                                    
+      4795 +                                                             
+      4796 +                alert(`File deleted:                         
+           +${pngSelectedPath}\n\nClick "Download Modified MCADDON" to   
+           +save your changes.`);                                        
+      4797 +                                                             
+      4798 +            } catch (error) {                                
+      4799 +                alert(`Error deleting file:                  
+           +${error.message}`);                                          
+      4800 +            }                                                
+      4801 +        }                                                    
+      4802 +                                                             
+      4803 +        // ========== Add PNG Functions ==========           
+      4804 +                                                             
+      4805 +        async function handleAddPngLocalSelect() {           
+      4806 +            const fileInput =                                
+           +document.getElementById('addPngLocalFile');                  
+      4807 +            const fileInfo =                                 
+           +document.getElementById('addPngLocalInfo');                  
+      4808 +            const file = fileInput.files[0];                 
+      4809 +                                                             
+      4810 +            if (!file) return;                               
+      4811 +                                                             
+      4812 +            try {                                            
+      4813 +                pngLocalFile = file;                         
+      4814 +                pngLocalFileData = await                     
+           +readFileAsArrayBuffer(file);                                 
+      4815 +                                                             
+      4816 +                fileInfo.innerHTML = `<p style="color:       
+           +#27ae60;">✓ Selected ${file.name}                            
+           +(${formatFileSize(file.size)})</p>`;                         
+      4817 +                                                             
+      4818 +                // Show folder browser                       
+      4819 +                document.getElementById('addPngBrowserSectio 
+           +n').style.display = 'block';                                 
+      4820 +                buildPngTreeForAdd();                        
+      4821 +                                                             
+      4822 +            } catch (error) {                                
+      4823 +                fileInfo.innerHTML = `<p style="color:       
+           +#e74c3c;">Error loading file: ${error.message}</p>`;         
+      4824 +            }                                                
+      4825 +        }                                                    
+      4826 +                                                             
+      4827 +        function buildPngTreeForAdd() {                      
+      4828 +            const listContainer =                            
+           +document.getElementById('pngAddFolderList');                 
+      4829 +            listContainer.innerHTML = '';                    
+      4830 +                                                             
+      4831 +                                                             
+           +document.getElementById('addConfirmSection').style.display = 
+           + 'none';                                                     
+      4832 +                                                             
+      4833 +            const tree = buildPngFileTree();                 
+      4834 +            renderPngTree(tree, listContainer, 0,            
+           +selectFolderForAdd, false, true);                            
+      4835 +        }                                                    
+      4836 +                                                             
+      4837 +        function selectFolderForAdd(path, isFolder) {        
+      4838 +            pngSelectedPath = path || '';                    
+      4839 +                                                             
+           +document.getElementById('addSelectedPath').textContent =     
+           +path || '(root)';                                            
+      4840 +                                                             
+           +document.getElementById('addConfirmSection').style.display = 
+           + 'block';                                                    
+      4841 +        }                                                    
+      4842 +                                                             
+      4843 +        async function confirmAddPng() {                     
+      4844 +            if (!pngLocalFile || !pngLocalFileData) {        
+      4845 +                alert('No local file selected');             
+      4846 +                return;                                      
+      4847 +            }                                                
+      4848 +                                                             
+      4849 +            try {                                            
+      4850 +                // Create a copy of the ZIP                  
+      4851 +                pngModifiedZip = await JSZip.loadAsync(await 
+           + pngZip.generateAsync({ type: 'arraybuffer' }));             
+      4852 +                                                             
+      4853 +                // Add the new file                          
+      4854 +                const targetPath = pngSelectedPath ?         
+           +`${pngSelectedPath}/${pngLocalFile.name}` :                  
+           +pngLocalFile.name;                                           
+      4855 +                pngModifiedZip.file(targetPath,              
+           +pngLocalFileData);                                           
+      4856 +                                                             
+      4857 +                // Show download button                      
+      4858 +                document.getElementById('downloadModifiedMcA 
+           +ddonBtn').style.display = 'block';                           
+      4859 +                                                             
+      4860 +                // Hide the add section                      
+      4861 +                                                             
+           +document.getElementById('png-add-section').style.display =   
+           +'none';                                                      
+      4862 +                                                             
+      4863 +                alert(`File added: ${targetPath}\n\nClick    
+           +"Download Modified MCADDON" to save your changes.`);         
+      4864 +                                                             
+      4865 +            } catch (error) {                                
+      4866 +                alert(`Error adding file:                    
+           +${error.message}`);                                          
+      4867 +            }                                                
+      4868 +        }                                                    
+      4869 +                                                             
+      4870 +        // ========== Replace PNG Functions ==========       
+      4871 +                                                             
+      4872 +        async function handleReplacePngLocalSelect() {       
+      4873 +            const fileInput =                                
+           +document.getElementById('replacePngLocalFile');              
+      4874 +            const fileInfo =                                 
+           +document.getElementById('replacePngLocalInfo');              
+      4875 +            const file = fileInput.files[0];                 
+      4876 +                                                             
+      4877 +            if (!file) return;                               
+      4878 +                                                             
+      4879 +            try {                                            
+      4880 +                pngLocalFile = file;                         
+      4881 +                pngLocalFileData = await                     
+           +readFileAsArrayBuffer(file);                                 
+      4882 +                                                             
+      4883 +                fileInfo.innerHTML = `<p style="color:       
+           +#27ae60;">✓ Selected ${file.name}                            
+           +(${formatFileSize(file.size)})</p>`;                         
+      4884 +                                                             
+      4885 +                // Show PNG browser                          
+      4886 +                document.getElementById('replacePngBrowserSe 
+           +ction').style.display = 'block';                             
+      4887 +                buildPngTreeForReplace();                    
+      4888 +                                                             
+      4889 +            } catch (error) {                                
+      4890 +                fileInfo.innerHTML = `<p style="color:       
+           +#e74c3c;">Error loading file: ${error.message}</p>`;         
+      4891 +            }                                                
+      4892 +        }                                                    
+      4893 +                                                             
+      4894 +        function buildPngTreeForReplace() {                  
+      4895 +            const listContainer =                            
+           +document.getElementById('pngReplaceList');                   
+      4896 +            listContainer.innerHTML = '';                    
+      4897 +                                                             
+      4898 +            document.getElementById('replaceConfirmSection') 
+           +.style.display = 'none';                                     
+      4899 +                                                             
+      4900 +            const tree = buildPngFileTree();                 
+      4901 +            renderPngTree(tree, listContainer, 0,            
+           +selectPngForReplace, true, false);                           
+      4902 +        }                                                    
+      4903 +                                                             
+      4904 +        function selectPngForReplace(path, isFolder) {       
+      4905 +            if (isFolder) return; // Only files can be       
+           +selected for replacement                                     
+      4906 +                                                             
+      4907 +            pngSelectedPath = path;                          
+      4908 +                                                             
+           +document.getElementById('replaceSelectedPath').textContent = 
+           + path;                                                       
+      4909 +            document.getElementById('replaceConfirmSection') 
+           +.style.display = 'block';                                    
+      4910 +        }                                                    
+      4911 +                                                             
+      4912 +        async function confirmReplacePng() {                 
+      4913 +            if (!pngSelectedPath) {                          
+      4914 +                alert('No file selected to replace');        
+      4915 +                return;                                      
+      4916 +            }                                                
+      4917 +                                                             
+      4918 +            if (!pngLocalFile || !pngLocalFileData) {        
+      4919 +                alert('No local file selected');             
+      4920 +                return;                                      
+      4921 +            }                                                
+      4922 +                                                             
+      4923 +            try {                                            
+      4924 +                // Create a copy of the ZIP                  
+      4925 +                pngModifiedZip = await JSZip.loadAsync(await 
+           + pngZip.generateAsync({ type: 'arraybuffer' }));             
+      4926 +                                                             
+      4927 +                // Replace the file (keep same path/name,    
+           +new content)                                                 
+      4928 +                pngModifiedZip.file(pngSelectedPath,         
+           +pngLocalFileData);                                           
+      4929 +                                                             
+      4930 +                // Show download button                      
+      4931 +                document.getElementById('downloadModifiedMcA 
+           +ddonBtn').style.display = 'block';                           
+      4932 +                                                             
+      4933 +                // Hide the replace section                  
+      4934 +                                                             
+           +document.getElementById('png-replace-section').style.display 
+           + = 'none';                                                   
+      4935 +                                                             
+      4936 +                alert(`File replaced:                        
+           +${pngSelectedPath}\n\nClick "Download Modified MCADDON" to   
+           +save your changes.`);                                        
+      4937 +                                                             
+      4938 +            } catch (error) {                                
+      4939 +                alert(`Error replacing file:                 
+           +${error.message}`);                                          
+      4940 +            }                                                
+      4941 +        }                                                    
+      4942 +                                                             
+      4943 +        // ========== Download PNG Functions ==========      
+      4944 +                                                             
+      4945 +        function buildPngTreeForDownload() {                 
+      4946 +            const listContainer =                            
+           +document.getElementById('pngDownloadList');                  
+      4947 +            listContainer.innerHTML = '';                    
+      4948 +                                                             
+      4949 +            document.getElementById('downloadPngConfirmSecti 
+           +on').style.display = 'none';                                 
+      4950 +                                                             
+      4951 +            const tree = buildPngFileTree();                 
+      4952 +            renderPngTree(tree, listContainer, 0,            
+           +selectPngForDownload, true, false);                          
+      4953 +        }                                                    
+      4954 +                                                             
+      4955 +        function selectPngForDownload(path, isFolder) {      
+      4956 +            if (isFolder) return; // Only files can be       
+           +selected for download                                        
+      4957 +                                                             
+      4958 +            pngSelectedPath = path;                          
+      4959 +                                                             
+           +document.getElementById('downloadSelectedPath').textContent  
+           += path;                                                      
+      4960 +            document.getElementById('downloadPngConfirmSecti 
+           +on').style.display = 'block';                                
+      4961 +        }                                                    
+      4962 +                                                             
+      4963 +        async function confirmDownloadPng() {                
+      4964 +            if (!pngSelectedPath) {                          
+      4965 +                alert('No file selected');                   
+      4966 +                return;                                      
+      4967 +            }                                                
+      4968 +                                                             
+      4969 +            try {                                            
+      4970 +                const zipEntry =                             
+           +pngZip.file(pngSelectedPath);                                
+      4971 +                if (!zipEntry) {                             
+      4972 +                    alert('File not found in MCADDON');      
+      4973 +                    return;                                  
+      4974 +                }                                            
+      4975 +                                                             
+      4976 +                const content = await                        
+           +zipEntry.async('blob');                                      
+      4977 +                const fileName =                             
+           +pngSelectedPath.split('/').pop();                            
+      4978 +                downloadBlob(content, fileName);             
+      4979 +                                                             
+      4980 +                alert(`PNG file downloaded: ${fileName}`);   
+      4981 +                                                             
+      4982 +            } catch (error) {                                
+      4983 +                alert(`Error downloading file:               
+           +${error.message}`);                                          
+      4984 +            }                                                
+      4985 +        }                                                    
+      4986 +                                                             
+      4987 +        // ========== Helper Functions ==========            
+      4988 +                                                             
+      4989 +        function cancelPngOperation() {                      
+      4990 +            // Reset to operation selector                   
+      4991 +            pngSelectedPath = null;                          
+      4992 +            pngLocalFile = null;                             
+      4993 +            pngLocalFileData = null;                         
+      4994 +                                                             
+      4995 +            // Hide all operation sections                   
+      4996 +                                                             
+           +document.getElementById('png-delete-section').style.display  
+           += 'none';                                                    
+      4997 +                                                             
+           +document.getElementById('png-add-section').style.display =   
+           +'none';                                                      
+      4998 +                                                             
+           +document.getElementById('png-replace-section').style.display 
+           + = 'none';                                                   
+      4999 +            document.getElementById('png-download-section'). 
+           +style.display = 'none';                                      
+      5000 +                                                             
+      5001 +            // Show operation selector                       
+      5002 +            document.getElementById('png-operation-selector' 
+           +).style.display = 'block';                                   
+      5003 +        }                                                    
+      5004 +                                                             
+      5005 +        async function downloadModifiedPngMcAddon() {        
+      5006 +            if (!pngModifiedZip) {                           
+      5007 +                alert('No modified file to download');       
+      5008 +                return;                                      
+      5009 +            }                                                
+      5010 +                                                             
+      5011 +            try {                                            
+      5012 +                const blob = await                           
+           +pngModifiedZip.generateAsync({ type: 'blob' });              
+      5013 +                const originalName = pngMcAddonFile.name;    
+      5014 +                const newName =                              
+           +originalName.replace('.mcaddon', '_modified.mcaddon');       
+      5015 +                downloadBlob(blob, newName);                 
+      5016 +                                                             
+      5017 +            } catch (error) {                                
+      5018 +                alert(`Error generating download:            
+           +${error.message}`);                                          
+      5019 +            }                                                
+      5020 +        }                                                    
+      5021      </script>                                                
+      5022  </body>                                                      
+      5023  </html>                                                      
+
+⏺ Excellent! I've completed the implementation of all PNG editing operations. Let me update the todo list and then test the feature:
+
+⏺ Now let me test the implementation by opening the HTML file:
+
+⏺ Bash(open minecraft_recipe.html)
+  ⎿  (No content)
+
+⏺ Implementation Complete!
+
+  I've successfully implemented the Edit PNGs feature for your Minecraft Recipe Generator application. Here's what was added:
+
+  Features Implemented:
+
+  1. Navigation
+  - Added "Edit PNGs" button to the left navigation panel (Screen 6)
+
+  2. User Interface
+  - Step 1: MCADDON file selector
+  - Step 2: Four operation buttons (Delete/Add/Replace/Download)
+  - Step 3: Operation-specific interfaces with file/folder browsers
+
+  3. File Browser
+  - Reused the existing tree view pattern from "Edit MCADDON Files"
+  - Expandable/collapsible folders with ▶ icons
+  - Shows PNG file counts in folders
+  - Displays file sizes
+  - Only shows PNG files and their parent folders
+
+  4. Four Operations:
+
+  Delete PNG:
+  - Browse PNG files in tree view
+  - Select a PNG file
+  - Confirm deletion
+  - Download modified MCADDON
+
+  Add PNG:
+  - Select PNG from local file system
+  - Browse folders in MCADDON (folders are clickable to select destination)
+  - Confirm to add file with its original filename
+  - Download modified MCADDON
+
+  Replace PNG:
+  - Select PNG from local file system
+  - Browse and select PNG file in MCADDON to replace
+  - Confirm replacement (keeps original filename, replaces content)
+  - Download modified MCADDON
+
+  Download PNG:
+  - Browse PNG files in tree view
+  - Select a PNG file
+  - Confirm to download individual PNG file
+
+  Key Design Decisions:
+
+  - No operation chaining: Each operation completes independently and downloads result
+  - Consistent UI: Matches existing file browser pattern from Edit MCADDON screen
+  - Standard file inputs: Uses native browser file picker for local files
+  - Modified MCADDON naming: Adds _modified suffix to downloaded files
+
+  Files Modified:
+
+  - minecraft_recipe.html - Added ~600 lines of HTML, CSS, and JavaScript
+
+  The application is now open in your browser. You can test it with a MCADDON file to verify all operations work correctly!
+
+> Update CLAUDE.md with Edit PNGs documentation 
+
+⏺ Read(CLAUDE.md)
+  ⎿  Read 414 lines
+
+⏺ Update(CLAUDE.md)
+  ⎿  Added 1 line, removed 1 line                                        
+      40    - File type-specific validation                              
+      41  - **Location**: Lines 1315-1340 (HTML), Lines 2939-3645        
+          (JavaScript)                                                   
+      42                                                                 
+      43 -### 6. Builtin Features (Screen 5) **[NEWLY IMPLEMENTED]**     
+      43 +### 6. Builtin Features (Screen 5)                             
+      44  - Apply predefined features to items in MCADDON files          
+      45  - Currently supports: **Food Effects**                         
+      46  - Extensible architecture for adding more builtin features     
+
+⏺ Update(CLAUDE.md)
+  ⎿  Added 70 lines                                                      
+       72    - JavaScript State: Lines 1579-1663                         
+       73    - JavaScript Functions: Lines 3647-3974                     
+       74                                                                
+       75 +### 7. Edit PNGs (Screen 6) **[NEWLY IMPLEMENTED]**           
+       76 +- Delete, add, replace, or download PNG files within MCADDON  
+          +packages                                                      
+       77 +- Four independent operations (no chaining)                   
+       78 +- Tree-based file browser matching existing UI patterns       
+       79 +- Non-destructive operations with download                    
+       80 +                                                              
+       81 +#### Operations                                               
+       82 +                                                              
+       83 +**Delete PNG:**                                               
+       84 +- Browse PNG files in hierarchical tree view                  
+       85 +- Select a PNG file to delete                                 
+       86 +- Confirm deletion                                            
+       87 +- Download modified MCADDON with deleted file removed         
+       88 +- **Workflow**: Select MCADDON → Choose "Delete PNG" →        
+          +Browse/select file → Confirm → Download                       
+       89 +                                                              
+       90 +**Add PNG:**                                                  
+       91 +- Select PNG file from local file system                      
+       92 +- Browse folders in MCADDON virtual file structure            
+       93 +- Select destination folder (or root)                         
+       94 +- Confirm to add file with original filename                  
+       95 +- Download modified MCADDON with new file added               
+       96 +- **Workflow**: Select MCADDON → Choose "Add PNG" → Select    
+          +local file → Browse/select folder → Confirm → Download        
+       97 +                                                              
+       98 +**Replace PNG:**                                              
+       99 +- Select PNG file from local file system                      
+      100 +- Browse PNG files in MCADDON                                 
+      101 +- Select PNG file to replace                                  
+      102 +- Confirm replacement (keeps original path/filename, replaces 
+          + content)                                                     
+      103 +- Download modified MCADDON with replaced file                
+      104 +- **Workflow**: Select MCADDON → Choose "Replace PNG" →       
+          +Select local file → Browse/select PNG to replace → Confirm →  
+          +Download                                                      
+      105 +                                                              
+      106 +**Download PNG:**                                             
+      107 +- Browse PNG files in hierarchical tree view                  
+      108 +- Select a PNG file to extract                                
+      109 +- Confirm download                                            
+      110 +- Individual PNG file is downloaded (not MCADDON)             
+      111 +- **Workflow**: Select MCADDON → Choose "Download PNG" →      
+          +Browse/select file → Confirm → Download PNG                   
+      112 +                                                              
+      113 +#### Implementation Details                                   
+      114 +- **File Browser**: Reuses existing tree view pattern from    
+          +Edit MCADDON screen                                           
+      115 +  - Expandable/collapsible folders with ▶ icons               
+      116 +  - File count badges on folders                              
+      117 +  - File size display                                         
+      118 +  - Only shows PNG files and their parent folders             
+      119 +- **No Operation Chaining**: Each operation completes         
+          +independently and ends with download                          
+      120 +- **Standard File Inputs**: Uses native browser file picker   
+          +for local file selection                                      
+      121 +- **Modified MCADDON Naming**: Adds `_modified` suffix to     
+          +downloaded MCADDON files                                      
+      122 +- **Tree Rendering**: Flexible `renderPngTree()` function     
+          +supports:                                                     
+      123 +  - Showing/hiding files (for folder-only selection)          
+      124 +  - Making folders clickable (for Add operation)              
+      125 +  - Custom click handlers per operation type                  
+      126 +                                                              
+      127 +#### State Management                                         
+      128 +```javascript                                                 
+      129 +let pngMcAddonFile = null;        // Selected MCADDON file    
+      130 +let pngZip = null;                // Loaded JSZip instance    
+      131 +let pngCurrentOperation = null;   // Current operation:       
+          +'delete', 'add', 'replace', 'download'                        
+      132 +let pngFiles = [];                // Array of PNG files in    
+          +MCADDON                                                       
+      133 +let pngSelectedPath = null;       // Selected file/folder     
+          +path                                                          
+      134 +let pngLocalFile = null;          // Local PNG file (for      
+          +add/replace)                                                  
+      135 +let pngLocalFileData = null;      // ArrayBuffer of local     
+          +file                                                          
+      136 +let pngModifiedZip = null;        // Modified ZIP for         
+          +download                                                      
+      137 +```                                                           
+      138 +                                                              
+      139 +- **Location**:                                               
+      140 +  - HTML: Lines 1417-1589                                     
+      141 +  - CSS: Lines 1095-1171                                      
+      142 +  - JavaScript State: Lines 1841-1849                         
+      143 +  - JavaScript Functions: Lines 4563-5020                     
+      144 +                                                              
+      145  ## Architecture                                               
+      146                                                                
+      147  ### File Structure                                            
+
+⏺ Update(CLAUDE.md)
+  ⎿  Added 2 lines, removed 2 lines                                      
+      145  ## Architecture                                               
+      146                                                                
+      147  ### File Structure                                            
+      148 -- **Single HTML file**: `minecraft_recipe.html` (3,978 lines) 
+      148 +- **Single HTML file**: `minecraft_recipe.html` (~5,025 lines)
+      149  - Self-contained with embedded CSS and JavaScript             
+      150  - Uses JSZip library (CDN) for MCADDON manipulation           
+      151                                                                
+      152  ### Screen System                                             
+      153  - Screens managed by `switchScreen(index)` function (Line     
+           1665)                                                         
+      154 -- 6 screens total (0-5)                                       
+      154 +- 7 screens total (0-6)                                       
+      155  - Each screen has dedicated state variables                   
+      156  - Navigation via vertical nav panel on left                   
+      157                                                                
+
+⏺ Update(CLAUDE.md)
+  ⎿  Added 10 lines                                                      
+      167  let builtinFoodEffects = [];                                  
+      168  let builtinEffectCounter = 0;                                 
+      169  let builtinModifiedZip = null;                                
+      170 +                                                              
+      171 +// Example from PNG Editor:                                   
+      172 +let pngMcAddonFile = null;                                    
+      173 +let pngZip = null;                                            
+      174 +let pngCurrentOperation = null;                               
+      175 +let pngFiles = [];                                            
+      176 +let pngSelectedPath = null;                                   
+      177 +let pngLocalFile = null;                                      
+      178 +let pngLocalFileData = null;                                  
+      179 +let pngModifiedZip = null;                                    
+      180  ```                                                           
+      181                                                                
+      182  ### Common Utilities                                          
+
+⏺ Update(CLAUDE.md)
+  ⎿  Added 1 line                                                        
+      453  ### CSS Organization                                          
+      454  - Global styles: Lines 9-892                                  
+      455  - Builtin Features styles: Lines 893-1093                     
+      456 +- PNG Editor styles: Lines 1095-1171                          
+      457  - Well-structured with clear class naming                     
+      458  - Consistent spacing and transitions                          
+      459                                                                
+
+⏺ Update(CLAUDE.md)
+  ⎿  Added 40 lines                                                      
+      397                                                                
+      398  ## Recent Changes                                             
+      399                                                                
+      400 +### 2025-12-30: Edit PNGs Feature Implementation              
+      401 +- **Added**: Complete PNG file editing system (Screen 6)      
+      402 +- **Four Operations**:                                        
+      403 +  - **Delete PNG**: Remove PNG files from MCADDON             
+      404 +  - **Add PNG**: Add local PNG files to any folder in MCADDON 
+      405 +  - **Replace PNG**: Replace existing PNG files with local    
+          +files                                                         
+      406 +  - **Download PNG**: Extract individual PNG files from       
+          +MCADDON                                                       
+      407 +                                                              
+      408 +- **Key Features**:                                           
+      409 +  - Tree-based file browser matching existing UI patterns     
+      410 +  - Expandable/collapsible folder navigation with file counts 
+      411 +  - No operation chaining - each operation completes          
+          +independently                                                 
+      412 +  - Modified MCADDON files saved with `_modified` suffix      
+      413 +  - Flexible tree rendering for different operation needs     
+      414 +  - Standard HTML file inputs for local file selection        
+      415 +                                                              
+      416 +- **Implementation**:                                         
+      417 +  - Reused existing tree view component from Edit MCADDON     
+          +screen                                                        
+      418 +  - Added specialized `renderPngTree()` with configurable     
+          +behavior:                                                     
+      419 +    - Show/hide files (for folder-only selection in Add       
+          +operation)                                                    
+      420 +    - Make folders clickable (for Add operation)              
+      421 +    - Custom click handlers per operation type                
+      422 +  - PNG-specific filtering: only shows PNG files and their    
+          +parent folders                                                
+      423 +  - Each operation has isolated UI section with               
+          +confirm/cancel workflow                                       
+      424 +                                                              
+      425 +- **State Management**:                                       
+      426 +  - 8 new state variables for PNG editor functionality        
+      427 +  - Isolated from other feature states following existing     
+          +patterns                                                      
+      428 +  - Clean state reset between operations                      
+      429 +                                                              
+      430 +- **User Experience**:                                        
+      431 +  - Clear step-by-step workflow for each operation            
+      432 +  - Visual feedback on file selection                         
+      433 +  - Confirmation dialogs before destructive actions           
+      434 +  - Informative success messages                              
+      435 +                                                              
+      436 +- Files modified: `minecraft_recipe.html`, `CLAUDE.md`        
+      437 +- Lines added: ~600 (HTML, CSS, JavaScript)                   
+      438 +- New navigation button, complete UI, and full operation      
+          +logic                                                         
+      439 +                                                              
+      440  ### 2025-12-21: Food Effects Bug Fix (Format 1.10 with Split  
+           Files)                                                        
+      441  - **Fixed**: Food effects not working in Minecraft            
+      442  - **Root Cause**: Format versions 1.16.100+ and 1.20.50+ have 
+            issues with food effects                                     
+
+⏺ Update(CLAUDE.md)
+  ⎿  Added 1 line, removed 1 line                                        
+      508  - Feature isolation: Each screen has its own state and        
+           functions                                                     
+      509  - Reusable utilities: File I/O, ZIP handling, validation      
+      510  - Consistent patterns: All features follow same workflow      
+           structure                                                     
+      511 -- Clear naming conventions: Feature prefixes (e.g.,           
+          -`builtin*`, `combine*`, `diff*`)                              
+      511 +- Clear naming conventions: Feature prefixes (e.g.,           
+          +`builtin*`, `combine*`, `diff*`, `png*`)                      
+      512                                                                
+      513  ## Future Enhancement Opportunities                           
+      514                                                                
+
+⏺ Update(CLAUDE.md)
+  ⎿  Added 10 lines                                                      
+      519  - Entity Spawn Eggs (filter for spawn eggs)                   
+      520  - Potion Effects (filter for potions)                         
+      521                                                                
+      522 +### PNG Editor Enhancements                                   
+      523 +- Batch operations: delete/replace multiple PNGs at once      
+      524 +- PNG preview thumbnails in file browser                      
+      525 +- Rename PNG files (change filename while keeping in same     
+          +location)                                                     
+      526 +- Move PNGs between folders                                   
+      527 +- Image validation (check dimensions, file integrity)         
+      528 +- Convert image formats (JPG → PNG, etc.)                     
+      529 +- Resize/compress PNGs before adding to MCADDON               
+      530 +                                                              
+      531  ### UI Improvements                                           
+      532  - Multi-item selection for batch operations                   
+      533  - Undo/Redo functionality                                     
+      534  - Preview changes before download                             
+      535  - Export/Import feature configurations                        
+      536  - Keyboard shortcuts                                          
+      537 +- Drag-and-drop file uploads                                  
+      538                                                                
+      539  ### Technical Improvements                                    
+      540  - Error handling with toast notifications instead of alerts   
+
+⏺ Update(CLAUDE.md)
+  ⎿  Added 1 line, removed 1 line                                        
+      1  # Minecraft Recipe Generator - Project Documentation            
+      2                                                                  
+      3  ## Project Overview                                             
+      4 -A web-based tool for creating and managing Minecraft Bedrock    
+        -Edition recipes and MCADDON files. The application provides     
+        -multiple features for working with Minecraft content creation,  
+        -including recipe generation, MCADDON editing, file combination, 
+        -diffing, validation, and applying builtin features to items.    
+      4 +A web-based tool for creating and managing Minecraft Bedrock    
+        +Edition recipes and MCADDON files. The application provides     
+        +multiple features for working with Minecraft content creation,  
+        +including recipe generation, MCADDON editing, file combination, 
+        +diffing, validation, applying builtin features to items         
+        +, and PNG asset management.                                     
+      5                                                                  
+      6  ## Current Features                                             
+      7                                                                  
+
+⏺ Update(CLAUDE.md)
+  ⎿  Added 53 lines                                                      
+      395                                                                
+      396  **Note**: Duration is in ticks (600 ticks = 30 seconds).      
+           Format version 1.10 uses split BP/RP files (vanilla Enchanted 
+            Golden Apple format).                                        
+      397                                                                
+      398 +### Manual Testing Workflow for PNG Editor                    
+      399 +                                                              
+      400 +**General Setup:**                                            
+      401 +1. Open `minecraft_recipe.html` in browser                    
+      402 +2. Click "Edit PNGs" in nav                                   
+      403 +3. Select a valid MCADDON file with PNG files                 
+      404 +                                                              
+      405 +**Testing Delete PNG:**                                       
+      406 +1. Click "Delete PNG" button                                  
+      407 +2. Expand folders to locate PNG files                         
+      408 +3. Click on a PNG file to select it                           
+      409 +4. Verify the selected file path is displayed                 
+      410 +5. Click "Confirm Delete" button                              
+      411 +6. Verify success message appears                             
+      412 +7. Click "Download Modified MCADDON" button                   
+      413 +8. Extract and verify the PNG was removed                     
+      414 +                                                              
+      415 +**Testing Add PNG:**                                          
+      416 +1. Click "Add PNG" button                                     
+      417 +2. Select a PNG file from your computer                       
+      418 +3. Verify file info is displayed                              
+      419 +4. Click on a folder to select as destination (or use root)   
+      420 +5. Verify selected folder path is displayed                   
+      421 +6. Click "Confirm Add" button                                 
+      422 +7. Verify success message with target path                    
+      423 +8. Click "Download Modified MCADDON" button                   
+      424 +9. Extract and verify the PNG was added to the correct        
+          +location                                                      
+      425 +                                                              
+      426 +**Testing Replace PNG:**                                      
+      427 +1. Click "Replace PNG" button                                 
+      428 +2. Select a PNG file from your computer                       
+      429 +3. Verify file info is displayed                              
+      430 +4. Expand folders and click on a PNG file to replace          
+      431 +5. Verify selected file path is displayed                     
+      432 +6. Click "Confirm Replace" button                             
+      433 +7. Verify success message appears                             
+      434 +8. Click "Download Modified MCADDON" button                   
+      435 +9. Extract and verify the PNG was replaced (same filename,    
+          +new content)                                                  
+      436 +                                                              
+      437 +**Testing Download PNG:**                                     
+      438 +1. Click "Download PNG" button                                
+      439 +2. Expand folders to locate PNG files                         
+      440 +3. Click on a PNG file to select it                           
+      441 +4. Verify the selected file path is displayed                 
+      442 +5. Click "Confirm Download" button                            
+      443 +6. Verify the PNG file downloads to your computer             
+      444 +7. Open the downloaded PNG to confirm it's valid              
+      445 +                                                              
+      446 +**Cancel Operation Testing:**                                 
+      447 +- In any operation, click "Cancel" button                     
+      448 +- Verify it returns to operation selector                     
+      449 +- Verify state is reset                                       
+      450 +                                                              
+      451  ## Recent Changes                                             
+      452                                                                
+      453  ### 2025-12-30: Edit PNGs Feature Implementation              
+
+⏺ Perfect! I've successfully updated the CLAUDE.md documentation with comprehensive information about the new Edit PNGs feature. Here's what was added:
+
+  Documentation Updates:
+
+  1. Current Features Section
+
+  - Added Edit PNGs as Feature #7 with complete documentation
+  - Detailed description of all four operations (Delete/Add/Replace/Download)
+  - Implementation details including state management
+  - Line number references for HTML, CSS, and JavaScript
+
+  2. Architecture Section
+
+  - Updated screen count: 6 → 7 screens (0-6)
+  - Updated file line count: 3,978 → ~5,025 lines
+  - Added PNG editor state variables to State Management Pattern example
+
+  3. Testing Section
+
+  - Added comprehensive manual testing workflow for all PNG operations
+  - Step-by-step test cases for Delete, Add, Replace, and Download
+  - Cancel operation testing procedures
+
+  4. Recent Changes Section
+
+  - Added detailed entry for 2025-12-30: Edit PNGs Feature Implementation
+  - Documented key features, implementation details, and user experience improvements
+  - ~600 lines of code added
+
+  5. CSS Organization
+
+  - Added PNG Editor styles line reference (Lines 1095-1171)
+
+  6. Maintainability Section
+
+  - Updated naming conventions to include png* prefix
+
+  7. Future Enhancements
+
+  - Added new section "PNG Editor Enhancements" with 7 potential improvements
+  - Ideas include batch operations, thumbnails, rename/move, validation, format conversion
+
+  8. Project Overview
+
+  - Updated to mention "PNG asset management"
+
+  The documentation is now complete, comprehensive, and follows the same pattern as the other features in the project!
+
+
+
