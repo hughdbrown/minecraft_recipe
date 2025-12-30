@@ -1091,6 +1091,83 @@
             display: flex;
             justify-content: center;
         }
+
+        /* ========== PNG Editor Styles ========== */
+        .png-section {
+            margin-bottom: 30px;
+        }
+
+        .png-operation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .png-operation-btn {
+            padding: 20px;
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .png-operation-btn:hover {
+            border-color: #667eea;
+            background: #f8f9fa;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .operation-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .operation-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .operation-desc {
+            font-size: 13px;
+            color: #7f8c8d;
+            line-height: 1.4;
+        }
+
+        .png-browser-container {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+
+        .png-file-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .png-folder-selectable {
+            padding: 10px 12px;
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .png-folder-selectable:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
     </style>
 </head>
 <body>
@@ -1103,6 +1180,7 @@
             <button class="nav-button" onclick="switchScreen(3)">Diff MCADDON Files</button>
             <button class="nav-button" onclick="switchScreen(4)">Validate MCADDON</button>
             <button class="nav-button" onclick="switchScreen(5)">Builtin Features</button>
+            <button class="nav-button" onclick="switchScreen(6)">Edit PNGs</button>
         </div>
 
         <!-- Main Content Area -->
@@ -1412,6 +1490,180 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Screen 6: Edit PNGs -->
+            <div class="screen" id="screen-png">
+                <div class="container">
+                    <div class="header">
+                        <h1>Edit PNG Files</h1>
+                        <p>Delete, add, replace, or download PNG files within MCADDON packages</p>
+                    </div>
+
+                    <div class="tab-content active" style="display: block;">
+                        <!-- Step 1: Select MCADDON File -->
+                        <div id="png-file-selector" class="png-section">
+                            <div class="info-box">
+                                <strong>Step 1: Select MCADDON File</strong>
+                                Choose a .mcaddon file to work with PNG files.
+                            </div>
+                            <div class="form-group">
+                                <label for="pngMcAddonFile">Select MCADDON File (.mcaddon)</label>
+                                <input type="file" id="pngMcAddonFile" accept=".mcaddon" onchange="handlePngMcAddonSelect()">
+                                <div class="file-info" id="pngFileInfo"></div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Choose Operation -->
+                        <div id="png-operation-selector" class="png-section" style="display: none;">
+                            <div class="info-box">
+                                <strong>Step 2: Choose Operation</strong>
+                                Select what you want to do with PNG files.
+                            </div>
+                            <div class="png-operation-grid">
+                                <button class="png-operation-btn" onclick="selectPngOperation('delete')">
+                                    <div class="operation-icon">🗑️</div>
+                                    <div class="operation-title">Delete PNG</div>
+                                    <div class="operation-desc">Remove a PNG file from the MCADDON</div>
+                                </button>
+                                <button class="png-operation-btn" onclick="selectPngOperation('add')">
+                                    <div class="operation-icon">➕</div>
+                                    <div class="operation-title">Add PNG</div>
+                                    <div class="operation-desc">Add a PNG file to a folder in the MCADDON</div>
+                                </button>
+                                <button class="png-operation-btn" onclick="selectPngOperation('replace')">
+                                    <div class="operation-icon">🔄</div>
+                                    <div class="operation-title">Replace PNG</div>
+                                    <div class="operation-desc">Replace an existing PNG file</div>
+                                </button>
+                                <button class="png-operation-btn" onclick="selectPngOperation('download')">
+                                    <div class="operation-icon">⬇️</div>
+                                    <div class="operation-title">Download PNG</div>
+                                    <div class="operation-desc">Extract a PNG file from the MCADDON</div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Delete PNG -->
+                        <div id="png-delete-section" class="png-section" style="display: none;">
+                            <div class="info-box">
+                                <strong>Delete PNG File</strong>
+                                Select a PNG file to delete from the MCADDON.
+                            </div>
+                            <div class="png-browser-container">
+                                <ul class="png-file-list" id="pngDeleteList"></ul>
+                            </div>
+                            <div id="deleteConfirmSection" style="display: none; margin-top: 20px;">
+                                <div class="selected-item-info">
+                                    <h4>Selected for deletion:</h4>
+                                    <p id="deleteSelectedPath"></p>
+                                </div>
+                                <button class="convert-btn" onclick="confirmDeletePng()" style="background: #e74c3c;">
+                                    Confirm Delete
+                                </button>
+                                <button class="convert-btn" onclick="cancelPngOperation()" style="background: #95a5a6; margin-left: 10px;">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Add PNG -->
+                        <div id="png-add-section" class="png-section" style="display: none;">
+                            <div class="info-box">
+                                <strong>Add PNG File</strong>
+                                Step 1: Select a PNG file from your computer. Step 2: Choose destination folder in MCADDON.
+                            </div>
+                            <div class="form-group">
+                                <label for="addPngLocalFile">Select PNG File from Computer</label>
+                                <input type="file" id="addPngLocalFile" accept=".png" onchange="handleAddPngLocalSelect()">
+                                <div class="file-info" id="addPngLocalInfo"></div>
+                            </div>
+                            <div id="addPngBrowserSection" style="display: none;">
+                                <div class="info-box" style="margin-top: 20px;">
+                                    <strong>Select Destination Folder</strong>
+                                    Click on a folder to select it as the destination.
+                                </div>
+                                <div class="png-browser-container">
+                                    <ul class="png-file-list" id="pngAddFolderList"></ul>
+                                </div>
+                                <div id="addConfirmSection" style="display: none; margin-top: 20px;">
+                                    <div class="selected-item-info">
+                                        <h4>Will add to folder:</h4>
+                                        <p id="addSelectedPath"></p>
+                                    </div>
+                                    <button class="convert-btn" onclick="confirmAddPng()">
+                                        Confirm Add
+                                    </button>
+                                    <button class="convert-btn" onclick="cancelPngOperation()" style="background: #95a5a6; margin-left: 10px;">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Replace PNG -->
+                        <div id="png-replace-section" class="png-section" style="display: none;">
+                            <div class="info-box">
+                                <strong>Replace PNG File</strong>
+                                Step 1: Select a PNG file from your computer. Step 2: Choose which PNG to replace in MCADDON.
+                            </div>
+                            <div class="form-group">
+                                <label for="replacePngLocalFile">Select PNG File from Computer</label>
+                                <input type="file" id="replacePngLocalFile" accept=".png" onchange="handleReplacePngLocalSelect()">
+                                <div class="file-info" id="replacePngLocalInfo"></div>
+                            </div>
+                            <div id="replacePngBrowserSection" style="display: none;">
+                                <div class="info-box" style="margin-top: 20px;">
+                                    <strong>Select PNG File to Replace</strong>
+                                    Navigate folders and click on a PNG file to replace it.
+                                </div>
+                                <div class="png-browser-container">
+                                    <ul class="png-file-list" id="pngReplaceList"></ul>
+                                </div>
+                                <div id="replaceConfirmSection" style="display: none; margin-top: 20px;">
+                                    <div class="selected-item-info">
+                                        <h4>Will replace file:</h4>
+                                        <p id="replaceSelectedPath"></p>
+                                    </div>
+                                    <button class="convert-btn" onclick="confirmReplacePng()">
+                                        Confirm Replace
+                                    </button>
+                                    <button class="convert-btn" onclick="cancelPngOperation()" style="background: #95a5a6; margin-left: 10px;">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Download PNG -->
+                        <div id="png-download-section" class="png-section" style="display: none;">
+                            <div class="info-box">
+                                <strong>Download PNG File</strong>
+                                Select a PNG file to extract from the MCADDON.
+                            </div>
+                            <div class="png-browser-container">
+                                <ul class="png-file-list" id="pngDownloadList"></ul>
+                            </div>
+                            <div id="downloadPngConfirmSection" style="display: none; margin-top: 20px;">
+                                <div class="selected-item-info">
+                                    <h4>Selected for download:</h4>
+                                    <p id="downloadSelectedPath"></p>
+                                </div>
+                                <button class="convert-btn" onclick="confirmDownloadPng()">
+                                    Confirm Download
+                                </button>
+                                <button class="convert-btn" onclick="cancelPngOperation()" style="background: #95a5a6; margin-left: 10px;">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Download Modified MCADDON Button -->
+                        <button class="convert-btn" id="downloadModifiedMcAddonBtn" onclick="downloadModifiedPngMcAddon()" style="display: none; margin-top: 15px; background: #27ae60;">
+                            Download Modified MCADDON
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1585,6 +1837,16 @@
         let builtinFoodEffects = [];
         let builtinEffectCounter = 0;
         let builtinModifiedZip = null;
+
+        // ========== PNG Editor State ==========
+        let pngMcAddonFile = null;
+        let pngZip = null;
+        let pngCurrentOperation = null;
+        let pngFiles = [];
+        let pngSelectedPath = null;
+        let pngLocalFile = null;
+        let pngLocalFileData = null;
+        let pngModifiedZip = null;
 
         // Builtin Features definitions
         const builtinFeatures = [
@@ -4293,6 +4555,465 @@
 
             try {
                 await downloadMcAddon(builtinModifiedZip, builtinMcAddonFile.name, '_modified');
+            } catch (error) {
+                alert(`Error generating download: ${error.message}`);
+            }
+        }
+
+        // ========== PNG Editor Functions ==========
+
+        async function handlePngMcAddonSelect() {
+            const fileInput = document.getElementById('pngMcAddonFile');
+            const fileInfo = document.getElementById('pngFileInfo');
+            const file = fileInput.files[0];
+
+            if (!file) return;
+
+            try {
+                pngMcAddonFile = file;
+                const data = await readFileAsArrayBuffer(file);
+                pngZip = await JSZip.loadAsync(data);
+
+                // Extract all PNG files
+                pngFiles = [];
+                for (const [path, zipEntry] of Object.entries(pngZip.files)) {
+                    if (!zipEntry.dir && path.toLowerCase().endsWith('.png')) {
+                        pngFiles.push({
+                            path: path,
+                            size: zipEntry._data ? zipEntry._data.uncompressedSize : 0,
+                            zipEntry: zipEntry
+                        });
+                    }
+                }
+
+                fileInfo.innerHTML = `<p style="color: #27ae60;">✓ Loaded ${file.name} (${formatFileSize(file.size)}) - Found ${pngFiles.length} PNG file${pngFiles.length !== 1 ? 's' : ''}</p>`;
+
+                // Show operation selector
+                document.getElementById('png-operation-selector').style.display = 'block';
+
+                // Reset state
+                pngCurrentOperation = null;
+                pngSelectedPath = null;
+                pngLocalFile = null;
+                pngLocalFileData = null;
+                pngModifiedZip = null;
+
+                // Hide all operation sections
+                document.getElementById('png-delete-section').style.display = 'none';
+                document.getElementById('png-add-section').style.display = 'none';
+                document.getElementById('png-replace-section').style.display = 'none';
+                document.getElementById('png-download-section').style.display = 'none';
+                document.getElementById('downloadModifiedMcAddonBtn').style.display = 'none';
+
+            } catch (error) {
+                fileInfo.innerHTML = `<p style="color: #e74c3c;">Error loading file: ${error.message}</p>`;
+            }
+        }
+
+        function selectPngOperation(operation) {
+            pngCurrentOperation = operation;
+
+            // Hide operation selector
+            document.getElementById('png-operation-selector').style.display = 'none';
+
+            // Hide all operation sections
+            document.getElementById('png-delete-section').style.display = 'none';
+            document.getElementById('png-add-section').style.display = 'none';
+            document.getElementById('png-replace-section').style.display = 'none';
+            document.getElementById('png-download-section').style.display = 'none';
+
+            // Show the relevant section and build tree
+            if (operation === 'delete') {
+                document.getElementById('png-delete-section').style.display = 'block';
+                buildPngTreeForDelete();
+            } else if (operation === 'add') {
+                document.getElementById('png-add-section').style.display = 'block';
+            } else if (operation === 'replace') {
+                document.getElementById('png-replace-section').style.display = 'block';
+            } else if (operation === 'download') {
+                document.getElementById('png-download-section').style.display = 'block';
+                buildPngTreeForDownload();
+            }
+        }
+
+        function buildPngFileTree() {
+            const root = { type: 'folder', name: '', children: {}, files: [] };
+
+            pngFiles.forEach((file, index) => {
+                const parts = file.path.split('/');
+                let current = root;
+
+                // Navigate/create folder structure
+                for (let i = 0; i < parts.length - 1; i++) {
+                    const folderName = parts[i];
+                    if (!current.children[folderName]) {
+                        current.children[folderName] = {
+                            type: 'folder',
+                            name: folderName,
+                            children: {},
+                            files: [],
+                            path: parts.slice(0, i + 1).join('/')
+                        };
+                    }
+                    current = current.children[folderName];
+                }
+
+                // Add file to the final folder
+                const fileName = parts[parts.length - 1];
+                current.files.push({
+                    type: 'file',
+                    name: fileName,
+                    index: index,
+                    size: file.size,
+                    path: file.path
+                });
+            });
+
+            return root;
+        }
+
+        function countPngFilesInFolder(folder) {
+            let count = folder.files.length;
+            for (const child of Object.values(folder.children)) {
+                count += countPngFilesInFolder(child);
+            }
+            return count;
+        }
+
+        function renderPngTree(folder, container, depth = 0, clickHandler = null, showFiles = true, allowFolderClick = false) {
+            const folderNames = Object.keys(folder.children).sort();
+
+            // Render folders
+            folderNames.forEach(folderName => {
+                const child = folder.children[folderName];
+                const fileCount = countPngFilesInFolder(child);
+
+                const folderDiv = document.createElement('div');
+                folderDiv.className = 'tree-item';
+
+                const folderHeader = document.createElement('div');
+                if (allowFolderClick) {
+                    folderHeader.className = 'tree-folder png-folder-selectable';
+                } else {
+                    folderHeader.className = 'tree-folder';
+                }
+
+                folderHeader.innerHTML = `
+                    <span class="tree-folder-icon">▶</span>
+                    <span class="tree-folder-name">${folderName}</span>
+                    <span class="tree-folder-count">${fileCount} PNG${fileCount !== 1 ? 's' : ''}</span>
+                `;
+
+                const childrenContainer = document.createElement('div');
+                childrenContainer.className = 'tree-children';
+
+                // Toggle expand/collapse and handle folder clicks
+                folderHeader.onclick = (e) => {
+                    if (allowFolderClick && clickHandler) {
+                        clickHandler(child.path || folderName, true);
+                    } else {
+                        const icon = folderHeader.querySelector('.tree-folder-icon');
+                        const isExpanded = childrenContainer.classList.contains('expanded');
+
+                        if (isExpanded) {
+                            childrenContainer.classList.remove('expanded');
+                            icon.classList.remove('expanded');
+                        } else {
+                            childrenContainer.classList.add('expanded');
+                            icon.classList.add('expanded');
+                        }
+                    }
+                };
+
+                // Recursively render children
+                renderPngTree(child, childrenContainer, depth + 1, clickHandler, showFiles, allowFolderClick);
+
+                folderDiv.appendChild(folderHeader);
+                folderDiv.appendChild(childrenContainer);
+                container.appendChild(folderDiv);
+            });
+
+            // Render files in this folder (if showFiles is true)
+            if (showFiles) {
+                folder.files.sort((a, b) => a.name.localeCompare(b.name));
+                folder.files.forEach(file => {
+                    const fileDiv = document.createElement('div');
+                    fileDiv.className = 'tree-file';
+
+                    if (clickHandler) {
+                        fileDiv.onclick = () => clickHandler(file.path, false);
+                    }
+
+                    fileDiv.innerHTML = `
+                        <span class="tree-file-name">${file.name}</span>
+                        <span class="tree-file-size">${formatFileSize(file.size)}</span>
+                    `;
+
+                    container.appendChild(fileDiv);
+                });
+            }
+        }
+
+        // ========== Delete PNG Functions ==========
+
+        function buildPngTreeForDelete() {
+            const listContainer = document.getElementById('pngDeleteList');
+            listContainer.innerHTML = '';
+
+            document.getElementById('deleteConfirmSection').style.display = 'none';
+
+            const tree = buildPngFileTree();
+            renderPngTree(tree, listContainer, 0, selectPngForDelete, true, false);
+        }
+
+        function selectPngForDelete(path, isFolder) {
+            if (isFolder) return; // Only files can be selected for deletion
+
+            pngSelectedPath = path;
+            document.getElementById('deleteSelectedPath').textContent = path;
+            document.getElementById('deleteConfirmSection').style.display = 'block';
+        }
+
+        async function confirmDeletePng() {
+            if (!pngSelectedPath) {
+                alert('No file selected');
+                return;
+            }
+
+            try {
+                // Create a copy of the ZIP
+                pngModifiedZip = await JSZip.loadAsync(await pngZip.generateAsync({ type: 'arraybuffer' }));
+
+                // Remove the file
+                pngModifiedZip.remove(pngSelectedPath);
+
+                // Show download button
+                document.getElementById('downloadModifiedMcAddonBtn').style.display = 'block';
+
+                // Hide the delete section
+                document.getElementById('png-delete-section').style.display = 'none';
+
+                alert(`File deleted: ${pngSelectedPath}\n\nClick "Download Modified MCADDON" to save your changes.`);
+
+            } catch (error) {
+                alert(`Error deleting file: ${error.message}`);
+            }
+        }
+
+        // ========== Add PNG Functions ==========
+
+        async function handleAddPngLocalSelect() {
+            const fileInput = document.getElementById('addPngLocalFile');
+            const fileInfo = document.getElementById('addPngLocalInfo');
+            const file = fileInput.files[0];
+
+            if (!file) return;
+
+            try {
+                pngLocalFile = file;
+                pngLocalFileData = await readFileAsArrayBuffer(file);
+
+                fileInfo.innerHTML = `<p style="color: #27ae60;">✓ Selected ${file.name} (${formatFileSize(file.size)})</p>`;
+
+                // Show folder browser
+                document.getElementById('addPngBrowserSection').style.display = 'block';
+                buildPngTreeForAdd();
+
+            } catch (error) {
+                fileInfo.innerHTML = `<p style="color: #e74c3c;">Error loading file: ${error.message}</p>`;
+            }
+        }
+
+        function buildPngTreeForAdd() {
+            const listContainer = document.getElementById('pngAddFolderList');
+            listContainer.innerHTML = '';
+
+            document.getElementById('addConfirmSection').style.display = 'none';
+
+            const tree = buildPngFileTree();
+            renderPngTree(tree, listContainer, 0, selectFolderForAdd, false, true);
+        }
+
+        function selectFolderForAdd(path, isFolder) {
+            pngSelectedPath = path || '';
+            document.getElementById('addSelectedPath').textContent = path || '(root)';
+            document.getElementById('addConfirmSection').style.display = 'block';
+        }
+
+        async function confirmAddPng() {
+            if (!pngLocalFile || !pngLocalFileData) {
+                alert('No local file selected');
+                return;
+            }
+
+            try {
+                // Create a copy of the ZIP
+                pngModifiedZip = await JSZip.loadAsync(await pngZip.generateAsync({ type: 'arraybuffer' }));
+
+                // Add the new file
+                const targetPath = pngSelectedPath ? `${pngSelectedPath}/${pngLocalFile.name}` : pngLocalFile.name;
+                pngModifiedZip.file(targetPath, pngLocalFileData);
+
+                // Show download button
+                document.getElementById('downloadModifiedMcAddonBtn').style.display = 'block';
+
+                // Hide the add section
+                document.getElementById('png-add-section').style.display = 'none';
+
+                alert(`File added: ${targetPath}\n\nClick "Download Modified MCADDON" to save your changes.`);
+
+            } catch (error) {
+                alert(`Error adding file: ${error.message}`);
+            }
+        }
+
+        // ========== Replace PNG Functions ==========
+
+        async function handleReplacePngLocalSelect() {
+            const fileInput = document.getElementById('replacePngLocalFile');
+            const fileInfo = document.getElementById('replacePngLocalInfo');
+            const file = fileInput.files[0];
+
+            if (!file) return;
+
+            try {
+                pngLocalFile = file;
+                pngLocalFileData = await readFileAsArrayBuffer(file);
+
+                fileInfo.innerHTML = `<p style="color: #27ae60;">✓ Selected ${file.name} (${formatFileSize(file.size)})</p>`;
+
+                // Show PNG browser
+                document.getElementById('replacePngBrowserSection').style.display = 'block';
+                buildPngTreeForReplace();
+
+            } catch (error) {
+                fileInfo.innerHTML = `<p style="color: #e74c3c;">Error loading file: ${error.message}</p>`;
+            }
+        }
+
+        function buildPngTreeForReplace() {
+            const listContainer = document.getElementById('pngReplaceList');
+            listContainer.innerHTML = '';
+
+            document.getElementById('replaceConfirmSection').style.display = 'none';
+
+            const tree = buildPngFileTree();
+            renderPngTree(tree, listContainer, 0, selectPngForReplace, true, false);
+        }
+
+        function selectPngForReplace(path, isFolder) {
+            if (isFolder) return; // Only files can be selected for replacement
+
+            pngSelectedPath = path;
+            document.getElementById('replaceSelectedPath').textContent = path;
+            document.getElementById('replaceConfirmSection').style.display = 'block';
+        }
+
+        async function confirmReplacePng() {
+            if (!pngSelectedPath) {
+                alert('No file selected to replace');
+                return;
+            }
+
+            if (!pngLocalFile || !pngLocalFileData) {
+                alert('No local file selected');
+                return;
+            }
+
+            try {
+                // Create a copy of the ZIP
+                pngModifiedZip = await JSZip.loadAsync(await pngZip.generateAsync({ type: 'arraybuffer' }));
+
+                // Replace the file (keep same path/name, new content)
+                pngModifiedZip.file(pngSelectedPath, pngLocalFileData);
+
+                // Show download button
+                document.getElementById('downloadModifiedMcAddonBtn').style.display = 'block';
+
+                // Hide the replace section
+                document.getElementById('png-replace-section').style.display = 'none';
+
+                alert(`File replaced: ${pngSelectedPath}\n\nClick "Download Modified MCADDON" to save your changes.`);
+
+            } catch (error) {
+                alert(`Error replacing file: ${error.message}`);
+            }
+        }
+
+        // ========== Download PNG Functions ==========
+
+        function buildPngTreeForDownload() {
+            const listContainer = document.getElementById('pngDownloadList');
+            listContainer.innerHTML = '';
+
+            document.getElementById('downloadPngConfirmSection').style.display = 'none';
+
+            const tree = buildPngFileTree();
+            renderPngTree(tree, listContainer, 0, selectPngForDownload, true, false);
+        }
+
+        function selectPngForDownload(path, isFolder) {
+            if (isFolder) return; // Only files can be selected for download
+
+            pngSelectedPath = path;
+            document.getElementById('downloadSelectedPath').textContent = path;
+            document.getElementById('downloadPngConfirmSection').style.display = 'block';
+        }
+
+        async function confirmDownloadPng() {
+            if (!pngSelectedPath) {
+                alert('No file selected');
+                return;
+            }
+
+            try {
+                const zipEntry = pngZip.file(pngSelectedPath);
+                if (!zipEntry) {
+                    alert('File not found in MCADDON');
+                    return;
+                }
+
+                const content = await zipEntry.async('blob');
+                const fileName = pngSelectedPath.split('/').pop();
+                downloadBlob(content, fileName);
+
+                alert(`PNG file downloaded: ${fileName}`);
+
+            } catch (error) {
+                alert(`Error downloading file: ${error.message}`);
+            }
+        }
+
+        // ========== Helper Functions ==========
+
+        function cancelPngOperation() {
+            // Reset to operation selector
+            pngSelectedPath = null;
+            pngLocalFile = null;
+            pngLocalFileData = null;
+
+            // Hide all operation sections
+            document.getElementById('png-delete-section').style.display = 'none';
+            document.getElementById('png-add-section').style.display = 'none';
+            document.getElementById('png-replace-section').style.display = 'none';
+            document.getElementById('png-download-section').style.display = 'none';
+
+            // Show operation selector
+            document.getElementById('png-operation-selector').style.display = 'block';
+        }
+
+        async function downloadModifiedPngMcAddon() {
+            if (!pngModifiedZip) {
+                alert('No modified file to download');
+                return;
+            }
+
+            try {
+                const blob = await pngModifiedZip.generateAsync({ type: 'blob' });
+                const originalName = pngMcAddonFile.name;
+                const newName = originalName.replace('.mcaddon', '_modified.mcaddon');
+                downloadBlob(blob, newName);
+
             } catch (error) {
                 alert(`Error generating download: ${error.message}`);
             }
