@@ -1168,6 +1168,263 @@
             border-color: #667eea;
             background: #f0f4ff;
         }
+
+        /* ========== Grid View Styles ========== */
+        .view-toggle-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .view-toggle-btn {
+            padding: 12px 30px;
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .view-toggle-btn:hover {
+            border-color: #667eea;
+            background: #f8f9fa;
+        }
+
+        .view-toggle-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .recipe-text-view,
+        .recipe-grid-view {
+            display: block;
+        }
+
+        .grid-container {
+            margin-top: 20px;
+        }
+
+        .grid-container h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .crafting-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 450px;
+            margin-bottom: 30px;
+        }
+
+        .grid-cell {
+            width: 140px;
+            height: 140px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .grid-cell:hover {
+            border-color: #667eea;
+            background: #f8f9fa;
+        }
+
+        .grid-cell.filled {
+            background: #e7f5ff;
+            border-color: #74c0fc;
+        }
+
+        .cell-display {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .cell-placeholder {
+            color: #adb5bd;
+            font-size: 14px;
+        }
+
+        .cell-item-name {
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 14px;
+            word-wrap: break-word;
+        }
+
+        .result-grid {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .result-cell {
+            width: 140px;
+            height: 140px;
+        }
+
+        .count-input {
+            width: 100px;
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .count-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .grid-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        /* Item Selector Modal */
+        .item-selector-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+        }
+
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 24px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 36px;
+            color: #adb5bd;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+        }
+
+        .modal-close:hover {
+            color: #e74c3c;
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .item-search {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .item-search:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .item-list-item {
+            padding: 12px 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .item-list-item:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+        }
+
+        .item-name {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 3px;
+        }
+
+        .item-identifier {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        .item-category-header {
+            font-weight: 700;
+            color: #667eea;
+            padding: 10px 0;
+            margin-top: 15px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .item-category-header:first-child {
+            margin-top: 0;
+        }
     </style>
 </head>
 <body>
@@ -1193,6 +1450,16 @@
                         <p>Convert recipe text files to JSON format for Minecraft Bedrock edition</p>
                     </div>
 
+                    <!-- View Toggle (Text/Grid) -->
+                    <div class="view-toggle-container">
+                        <button class="view-toggle-btn active" id="textViewBtn" onclick="switchRecipeView('text')">
+                            📝 Text View
+                        </button>
+                        <button class="view-toggle-btn" id="gridViewBtn" onclick="switchRecipeView('grid')">
+                            ⚙️ Grid View
+                        </button>
+                    </div>
+
                     <div class="tabs">
                         <button class="tab active" onclick="switchRecipeTab(0)">JSON Only</button>
                         <button class="tab" onclick="switchRecipeTab(1)">JSON + McAddon</button>
@@ -1200,48 +1467,138 @@
 
                     <!-- Tab 1: JSON Only -->
                     <div class="tab-content active" id="tab1">
-            <div class="info-box">
-                <strong>Tab 1: Convert Recipe to JSON</strong>
-                Select a .txt recipe file to convert it to JSON format. The JSON file will be downloaded to your Downloads folder.
-            </div>
+                        <!-- Text View -->
+                        <div class="recipe-text-view" id="tab1-text-view">
+                            <div class="info-box">
+                                <strong>Tab 1: Convert Recipe to JSON</strong>
+                                Select a .txt recipe file to convert it to JSON format. The JSON file will be downloaded to your Downloads folder.
+                            </div>
 
-            <div class="form-group">
-                <label for="txtFile1">Select Recipe File (.txt)</label>
-                <input type="file" id="txtFile1" accept=".txt" onchange="handleFileSelect(1)">
-                <div class="file-info" id="fileInfo1"></div>
-            </div>
+                            <div class="form-group">
+                                <label for="txtFile1">Select Recipe File (.txt)</label>
+                                <input type="file" id="txtFile1" accept=".txt" onchange="handleFileSelect(1)">
+                                <div class="file-info" id="fileInfo1"></div>
+                            </div>
 
-            <button class="convert-btn" id="convertBtn1" onclick="convertToJson()" disabled>
-                Convert to JSON
-            </button>
+                            <button class="convert-btn" id="convertBtn1" onclick="convertToJson()" disabled>
+                                Convert to JSON
+                            </button>
 
-            <div class="result" id="result1"></div>
-        </div>
+                            <div class="result" id="result1"></div>
+                        </div>
 
-        <!-- Tab 2: JSON + McAddon -->
-        <div class="tab-content" id="tab2">
-            <div class="info-box">
-                <strong>Tab 2: Convert Recipe and Create McAddon</strong>
-                Select a .txt recipe file and a base .mcaddon file. The recipe will be converted to JSON and injected into the .mcaddon package.
-            </div>
+                        <!-- Grid View -->
+                        <div class="recipe-grid-view" id="tab1-grid-view" style="display: none;">
+                            <div class="info-box">
+                                <strong>Tab 1: Create Recipe with Grid</strong>
+                                Select items in the 3x3 crafting grid below, choose a result item, and convert to JSON format.
+                            </div>
 
-            <div class="form-group">
-                <label for="txtFile2">Select Recipe File (.txt)</label>
-                <input type="file" id="txtFile2" accept=".txt" onchange="handleFileSelect(2)">
-                <div class="file-info" id="fileInfo2"></div>
-            </div>
+                            <div class="grid-container">
+                                <h3>Crafting Grid</h3>
+                                <div class="crafting-grid" id="craftingGrid1">
+                                    <!-- 3x3 grid cells will be generated by JavaScript -->
+                                </div>
 
-            <div class="form-group">
-                <label for="mcaddonFile">Select Base McAddon File (.mcaddon)</label>
-                <input type="file" id="mcaddonFile" accept=".mcaddon" onchange="handleMcAddonSelect()">
-                <div class="file-info" id="mcaddonInfo"></div>
-            </div>
+                                <h3>Result Item</h3>
+                                <div class="result-grid">
+                                    <div class="grid-cell result-cell" id="resultCell1">
+                                        <div class="cell-display" onclick="openItemSelector('result', 1)">
+                                            <span class="cell-placeholder">Click to select result</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="margin-left: 20px;">
+                                        <label for="resultCount1">Result Count</label>
+                                        <input type="number" id="resultCount1" value="1" min="1" max="64" class="count-input">
+                                    </div>
+                                </div>
 
-            <button class="convert-btn" id="convertBtn2" onclick="convertAndInject()" disabled>
-                Convert & Create McAddon
-            </button>
+                                <div class="grid-actions">
+                                    <button class="convert-btn" onclick="clearGrid(1)" style="background: #95a5a6;">
+                                        Clear Grid
+                                    </button>
+                                    <button class="convert-btn" id="convertGridBtn1" onclick="convertGridToJson(1)">
+                                        Convert to JSON
+                                    </button>
+                                </div>
+                            </div>
 
-            <div class="result" id="result2"></div>
+                            <div class="result" id="gridResult1"></div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: JSON + McAddon -->
+                    <div class="tab-content" id="tab2">
+                        <!-- Text View -->
+                        <div class="recipe-text-view" id="tab2-text-view">
+                            <div class="info-box">
+                                <strong>Tab 2: Convert Recipe and Create McAddon</strong>
+                                Select a .txt recipe file and a base .mcaddon file. The recipe will be converted to JSON and injected into the .mcaddon package.
+                            </div>
+
+                            <div class="form-group">
+                                <label for="txtFile2">Select Recipe File (.txt)</label>
+                                <input type="file" id="txtFile2" accept=".txt" onchange="handleFileSelect(2)">
+                                <div class="file-info" id="fileInfo2"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="mcaddonFile">Select Base McAddon File (.mcaddon)</label>
+                                <input type="file" id="mcaddonFile" accept=".mcaddon" onchange="handleMcAddonSelect()">
+                                <div class="file-info" id="mcaddonInfo"></div>
+                            </div>
+
+                            <button class="convert-btn" id="convertBtn2" onclick="convertAndInject()" disabled>
+                                Convert & Create McAddon
+                            </button>
+
+                            <div class="result" id="result2"></div>
+                        </div>
+
+                        <!-- Grid View -->
+                        <div class="recipe-grid-view" id="tab2-grid-view" style="display: none;">
+                            <div class="info-box">
+                                <strong>Tab 2: Create Recipe with Grid + McAddon</strong>
+                                Load an MCADDON file to access custom items, then create your recipe using the grid.
+                            </div>
+
+                            <div class="form-group">
+                                <label for="mcaddonFileGrid">Select Base McAddon File (.mcaddon)</label>
+                                <input type="file" id="mcaddonFileGrid" accept=".mcaddon" onchange="handleMcAddonGridSelect()">
+                                <div class="file-info" id="mcaddonGridInfo"></div>
+                            </div>
+
+                            <div class="grid-container">
+                                <h3>Crafting Grid</h3>
+                                <div class="crafting-grid" id="craftingGrid2">
+                                    <!-- 3x3 grid cells will be generated by JavaScript -->
+                                </div>
+
+                                <h3>Result Item</h3>
+                                <div class="result-grid">
+                                    <div class="grid-cell result-cell" id="resultCell2">
+                                        <div class="cell-display" onclick="openItemSelector('result', 2)">
+                                            <span class="cell-placeholder">Click to select result</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group" style="margin-left: 20px;">
+                                        <label for="resultCount2">Result Count</label>
+                                        <input type="number" id="resultCount2" value="1" min="1" max="64" class="count-input">
+                                    </div>
+                                </div>
+
+                                <div class="grid-actions">
+                                    <button class="convert-btn" onclick="clearGrid(2)" style="background: #95a5a6;">
+                                        Clear Grid
+                                    </button>
+                                    <button class="convert-btn" id="convertGridBtn2" onclick="convertGridToJson(2)">
+                                        Convert & Create McAddon
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="result" id="gridResult2"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1665,6 +2022,23 @@
                 </div>
             </div>
         </div>
+
+        <!-- Item Selector Modal -->
+        <div class="item-selector-modal" id="itemSelectorModal" style="display: none;">
+            <div class="modal-overlay" onclick="closeItemSelector()"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Select Item</h2>
+                    <button class="modal-close" onclick="closeItemSelector()">×</button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="itemSearchInput" class="item-search" placeholder="Search items..." oninput="filterItems()">
+                    <div class="item-list" id="itemList">
+                        <!-- Items will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -1802,6 +2176,316 @@
                 };
             }
         }
+
+        // ========== VANILLA ITEMS DATA ==========
+        const VANILLA_ITEMS = {
+            "Building Blocks": [
+                {id: "minecraft:stone", name: "Stone"},
+                {id: "minecraft:granite", name: "Granite"},
+                {id: "minecraft:diorite", name: "Diorite"},
+                {id: "minecraft:andesite", name: "Andesite"},
+                {id: "minecraft:cobblestone", name: "Cobblestone"},
+                {id: "minecraft:oak_planks", name: "Oak Planks"},
+                {id: "minecraft:spruce_planks", name: "Spruce Planks"},
+                {id: "minecraft:birch_planks", name: "Birch Planks"},
+                {id: "minecraft:jungle_planks", name: "Jungle Planks"},
+                {id: "minecraft:acacia_planks", name: "Acacia Planks"},
+                {id: "minecraft:dark_oak_planks", name: "Dark Oak Planks"},
+                {id: "minecraft:mangrove_planks", name: "Mangrove Planks"},
+                {id: "minecraft:cherry_planks", name: "Cherry Planks"},
+                {id: "minecraft:bamboo_planks", name: "Bamboo Planks"},
+                {id: "minecraft:crimson_planks", name: "Crimson Planks"},
+                {id: "minecraft:warped_planks", name: "Warped Planks"},
+                {id: "minecraft:glass", name: "Glass"},
+                {id: "minecraft:sandstone", name: "Sandstone"},
+                {id: "minecraft:wool", name: "Wool"},
+                {id: "minecraft:brick_block", name: "Bricks"},
+                {id: "minecraft:bookshelf", name: "Bookshelf"},
+                {id: "minecraft:mossy_cobblestone", name: "Mossy Cobblestone"},
+                {id: "minecraft:obsidian", name: "Obsidian"},
+                {id: "minecraft:purpur_block", name: "Purpur Block"},
+                {id: "minecraft:stone_bricks", name: "Stone Bricks"},
+                {id: "minecraft:nether_bricks", name: "Nether Bricks"},
+                {id: "minecraft:end_bricks", name: "End Stone Bricks"},
+                {id: "minecraft:prismarine", name: "Prismarine"},
+                {id: "minecraft:sea_lantern", name: "Sea Lantern"},
+                {id: "minecraft:glowstone", name: "Glowstone"},
+                {id: "minecraft:quartz_block", name: "Block of Quartz"},
+                {id: "minecraft:concrete", name: "Concrete"},
+                {id: "minecraft:terracotta", name: "Terracotta"},
+                {id: "minecraft:netherite_block", name: "Block of Netherite"},
+                {id: "minecraft:copper_block", name: "Block of Copper"},
+                {id: "minecraft:iron_block", name: "Block of Iron"},
+                {id: "minecraft:gold_block", name: "Block of Gold"},
+                {id: "minecraft:diamond_block", name: "Block of Diamond"},
+                {id: "minecraft:emerald_block", name: "Block of Emerald"},
+                {id: "minecraft:coal_block", name: "Block of Coal"}
+            ],
+            "Nature": [
+                {id: "minecraft:dirt", name: "Dirt"},
+                {id: "minecraft:grass", name: "Grass Block"},
+                {id: "minecraft:podzol", name: "Podzol"},
+                {id: "minecraft:mycelium", name: "Mycelium"},
+                {id: "minecraft:sand", name: "Sand"},
+                {id: "minecraft:red_sand", name: "Red Sand"},
+                {id: "minecraft:gravel", name: "Gravel"},
+                {id: "minecraft:log", name: "Oak Log"},
+                {id: "minecraft:log2", name: "Spruce Log"},
+                {id: "minecraft:leaves", name: "Oak Leaves"},
+                {id: "minecraft:sapling", name: "Oak Sapling"},
+                {id: "minecraft:cactus", name: "Cactus"},
+                {id: "minecraft:clay", name: "Clay"},
+                {id: "minecraft:snow", name: "Snow Block"},
+                {id: "minecraft:ice", name: "Ice"},
+                {id: "minecraft:packed_ice", name: "Packed Ice"},
+                {id: "minecraft:blue_ice", name: "Blue Ice"},
+                {id: "minecraft:vine", name: "Vines"},
+                {id: "minecraft:moss_block", name: "Moss Block"},
+                {id: "minecraft:azalea", name: "Azalea"},
+                {id: "minecraft:bamboo", name: "Bamboo"}
+            ],
+            "Ores & Minerals": [
+                {id: "minecraft:coal_ore", name: "Coal Ore"},
+                {id: "minecraft:iron_ore", name: "Iron Ore"},
+                {id: "minecraft:gold_ore", name: "Gold Ore"},
+                {id: "minecraft:diamond_ore", name: "Diamond Ore"},
+                {id: "minecraft:emerald_ore", name: "Emerald Ore"},
+                {id: "minecraft:lapis_ore", name: "Lapis Lazuli Ore"},
+                {id: "minecraft:redstone_ore", name: "Redstone Ore"},
+                {id: "minecraft:copper_ore", name: "Copper Ore"},
+                {id: "minecraft:nether_gold_ore", name: "Nether Gold Ore"},
+                {id: "minecraft:nether_quartz_ore", name: "Nether Quartz Ore"},
+                {id: "minecraft:ancient_debris", name: "Ancient Debris"},
+                {id: "minecraft:coal", name: "Coal"},
+                {id: "minecraft:iron_ingot", name: "Iron Ingot"},
+                {id: "minecraft:gold_ingot", name: "Gold Ingot"},
+                {id: "minecraft:diamond", name: "Diamond"},
+                {id: "minecraft:emerald", name: "Emerald"},
+                {id: "minecraft:lapis_lazuli", name: "Lapis Lazuli"},
+                {id: "minecraft:redstone", name: "Redstone Dust"},
+                {id: "minecraft:copper_ingot", name: "Copper Ingot"},
+                {id: "minecraft:netherite_ingot", name: "Netherite Ingot"},
+                {id: "minecraft:netherite_scrap", name: "Netherite Scrap"},
+                {id: "minecraft:quartz", name: "Nether Quartz"},
+                {id: "minecraft:amethyst_shard", name: "Amethyst Shard"}
+            ],
+            "Tools & Weapons": [
+                {id: "minecraft:wooden_pickaxe", name: "Wooden Pickaxe"},
+                {id: "minecraft:wooden_axe", name: "Wooden Axe"},
+                {id: "minecraft:wooden_shovel", name: "Wooden Shovel"},
+                {id: "minecraft:wooden_hoe", name: "Wooden Hoe"},
+                {id: "minecraft:wooden_sword", name: "Wooden Sword"},
+                {id: "minecraft:stone_pickaxe", name: "Stone Pickaxe"},
+                {id: "minecraft:stone_axe", name: "Stone Axe"},
+                {id: "minecraft:stone_shovel", name: "Stone Shovel"},
+                {id: "minecraft:stone_hoe", name: "Stone Hoe"},
+                {id: "minecraft:stone_sword", name: "Stone Sword"},
+                {id: "minecraft:iron_pickaxe", name: "Iron Pickaxe"},
+                {id: "minecraft:iron_axe", name: "Iron Axe"},
+                {id: "minecraft:iron_shovel", name: "Iron Shovel"},
+                {id: "minecraft:iron_hoe", name: "Iron Hoe"},
+                {id: "minecraft:iron_sword", name: "Iron Sword"},
+                {id: "minecraft:golden_pickaxe", name: "Golden Pickaxe"},
+                {id: "minecraft:golden_axe", name: "Golden Axe"},
+                {id: "minecraft:golden_shovel", name: "Golden Shovel"},
+                {id: "minecraft:golden_hoe", name: "Golden Hoe"},
+                {id: "minecraft:golden_sword", name: "Golden Sword"},
+                {id: "minecraft:diamond_pickaxe", name: "Diamond Pickaxe"},
+                {id: "minecraft:diamond_axe", name: "Diamond Axe"},
+                {id: "minecraft:diamond_shovel", name: "Diamond Shovel"},
+                {id: "minecraft:diamond_hoe", name: "Diamond Hoe"},
+                {id: "minecraft:diamond_sword", name: "Diamond Sword"},
+                {id: "minecraft:netherite_pickaxe", name: "Netherite Pickaxe"},
+                {id: "minecraft:netherite_axe", name: "Netherite Axe"},
+                {id: "minecraft:netherite_shovel", name: "Netherite Shovel"},
+                {id: "minecraft:netherite_hoe", name: "Netherite Hoe"},
+                {id: "minecraft:netherite_sword", name: "Netherite Sword"},
+                {id: "minecraft:bow", name: "Bow"},
+                {id: "minecraft:crossbow", name: "Crossbow"},
+                {id: "minecraft:arrow", name: "Arrow"},
+                {id: "minecraft:spectral_arrow", name: "Spectral Arrow"},
+                {id: "minecraft:trident", name: "Trident"},
+                {id: "minecraft:shield", name: "Shield"},
+                {id: "minecraft:shears", name: "Shears"},
+                {id: "minecraft:fishing_rod", name: "Fishing Rod"},
+                {id: "minecraft:flint_and_steel", name: "Flint and Steel"}
+            ],
+            "Armor": [
+                {id: "minecraft:leather_helmet", name: "Leather Cap"},
+                {id: "minecraft:leather_chestplate", name: "Leather Tunic"},
+                {id: "minecraft:leather_leggings", name: "Leather Pants"},
+                {id: "minecraft:leather_boots", name: "Leather Boots"},
+                {id: "minecraft:chainmail_helmet", name: "Chainmail Helmet"},
+                {id: "minecraft:chainmail_chestplate", name: "Chainmail Chestplate"},
+                {id: "minecraft:chainmail_leggings", name: "Chainmail Leggings"},
+                {id: "minecraft:chainmail_boots", name: "Chainmail Boots"},
+                {id: "minecraft:iron_helmet", name: "Iron Helmet"},
+                {id: "minecraft:iron_chestplate", name: "Iron Chestplate"},
+                {id: "minecraft:iron_leggings", name: "Iron Leggings"},
+                {id: "minecraft:iron_boots", name: "Iron Boots"},
+                {id: "minecraft:golden_helmet", name: "Golden Helmet"},
+                {id: "minecraft:golden_chestplate", name: "Golden Chestplate"},
+                {id: "minecraft:golden_leggings", name: "Golden Leggings"},
+                {id: "minecraft:golden_boots", name: "Golden Boots"},
+                {id: "minecraft:diamond_helmet", name: "Diamond Helmet"},
+                {id: "minecraft:diamond_chestplate", name: "Diamond Chestplate"},
+                {id: "minecraft:diamond_leggings", name: "Diamond Leggings"},
+                {id: "minecraft:diamond_boots", name: "Diamond Boots"},
+                {id: "minecraft:netherite_helmet", name: "Netherite Helmet"},
+                {id: "minecraft:netherite_chestplate", name: "Netherite Chestplate"},
+                {id: "minecraft:netherite_leggings", name: "Netherite Leggings"},
+                {id: "minecraft:netherite_boots", name: "Netherite Boots"},
+                {id: "minecraft:turtle_helmet", name: "Turtle Shell"}
+            ],
+            "Food": [
+                {id: "minecraft:apple", name: "Apple"},
+                {id: "minecraft:golden_apple", name: "Golden Apple"},
+                {id: "minecraft:enchanted_golden_apple", name: "Enchanted Golden Apple"},
+                {id: "minecraft:bread", name: "Bread"},
+                {id: "minecraft:cookie", name: "Cookie"},
+                {id: "minecraft:cake", name: "Cake"},
+                {id: "minecraft:pumpkin_pie", name: "Pumpkin Pie"},
+                {id: "minecraft:melon", name: "Melon Slice"},
+                {id: "minecraft:carrot", name: "Carrot"},
+                {id: "minecraft:golden_carrot", name: "Golden Carrot"},
+                {id: "minecraft:potato", name: "Potato"},
+                {id: "minecraft:baked_potato", name: "Baked Potato"},
+                {id: "minecraft:poisonous_potato", name: "Poisonous Potato"},
+                {id: "minecraft:beetroot", name: "Beetroot"},
+                {id: "minecraft:beetroot_soup", name: "Beetroot Soup"},
+                {id: "minecraft:mushroom_stew", name: "Mushroom Stew"},
+                {id: "minecraft:rabbit_stew", name: "Rabbit Stew"},
+                {id: "minecraft:suspicious_stew", name: "Suspicious Stew"},
+                {id: "minecraft:cooked_beef", name: "Steak"},
+                {id: "minecraft:cooked_porkchop", name: "Cooked Porkchop"},
+                {id: "minecraft:cooked_chicken", name: "Cooked Chicken"},
+                {id: "minecraft:cooked_mutton", name: "Cooked Mutton"},
+                {id: "minecraft:cooked_rabbit", name: "Cooked Rabbit"},
+                {id: "minecraft:cooked_cod", name: "Cooked Cod"},
+                {id: "minecraft:cooked_salmon", name: "Cooked Salmon"},
+                {id: "minecraft:dried_kelp", name: "Dried Kelp"},
+                {id: "minecraft:sweet_berries", name: "Sweet Berries"},
+                {id: "minecraft:glow_berries", name: "Glow Berries"},
+                {id: "minecraft:chorus_fruit", name: "Chorus Fruit"},
+                {id: "minecraft:honey_bottle", name: "Honey Bottle"}
+            ],
+            "Redstone & Mechanisms": [
+                {id: "minecraft:redstone_torch", name: "Redstone Torch"},
+                {id: "minecraft:lever", name: "Lever"},
+                {id: "minecraft:button", name: "Button"},
+                {id: "minecraft:wooden_pressure_plate", name: "Wooden Pressure Plate"},
+                {id: "minecraft:stone_pressure_plate", name: "Stone Pressure Plate"},
+                {id: "minecraft:tripwire_hook", name: "Tripwire Hook"},
+                {id: "minecraft:redstone_lamp", name: "Redstone Lamp"},
+                {id: "minecraft:piston", name: "Piston"},
+                {id: "minecraft:sticky_piston", name: "Sticky Piston"},
+                {id: "minecraft:dispenser", name: "Dispenser"},
+                {id: "minecraft:dropper", name: "Dropper"},
+                {id: "minecraft:hopper", name: "Hopper"},
+                {id: "minecraft:observer", name: "Observer"},
+                {id: "minecraft:repeater", name: "Redstone Repeater"},
+                {id: "minecraft:comparator", name: "Redstone Comparator"},
+                {id: "minecraft:daylight_detector", name: "Daylight Detector"},
+                {id: "minecraft:note_block", name: "Note Block"},
+                {id: "minecraft:jukebox", name: "Jukebox"},
+                {id: "minecraft:tnt", name: "TNT"},
+                {id: "minecraft:rail", name: "Rail"},
+                {id: "minecraft:powered_rail", name: "Powered Rail"},
+                {id: "minecraft:detector_rail", name: "Detector Rail"},
+                {id: "minecraft:activator_rail", name: "Activator Rail"},
+                {id: "minecraft:minecart", name: "Minecart"},
+                {id: "minecraft:chest_minecart", name: "Minecart with Chest"},
+                {id: "minecraft:furnace_minecart", name: "Minecart with Furnace"},
+                {id: "minecraft:hopper_minecart", name: "Minecart with Hopper"},
+                {id: "minecraft:tnt_minecart", name: "Minecart with TNT"}
+            ],
+            "Crafting Materials": [
+                {id: "minecraft:stick", name: "Stick"},
+                {id: "minecraft:string", name: "String"},
+                {id: "minecraft:feather", name: "Feather"},
+                {id: "minecraft:gunpowder", name: "Gunpowder"},
+                {id: "minecraft:wheat", name: "Wheat"},
+                {id: "minecraft:flint", name: "Flint"},
+                {id: "minecraft:snowball", name: "Snowball"},
+                {id: "minecraft:egg", name: "Egg"},
+                {id: "minecraft:sugar", name: "Sugar"},
+                {id: "minecraft:bone", name: "Bone"},
+                {id: "minecraft:bone_meal", name: "Bone Meal"},
+                {id: "minecraft:ink_sac", name: "Ink Sac"},
+                {id: "minecraft:slime_ball", name: "Slimeball"},
+                {id: "minecraft:ender_pearl", name: "Ender Pearl"},
+                {id: "minecraft:blaze_rod", name: "Blaze Rod"},
+                {id: "minecraft:blaze_powder", name: "Blaze Powder"},
+                {id: "minecraft:magma_cream", name: "Magma Cream"},
+                {id: "minecraft:ender_eye", name: "Eye of Ender"},
+                {id: "minecraft:ghast_tear", name: "Ghast Tear"},
+                {id: "minecraft:nether_star", name: "Nether Star"},
+                {id: "minecraft:prismarine_shard", name: "Prismarine Shard"},
+                {id: "minecraft:prismarine_crystals", name: "Prismarine Crystals"},
+                {id: "minecraft:rabbit_hide", name: "Rabbit Hide"},
+                {id: "minecraft:rabbit_foot", name: "Rabbit's Foot"},
+                {id: "minecraft:shulker_shell", name: "Shulker Shell"},
+                {id: "minecraft:phantom_membrane", name: "Phantom Membrane"},
+                {id: "minecraft:nautilus_shell", name: "Nautilus Shell"},
+                {id: "minecraft:heart_of_the_sea", name: "Heart of the Sea"},
+                {id: "minecraft:scute", name: "Scute"},
+                {id: "minecraft:honeycomb", name: "Honeycomb"},
+                {id: "minecraft:echo_shard", name: "Echo Shard"},
+                {id: "minecraft:disc_fragment_5", name: "Disc Fragment"}
+            ],
+            "Utility Items": [
+                {id: "minecraft:bucket", name: "Bucket"},
+                {id: "minecraft:water_bucket", name: "Water Bucket"},
+                {id: "minecraft:lava_bucket", name: "Lava Bucket"},
+                {id: "minecraft:milk_bucket", name: "Milk Bucket"},
+                {id: "minecraft:powder_snow_bucket", name: "Powder Snow Bucket"},
+                {id: "minecraft:compass", name: "Compass"},
+                {id: "minecraft:recovery_compass", name: "Recovery Compass"},
+                {id: "minecraft:clock", name: "Clock"},
+                {id: "minecraft:map", name: "Map"},
+                {id: "minecraft:spyglass", name: "Spyglass"},
+                {id: "minecraft:lead", name: "Lead"},
+                {id: "minecraft:name_tag", name: "Name Tag"},
+                {id: "minecraft:saddle", name: "Saddle"},
+                {id: "minecraft:bed", name: "Bed"},
+                {id: "minecraft:torch", name: "Torch"},
+                {id: "minecraft:soul_torch", name: "Soul Torch"},
+                {id: "minecraft:lantern", name: "Lantern"},
+                {id: "minecraft:soul_lantern", name: "Soul Lantern"},
+                {id: "minecraft:campfire", name: "Campfire"},
+                {id: "minecraft:soul_campfire", name: "Soul Campfire"},
+                {id: "minecraft:crafting_table", name: "Crafting Table"},
+                {id: "minecraft:furnace", name: "Furnace"},
+                {id: "minecraft:blast_furnace", name: "Blast Furnace"},
+                {id: "minecraft:smoker", name: "Smoker"},
+                {id: "minecraft:chest", name: "Chest"},
+                {id: "minecraft:ender_chest", name: "Ender Chest"},
+                {id: "minecraft:shulker_box", name: "Shulker Box"},
+                {id: "minecraft:barrel", name: "Barrel"},
+                {id: "minecraft:anvil", name: "Anvil"},
+                {id: "minecraft:grindstone", name: "Grindstone"},
+                {id: "minecraft:enchanting_table", name: "Enchanting Table"},
+                {id: "minecraft:brewing_stand", name: "Brewing Stand"},
+                {id: "minecraft:cauldron", name: "Cauldron"},
+                {id: "minecraft:beacon", name: "Beacon"},
+                {id: "minecraft:conduit", name: "Conduit"},
+                {id: "minecraft:lectern", name: "Lectern"},
+                {id: "minecraft:composter", name: "Composter"},
+                {id: "minecraft:stonecutter", name: "Stonecutter"},
+                {id: "minecraft:loom", name: "Loom"},
+                {id: "minecraft:smithing_table", name: "Smithing Table"},
+                {id: "minecraft:cartography_table", name: "Cartography Table"},
+                {id: "minecraft:fletching_table", name: "Fletching Table"}
+            ]
+        };
+
+        // Grid View state
+        let currentView = 'text'; // 'text' or 'grid'
+        let gridData1 = { pattern: Array(9).fill(null), result: null }; // Tab 1 grid data
+        let gridData2 = { pattern: Array(9).fill(null), result: null }; // Tab 2 grid data
+        let currentSelectorTarget = null; // {type: 'cell'|'result', tab: 1|2, index: number}
+        let customItems = []; // Custom items from MCADDON (Tab 2 only)
+        let allItems = []; // Combined vanilla + custom items
 
         // Global state
         let currentTab = 0;
@@ -2098,6 +2782,444 @@
             if (bytes < 1024) return bytes + ' B';
             if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
             return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        // ========== GRID VIEW FUNCTIONS ==========
+
+        // Switch between text and grid view
+        function switchRecipeView(view) {
+            currentView = view;
+
+            // Update toggle button states
+            const textBtn = document.getElementById('textViewBtn');
+            const gridBtn = document.getElementById('gridViewBtn');
+
+            if (view === 'text') {
+                textBtn.classList.add('active');
+                gridBtn.classList.remove('active');
+
+                // Show text view, hide grid view for both tabs
+                document.getElementById('tab1-text-view').style.display = 'block';
+                document.getElementById('tab1-grid-view').style.display = 'none';
+                document.getElementById('tab2-text-view').style.display = 'block';
+                document.getElementById('tab2-grid-view').style.display = 'none';
+            } else {
+                textBtn.classList.remove('active');
+                gridBtn.classList.add('active');
+
+                // Show grid view, hide text view for both tabs
+                document.getElementById('tab1-text-view').style.display = 'none';
+                document.getElementById('tab1-grid-view').style.display = 'block';
+                document.getElementById('tab2-text-view').style.display = 'none';
+                document.getElementById('tab2-grid-view').style.display = 'block';
+            }
+        }
+
+        // Initialize grid cells on page load
+        function initializeGrids() {
+            // Initialize Tab 1 grid
+            const grid1 = document.getElementById('craftingGrid1');
+            grid1.innerHTML = '';
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.id = `grid1-cell-${i}`;
+                cell.innerHTML = `
+                    <div class="cell-display" onclick="openItemSelector('cell', 1, ${i})">
+                        <span class="cell-placeholder">Empty</span>
+                    </div>
+                `;
+                grid1.appendChild(cell);
+            }
+
+            // Initialize Tab 2 grid
+            const grid2 = document.getElementById('craftingGrid2');
+            grid2.innerHTML = '';
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.id = `grid2-cell-${i}`;
+                cell.innerHTML = `
+                    <div class="cell-display" onclick="openItemSelector('cell', 2, ${i})">
+                        <span class="cell-placeholder">Empty</span>
+                    </div>
+                `;
+                grid2.appendChild(cell);
+            }
+
+            // Initialize all items array with vanilla items
+            refreshAllItems();
+        }
+
+        // Refresh the combined items list (vanilla + custom)
+        function refreshAllItems() {
+            allItems = [];
+
+            // Add custom items first (for Tab 2)
+            if (customItems.length > 0) {
+                allItems.push({
+                    category: "Custom Items",
+                    items: customItems
+                });
+            }
+
+            // Add vanilla items
+            for (const [category, items] of Object.entries(VANILLA_ITEMS)) {
+                allItems.push({ category, items });
+            }
+        }
+
+        // Open item selector modal
+        function openItemSelector(type, tab, index = null) {
+            currentSelectorTarget = { type, tab, index };
+
+            // Populate item list
+            const itemList = document.getElementById('itemList');
+            itemList.innerHTML = '';
+
+            for (const categoryData of allItems) {
+                // Add category header
+                const header = document.createElement('div');
+                header.className = 'item-category-header';
+                header.textContent = categoryData.category;
+                itemList.appendChild(header);
+
+                // Add items
+                for (const item of categoryData.items) {
+                    const itemEl = document.createElement('div');
+                    itemEl.className = 'item-list-item';
+                    itemEl.onclick = () => selectItem(item);
+                    itemEl.innerHTML = `
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-identifier">${item.id}</div>
+                    `;
+                    itemList.appendChild(itemEl);
+                }
+            }
+
+            // Clear search input
+            document.getElementById('itemSearchInput').value = '';
+
+            // Show modal
+            document.getElementById('itemSelectorModal').style.display = 'block';
+        }
+
+        // Close item selector modal
+        function closeItemSelector() {
+            document.getElementById('itemSelectorModal').style.display = 'none';
+            currentSelectorTarget = null;
+        }
+
+        // Filter items based on search input
+        function filterItems() {
+            const searchTerm = document.getElementById('itemSearchInput').value.toLowerCase();
+            const items = document.querySelectorAll('.item-list-item');
+            const headers = document.querySelectorAll('.item-category-header');
+
+            items.forEach(item => {
+                const name = item.querySelector('.item-name').textContent.toLowerCase();
+                const id = item.querySelector('.item-identifier').textContent.toLowerCase();
+                if (name.includes(searchTerm) || id.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            // Hide category headers if no items are visible in that category
+            headers.forEach(header => {
+                let nextEl = header.nextElementSibling;
+                let hasVisibleItems = false;
+                while (nextEl && !nextEl.classList.contains('item-category-header')) {
+                    if (nextEl.classList.contains('item-list-item') && nextEl.style.display !== 'none') {
+                        hasVisibleItems = true;
+                        break;
+                    }
+                    nextEl = nextEl.nextElementSibling;
+                }
+                header.style.display = hasVisibleItems ? 'block' : 'none';
+            });
+        }
+
+        // Select an item from the modal
+        function selectItem(item) {
+            const { type, tab, index } = currentSelectorTarget;
+
+            if (type === 'cell') {
+                // Update grid cell
+                const gridData = tab === 1 ? gridData1 : gridData2;
+                gridData.pattern[index] = item;
+
+                // Update UI
+                const cell = document.getElementById(`grid${tab}-cell-${index}`);
+                cell.classList.add('filled');
+                cell.querySelector('.cell-display').innerHTML = `
+                    <span class="cell-item-name">${item.name}</span>
+                `;
+            } else if (type === 'result') {
+                // Update result cell
+                const gridData = tab === 1 ? gridData1 : gridData2;
+                gridData.result = item;
+
+                // Update UI
+                const cell = document.getElementById(`resultCell${tab}`);
+                cell.classList.add('filled');
+                cell.querySelector('.cell-display').innerHTML = `
+                    <span class="cell-item-name">${item.name}</span>
+                `;
+            }
+
+            closeItemSelector();
+        }
+
+        // Clear grid
+        function clearGrid(tab) {
+            const gridData = tab === 1 ? gridData1 : gridData2;
+
+            // Reset data
+            gridData.pattern = Array(9).fill(null);
+            gridData.result = null;
+
+            // Reset UI for pattern cells
+            for (let i = 0; i < 9; i++) {
+                const cell = document.getElementById(`grid${tab}-cell-${i}`);
+                cell.classList.remove('filled');
+                cell.querySelector('.cell-display').innerHTML = `
+                    <span class="cell-placeholder">Empty</span>
+                `;
+            }
+
+            // Reset result cell
+            const resultCell = document.getElementById(`resultCell${tab}`);
+            resultCell.classList.remove('filled');
+            resultCell.querySelector('.cell-display').innerHTML = `
+                <span class="cell-placeholder">Click to select result</span>
+            `;
+
+            // Reset count
+            document.getElementById(`resultCount${tab}`).value = 1;
+
+            // Clear result message
+            document.getElementById(`gridResult${tab}`).innerHTML = '';
+        }
+
+        // Convert grid to JSON
+        async function convertGridToJson(tab) {
+            const gridData = tab === 1 ? gridData1 : gridData2;
+            const count = parseInt(document.getElementById(`resultCount${tab}`).value);
+
+            // Validate grid data
+            if (!gridData.result) {
+                showGridResult(tab, 'error', 'Missing Result', 'Please select a result item.');
+                return;
+            }
+
+            if (isNaN(count) || count < 1 || count > 64) {
+                showGridResult(tab, 'error', 'Invalid Count', 'Result count must be between 1 and 64.');
+                return;
+            }
+
+            // Check if there are any items in the pattern
+            const hasItems = gridData.pattern.some(item => item !== null);
+            if (!hasItems) {
+                showGridResult(tab, 'error', 'Empty Pattern', 'Please add at least one item to the crafting grid.');
+                return;
+            }
+
+            try {
+                // Build pattern (3x3)
+                const pattern = [];
+                const key = {};
+                const symbolMap = {}; // Map item IDs to symbols
+                let symbolIndex = 0;
+                const symbols = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+                for (let row = 0; row < 3; row++) {
+                    let patternRow = '';
+                    for (let col = 0; col < 3; col++) {
+                        const index = row * 3 + col;
+                        const item = gridData.pattern[index];
+
+                        if (item === null) {
+                            patternRow += ' ';
+                        } else {
+                            // Get or create symbol for this item
+                            if (!symbolMap[item.id]) {
+                                symbolMap[item.id] = symbols[symbolIndex];
+                                key[symbols[symbolIndex]] = { item: item.id };
+                                symbolIndex++;
+                            }
+                            patternRow += symbolMap[item.id];
+                        }
+                    }
+                    pattern.push(patternRow);
+                }
+
+                // Build JSON
+                const recipeJson = {
+                    format_version: "1.20.0",
+                    "minecraft:recipe_shaped": {
+                        description: {
+                            identifier: gridData.result.id
+                        },
+                        tags: ["crafting_table"],
+                        pattern: pattern,
+                        key: key,
+                        result: {
+                            item: gridData.result.id,
+                            count: count
+                        }
+                    }
+                };
+
+                // Handle Tab 1 (JSON only) or Tab 2 (JSON + McAddon)
+                if (tab === 1) {
+                    // Download JSON file
+                    const jsonString = JSON.stringify(recipeJson, null, 2);
+                    const fileName = gridData.result.id.replace(':', '_') + '.json';
+                    downloadFile(jsonString, fileName, 'application/json');
+
+                    showGridResult(tab, 'success', 'Recipe Created!',
+                        `Recipe JSON file "${fileName}" has been downloaded to your Downloads folder.`);
+                } else {
+                    // Tab 2: Inject into MCADDON
+                    const mcaddonFileGrid = document.getElementById('mcaddonFileGrid').files[0];
+                    if (!mcaddonFileGrid) {
+                        showGridResult(tab, 'error', 'Missing McAddon', 'Please select an MCADDON file first.');
+                        return;
+                    }
+
+                    const zip = await loadMcAddonZip(mcaddonFileGrid);
+                    const behaviorPackPath = await findBehaviorPack(zip);
+
+                    if (!behaviorPackPath) {
+                        showGridResult(tab, 'error', 'Invalid McAddon', 'Could not find behavior pack in MCADDON file.');
+                        return;
+                    }
+
+                    // Add recipe to MCADDON
+                    const prefix = behaviorPackPath === '.' ? '' : behaviorPackPath + '/';
+                    const recipePath = prefix + 'recipes/' + gridData.result.id.replace(':', '_') + '.json';
+                    zip.file(recipePath, JSON.stringify(recipeJson, null, 2));
+
+                    // Generate and download modified MCADDON
+                    const blob = await zip.generateAsync({ type: 'blob' });
+                    const fileName = mcaddonFileGrid.name.replace('.mcaddon', '_with_recipe.mcaddon');
+                    downloadBlob(blob, fileName);
+
+                    showGridResult(tab, 'success', 'McAddon Created!',
+                        `Modified MCADDON file "${fileName}" has been downloaded with your recipe.`);
+                }
+            } catch (error) {
+                showGridResult(tab, 'error', 'Conversion Failed', error.message);
+            }
+        }
+
+        // Show result message for grid view
+        function showGridResult(tab, type, title, message) {
+            const resultDiv = document.getElementById(`gridResult${tab}`);
+            const icon = type === 'success' ? '✓' : '✗';
+            const colorClass = type === 'success' ? '#27ae60' : '#e74c3c';
+
+            resultDiv.innerHTML = `
+                <div style="padding: 20px; border: 2px solid ${colorClass}; border-radius: 8px; background: ${type === 'success' ? '#d4edda' : '#f8d7da'}; margin-top: 20px;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <div style="width: 30px; height: 30px; border-radius: 50%; background: ${colorClass}; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px;">${icon}</div>
+                        <h3 style="margin: 0; color: ${colorClass};">${title}</h3>
+                    </div>
+                    <p style="margin: 0; color: #2c3e50;">${message}</p>
+                </div>
+            `;
+        }
+
+        // Handle MCADDON file selection for grid view (Tab 2)
+        async function handleMcAddonGridSelect() {
+            const fileInput = document.getElementById('mcaddonFileGrid');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                return;
+            }
+
+            const fileInfo = document.getElementById('mcaddonGridInfo');
+            fileInfo.innerHTML = `
+                <div style="padding: 10px; background: #e7f5ff; border: 1px solid #74c0fc; border-radius: 6px; margin-top: 10px;">
+                    <strong>${file.name}</strong> (${formatFileSize(file.size)})
+                    <div style="margin-top: 5px;">Scanning for custom items...</div>
+                </div>
+            `;
+
+            try {
+                // Load MCADDON and scan for custom items
+                const zip = await loadMcAddonZip(file);
+                const behaviorPackPath = await findBehaviorPack(zip);
+
+                if (!behaviorPackPath) {
+                    fileInfo.innerHTML = `
+                        <div style="padding: 10px; background: #f8d7da; border: 1px solid #e74c3c; border-radius: 6px; margin-top: 10px;">
+                            <strong>Error:</strong> Could not find behavior pack in MCADDON file.
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Scan for custom items and blocks
+                customItems = [];
+                const prefix = behaviorPackPath === '.' ? '' : behaviorPackPath + '/';
+                const itemsPath = prefix + 'items/';
+                const blocksPath = prefix + 'blocks/';
+
+                for (const [path, zipEntry] of Object.entries(zip.files)) {
+                    if (zipEntry.dir) continue;
+                    if (!path.endsWith('.json')) continue;
+
+                    // Check if it's an item or block
+                    const isItem = path.startsWith(itemsPath);
+                    const isBlock = path.startsWith(blocksPath);
+
+                    if (isItem || isBlock) {
+                        try {
+                            const content = await zipEntry.async('string');
+                            const data = JSON.parse(content);
+
+                            let identifier = null;
+
+                            // Check for item
+                            if (data['minecraft:item'] && data['minecraft:item'].description) {
+                                identifier = data['minecraft:item'].description.identifier;
+                            }
+                            // Check for block
+                            else if (data['minecraft:block'] && data['minecraft:block'].description) {
+                                identifier = data['minecraft:block'].description.identifier;
+                            }
+
+                            if (identifier) {
+                                const name = identifier.split(':')[1].replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                                customItems.push({ id: identifier, name: name });
+                            }
+                        } catch (e) {
+                            // Skip invalid JSON files
+                        }
+                    }
+                }
+
+                // Refresh all items to include custom items
+                refreshAllItems();
+
+                const customItemCount = customItems.length;
+                fileInfo.innerHTML = `
+                    <div style="padding: 10px; background: #d4edda; border: 1px solid #27ae60; border-radius: 6px; margin-top: 10px;">
+                        <strong>${file.name}</strong> (${formatFileSize(file.size)})
+                        <div style="margin-top: 5px;">✓ Loaded successfully! Found ${customItemCount} custom item${customItemCount !== 1 ? 's' : ''} and block${customItemCount !== 1 ? 's' : ''}.</div>
+                    </div>
+                `;
+            } catch (error) {
+                fileInfo.innerHTML = `
+                    <div style="padding: 10px; background: #f8d7da; border: 1px solid #e74c3c; border-radius: 6px; margin-top: 10px;">
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
         }
 
         // ========== MCADDON ZIP UTILITIES ==========
@@ -4162,9 +5284,10 @@
 
         // ========== BUILTIN FEATURES FUNCTIONS ==========
 
-        // Initialize builtin features list on page load
+        // Initialize page components on load
         window.addEventListener('DOMContentLoaded', function() {
             initializeBuiltinFeatures();
+            initializeGrids();
         });
 
         function initializeBuiltinFeatures() {
