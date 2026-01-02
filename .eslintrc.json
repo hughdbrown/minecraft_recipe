@@ -1,0 +1,44 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "extends": "eslint:recommended",
+  "parserOptions": {
+    "ecmaVersion": 2021,
+    "sourceType": "script"
+  },
+  "globals": {
+    "JSZip": "readonly",
+    "McAddon": "readonly",
+    "RecipeParser": "readonly",
+    "readFileAsArrayBuffer": "readonly",
+    "downloadBlob": "readonly"
+  },
+  "rules": {
+    "no-unused-vars": ["warn", {
+      "vars": "all",
+      "args": "none",
+      "varsIgnorePattern": "^_"
+    }],
+    "no-undef": "error",
+    "no-redeclare": ["error", { "builtinGlobals": false }],
+    "no-constant-condition": "warn",
+    "no-empty": "warn",
+    "no-unreachable": "error",
+    "no-dupe-keys": "error",
+    "no-dupe-args": "error",
+    "no-func-assign": "error",
+    "valid-typeof": "error",
+    "no-irregular-whitespace": "error",
+    "no-unexpected-multiline": "error",
+    "no-prototype-builtins": "off",
+    "semi": ["warn", "always"],
+    "no-extra-semi": "warn",
+    "curly": ["error", "all"],
+    "eqeqeq": ["warn", "always"],
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "no-with": "error"
+  }
+}

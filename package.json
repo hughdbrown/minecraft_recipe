@@ -1,0 +1,21 @@
+{
+  "name": "minecraft-recipe-web",
+  "version": "1.0.0",
+  "description": "Minecraft Bedrock Recipe Generator - Web Interface",
+  "scripts": {
+    "test": "npm run lint",
+    "lint": "eslint minecraft_recipe.js mcaddon.js",
+    "lint:fix": "eslint --fix minecraft_recipe.js mcaddon.js"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0"
+  },
+  "keywords": [
+    "minecraft",
+    "bedrock",
+    "recipe",
+    "mcaddon"
+  ],
+  "author": "",
+  "license": "ISC"
+}
