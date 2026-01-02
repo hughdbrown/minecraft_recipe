@@ -18,6 +18,7 @@
             <button class="nav-button" onclick="switchScreen(4)">Validate MCADDON</button>
             <button class="nav-button" onclick="switchScreen(5)">Builtin Features</button>
             <button class="nav-button" onclick="switchScreen(6)">Edit PNGs</button>
+            <button class="nav-button" onclick="switchScreen(7)">Edit Blocks/Items</button>
         </div>
 
         <!-- Main Content Area -->
@@ -597,6 +598,104 @@
                         <!-- Download Modified MCADDON Button -->
                         <button class="convert-btn" id="downloadModifiedMcAddonBtn" onclick="downloadModifiedPngMcAddon()" style="display: none; margin-top: 15px; background: #27ae60;">
                             Download Modified MCADDON
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Screen 7: Edit Blocks/Items -->
+            <div class="screen" id="screen-edit-blocks-items">
+                <div class="container">
+                    <div class="header">
+                        <h1>Edit Blocks and Items</h1>
+                        <p>Modify display names, identifiers, or delete blocks and items in MCADDON files</p>
+                    </div>
+
+                    <div class="tab-content active" style="display: block;">
+                        <!-- Step 1: Select MCADDON File -->
+                        <div id="edit-blocks-items-file-selector" class="edit-blocks-items-section">
+                            <div class="info-box">
+                                <strong>Step 1: Select MCADDON File</strong>
+                                Choose a .mcaddon file to edit its blocks and items.
+                            </div>
+                            <div class="form-group">
+                                <label for="editBlocksItemsFile">Select MCADDON File (.mcaddon)</label>
+                                <input type="file" id="editBlocksItemsFile" accept=".mcaddon" onchange="handleEditBlocksItemsFileSelect()">
+                                <div class="file-info" id="editBlocksItemsFileInfo"></div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Edit Items and Blocks -->
+                        <div id="edit-blocks-items-editor" class="edit-blocks-items-section" style="display: none;">
+                            <div class="info-box">
+                                <strong>Step 2: Edit Items and Blocks</strong>
+                                Edit display names and identifiers, or delete items and blocks. All changes will be saved when you download the modified MCADDON.
+                            </div>
+
+                            <!-- Items Section -->
+                            <div class="edit-blocks-items-category">
+                                <h3>Items</h3>
+                                <div id="itemsListContainer">
+                                    <table class="edit-blocks-items-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Display Name</th>
+                                                <th>Identifier</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="itemsTableBody">
+                                            <!-- Items will be populated by JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Blocks Section -->
+                            <div class="edit-blocks-items-category">
+                                <h3>Blocks</h3>
+                                <div id="blocksListContainer">
+                                    <table class="edit-blocks-items-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Display Name</th>
+                                                <th>Identifier</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="blocksTableBody">
+                                            <!-- Blocks will be populated by JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Download Modified MCADDON Button -->
+                            <button class="convert-btn" id="downloadEditedBlocksItemsBtn" onclick="downloadEditedBlocksItems()" style="display: none; margin-top: 20px; background: #27ae60;">
+                                Download Modified MCADDON
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div class="delete-modal" id="deleteConfirmModal" style="display: none;">
+            <div class="modal-overlay" onclick="cancelDelete()"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Confirm Deletion</h2>
+                    <button class="modal-close" onclick="cancelDelete()">×</button>
+                </div>
+                <div class="modal-body">
+                    <p id="deleteConfirmMessage"></p>
+                    <div class="modal-actions">
+                        <button class="convert-btn" onclick="confirmDelete()" style="background: #e74c3c;">
+                            Delete
+                        </button>
+                        <button class="convert-btn" onclick="cancelDelete()" style="background: #95a5a6; margin-left: 10px;">
+                            Cancel
                         </button>
                     </div>
                 </div>
