@@ -110,11 +110,29 @@ The tools generate:
 - **JSON file**: Recipe in Minecraft Bedrock format (same directory as input)
 - **MCADDON file** (optional): Complete addon package with auto-incrementing serial numbers (e.g., `base_001.mcaddon`, `base_002.mcaddon`)
 
+## Testing
+
+The JavaScript web interface includes automated linting tests:
+
+```bash
+# Install dependencies (first time only)
+npm install
+
+# Run tests
+npm test
+
+# Auto-fix linting issues
+npm run lint:fix
+```
+
+See [TESTING.md](TESTING.md) for detailed testing documentation.
+
 ## Documentation
 
 - [Web Interface Documentation](README-WEB.md) - Browser-based UI, no installation required
 - [Python UI Documentation](README-PYTHON-UI.md) - Python implementation details, command-line usage, and troubleshooting
 - [Rust UI Documentation](README-RUST-UI.md) - Rust implementation details, building, and cross-compilation
+- [Testing Documentation](TESTING.md) - JavaScript linting tests and code quality
 
 ## License
 
