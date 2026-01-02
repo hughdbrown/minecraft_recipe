@@ -675,33 +675,11 @@ async function convertAndInject() {
         parser.parse();
         const recipeJson = parser.toJson();
 
-        // Load MCADDON file
-        const zip = await loadMcAddonZip(mcaddonFile);
-
-        // Find behavior pack directory
-        const behaviorPack = await findBehaviorPack(zip);
-        if (!behaviorPack) {
-            throw new Error('Could not find behavior pack in McAddon file');
-        }
-
-        // Create recipes directory path
-        const recipesPath = constructPackPath(behaviorPack, 'recipes');
-
-        // Add recipe to zip
+        // Load MCADDON file using McAddon class
+        const mcaddon = await McAddon.fromFile(mcaddonFile);
         const recipeFileName = txtFile2.name.replace(/\.txt$/i, '.json');
-        const recipeFilePath = recipesPath + recipeFileName;
-
-        zip.file(recipeFilePath, JSON.stringify(recipeJson, null, 2));
-
-        // Generate new zip
-        const newZipBlob = await zip.generateAsync({ type: 'blob' });
-
-        // Generate output filename with incrementing number
-        const baseName = mcaddonFile.name.replace(/\.mcaddon$/i, '');
-        const outputFileName = `${baseName}_web.mcaddon`;
-
-        // Download the new mcaddon
-        downloadBlob(newZipBlob, outputFileName);
+        const modified = await mcaddon.addRecipe(recipeFileName, recipeJson);
+        const outputFileName = await modified.download('_web');
 
         showResult(2, 'success', 'Success!',
             `Created "${outputFileName}" with recipe "${recipeFileName}" included.`);
@@ -1192,105 +1170,36 @@ async function handleMcAddonGridSelect() {
 // ========== MCADDON ZIP UTILITIES ==========
 
 /**
- * Load an MCADDON file as a JSZip object
- */
-async function loadMcAddonZip(file) {
-    const data = await readFileAsArrayBuffer(file);
-    return await JSZip.loadAsync(data);
-}
-
-/**
  * Find the behavior pack folder in an MCADDON ZIP
  * Returns the folder path or null if not found
+ * @deprecated Use McAddon.fromZip(zip).getBehaviorPack() instead
  */
 async function findBehaviorPack(zip) {
-    for (const [path, zipEntry] of Object.entries(zip.files)) {
-        if (zipEntry.dir && path.includes('manifest.json') === false) continue;
-
-        const manifestPath = path.endsWith('/') ? path + 'manifest.json' : path;
-        if (zip.files[manifestPath]) {
-            try {
-                const manifestContent = await zip.files[manifestPath].async('string');
-                const manifest = JSON.parse(manifestContent);
-
-                if (manifest.modules) {
-                    for (const module of manifest.modules) {
-                        if (module.type === 'data') {
-                            let behaviorPack = path.endsWith('/') ? path.slice(0, -1) : path.substring(0, path.lastIndexOf('/'));
-                            if (behaviorPack === '') behaviorPack = '.';
-                            return behaviorPack;
-                        }
-                    }
-                }
-            } catch (e) {
-                // Not a valid manifest, continue
-            }
-        }
-    }
-    return null;
+    const mcaddon = McAddon.fromZip(zip);
+    return await mcaddon.getBehaviorPack();
 }
 
 /**
  * Find the resources pack folder in an MCADDON ZIP
  * Returns the folder path or null if not found
+ * @deprecated Use McAddon.fromZip(zip).getResourcePack() instead
  */
 async function findResourcesPack(zip) {
-    for (const [path, zipEntry] of Object.entries(zip.files)) {
-        if (zipEntry.dir && path.includes('manifest.json') === false) continue;
-
-        const manifestPath = path.endsWith('/') ? path + 'manifest.json' : path;
-        if (zip.files[manifestPath]) {
-            try {
-                const manifestContent = await zip.files[manifestPath].async('string');
-                const manifest = JSON.parse(manifestContent);
-
-                if (manifest.modules) {
-                    for (const module of manifest.modules) {
-                        if (module.type === 'resources') {
-                            let resourcesPack = path.endsWith('/') ? path.slice(0, -1) : path.substring(0, path.lastIndexOf('/'));
-                            if (resourcesPack === '') resourcesPack = '.';
-                            return resourcesPack;
-                        }
-                    }
-                }
-            } catch (e) {
-                // Not a valid manifest, continue
-            }
-        }
-    }
-    return null;
+    const mcaddon = McAddon.fromZip(zip);
+    return await mcaddon.getResourcePack();
 }
 
 /**
  * Find a resource pack item file by identifier
  * @param {JSZip} zip - The MCADDON ZIP object
- * @param {string} resourcesPack - The resource pack folder path
+ * @param {string} resourcesPack - The resource pack folder path (ignored, kept for backwards compatibility)
  * @param {string} identifier - The item identifier (e.g., "namespace:item_name")
  * @returns {string|null} The path to the resource pack item file, or null if not found
+ * @deprecated Use McAddon.fromZip(zip).findResourcePackItemFile(identifier) instead
  */
 async function findResourcePackItemFile(zip, resourcesPack, identifier) {
-    // Search in the resource pack's items directory
-    for (const [path, zipEntry] of Object.entries(zip.files)) {
-        if (zipEntry.dir) continue;
-        if (!path.toLowerCase().includes('/items/')) continue;
-        if (!path.toLowerCase().endsWith('.json')) continue;
-
-        // Check if this path is within the resource pack
-        if (!path.startsWith(resourcesPack)) continue;
-
-        try {
-            const content = await zipEntry.async('string');
-            const itemData = JSON.parse(content);
-
-            // Check if this item matches the identifier
-            if (itemData['minecraft:item']?.description?.identifier === identifier) {
-                return path;
-            }
-        } catch (e) {
-            // Invalid JSON or structure, skip
-        }
-    }
-    return null;
+    const mcaddon = McAddon.fromZip(zip);
+    return await mcaddon.findResourcePackItemFile(identifier);
 }
 
 /**
@@ -1406,28 +1315,13 @@ function convertToFormat1_10(itemData) {
  * @param {Function} pathFilter - Optional function to filter paths (returns true to include)
  * @returns {Array} Array of {path, content, parsed} objects
  */
+/**
+ * Extract all JSON files from the MCADDON ZIP
+ * @deprecated Use McAddon.fromZip(zip).getJsonFiles(pathFilter) instead
+ */
 async function extractJsonFiles(zip, pathFilter = null) {
-    const jsonFiles = [];
-
-    for (const [path, entry] of Object.entries(zip.files)) {
-        if (!entry.dir && path.toLowerCase().endsWith('.json')) {
-            if (pathFilter && !pathFilter(path)) continue;
-
-            try {
-                const content = await entry.async('string');
-                const parsed = JSON.parse(content);
-                jsonFiles.push({
-                    path: path,
-                    content: content,
-                    parsed: parsed
-                });
-            } catch (e) {
-                // Skip invalid JSON files
-            }
-        }
-    }
-
-    return jsonFiles;
+    const mcaddon = McAddon.fromZip(zip);
+    return await mcaddon.getJsonFiles(pathFilter);
 }
 
 /**
@@ -1435,6 +1329,7 @@ async function extractJsonFiles(zip, pathFilter = null) {
  * @param {string} behaviorPack - The behavior pack base path
  * @param {string} subPath - The sub-path (e.g., 'recipes', 'items')
  * @returns {string} The full path
+ * @deprecated This is now handled internally by McAddon class
  */
 function constructPackPath(behaviorPack, subPath) {
     return behaviorPack === '.' ? subPath + '/' : `${behaviorPack}/${subPath}/`;

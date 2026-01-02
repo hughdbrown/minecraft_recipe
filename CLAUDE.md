@@ -556,6 +556,57 @@ if (builtinSelectedFeature.id === 'your_feature_id') {
 
 ## Recent Changes
 
+### 2026-01-01: McAddon Object Model Refactoring
+- **Added**: Comprehensive `McAddon` class in separate `mcaddon.js` file
+- **Migrated**: All MCADDON utility functions to use McAddon class
+- **Refactored**: Recipe injection function to use clean McAddon API
+
+#### McAddon Class Features:
+  - Factory methods: `McAddon.fromFile(file)` and `McAddon.fromZip(zip)`
+  - Pack navigation: `getBehaviorPack()`, `getResourcePack()`
+  - Content queries: `getItems()`, `getBlocks()`, `getRecipes()`
+  - Item/block search: `findItem(identifier)`, `filterItems(fn)`
+  - Resource pack utilities: `findResourcePackItemFile(identifier)`
+  - Immutable modifications: `addFile()`, `removeFile()`, `addRecipe()`
+  - Export: `toBlob()`, `download(suffix)`
+  - Internal caching for performance optimization
+
+#### Implementation Details:
+  - **New File**: `mcaddon.js` (454 lines) - McAddon class implementation
+  - **Updated File**: `minecraft_recipe.js` - Reduced from 5,327 to 4,794 lines (533 lines removed, 10% reduction)
+  - **Updated File**: `minecraft_recipe.html` - Added script tag for mcaddon.js
+  - **Utility Functions**: Converted to thin 2-3 line wrappers delegating to McAddon
+    - `findBehaviorPack()` - reduced from 25 to 3 lines
+    - `findResourcesPack()` - reduced from 25 to 3 lines
+    - `findResourcePackItemFile()` - reduced from 23 to 3 lines
+    - `extractJsonFiles()` - reduced from 20 to 3 lines
+  - **Recipe Function**: `convertAndInject()` - reduced from 46 to 25 lines (46% reduction)
+
+#### Benefits:
+  - **Single Source of Truth**: All MCADDON logic in mcaddon.js
+  - **Eliminated Duplication**: ~100 lines of duplicate code removed
+  - **Separation of Concerns**: Object model in separate file
+  - **Caching**: Expensive operations cached automatically
+  - **Immutability**: Modification operations return new instances
+  - **Backwards Compatible**: Thin wrapper functions maintain API compatibility
+  - **Cleaner Code**: Declarative API vs imperative ZIP manipulation
+
+#### Example Usage:
+  ```javascript
+  // Modern approach - Clean and declarative
+  const mcaddon = await McAddon.fromFile(file);
+  const modified = await mcaddon.addRecipe('my_recipe.json', recipeJson);
+  await modified.download('_web');
+
+  // Legacy approach still works through wrappers
+  const zip = await loadMcAddonZip(file);
+  const behaviorPack = await findBehaviorPack(zip);  // Now delegates to McAddon
+  ```
+
+- **Total Line Count**: 7,175 → 7,097 lines (78 line reduction across all files)
+- **JavaScript**: 5,327 → 4,794 lines (-533 lines, 10% reduction)
+- **New mcaddon.js**: +454 lines (clean object model implementation)
+
 ### 2026-01-01: Edit Blocks/Items Feature Implementation
 - **Added**: Complete block and item editing system (Screen 7)
 - **Features**:
@@ -723,3 +774,269 @@ if (builtinSelectedFeature.id === 'your_feature_id') {
 - Service worker for offline support
 - Automated testing suite
 - Error logging and diagnostics
+
+---
+
+## Recommended Refactorings (To Be Implemented)
+
+The following refactorings have been identified as high-value improvements to the codebase. They build upon the McAddon object model refactoring completed on 2026-01-01.
+
+### Refactoring #2: Convert Features to Self-Contained Modules/Classes
+
+**Current State:**
+Each feature (Editor, Combine, Diff, Builtin Features, PNG Editor, Edit Blocks/Items) is implemented with:
+- 5-10 global state variables prefixed by feature name
+- 10-20 global functions prefixed by feature name
+- Mixed DOM manipulation and business logic
+
+**Proposed Change:**
+Convert each feature into a class with encapsulated state:
+
+```javascript
+class BuiltinFeaturesManager {
+    #selectedFeature = null;
+    #mcaddon = null;
+    #filteredItems = [];
+    #selectedItem = null;
+    #foodEffects = [];
+
+    constructor(domElements) {
+        this.ui = domElements; // References to DOM elements
+    }
+
+    async selectFeature(feature) { /* ... */ }
+    async loadMcAddon(file) { /* ... */ }
+    selectItem(item) { /* ... */ }
+    addFoodEffect() { /* ... */ }
+    async apply() { /* ... */ }
+}
+
+// Similar classes for:
+// - McAddonEditorManager
+// - CombineManager
+// - DiffManager
+// - PngEditorManager
+// - BlocksItemsEditorManager
+```
+
+**Advantages:**
+- **Eliminates Global State**: All state is private to class instances
+- **Clear Boundaries**: Each feature is independent and self-contained
+- **Easier Testing**: Mock dependencies, test features in isolation
+- **Better Organization**: Related code grouped together
+- **Namespace Protection**: No naming collisions between features
+- **Memory Management**: Garbage collection can clean up feature state when done
+
+**Implementation Notes:**
+- Start with one feature (e.g., Combine) as a proof of concept
+- Gradually migrate other features using the same pattern
+- Maintain backwards compatibility during migration
+- Each manager class should use the McAddon object model internally
+
+---
+
+### Refactoring #3: Separate UI Layer from Business Logic
+
+**Current State:**
+Functions mix:
+- DOM manipulation (`document.getElementById`, `innerHTML =`)
+- Business logic (validation, transformation)
+- File operations (reading, writing, downloading)
+
+Example from `formatJson()`:
+```javascript
+function formatJson() {
+    const editor = document.getElementById('jsonEditor');  // DOM
+    const errorDiv = document.getElementById('validationError');  // DOM
+    try {
+        const parsed = JSON.parse(editor.value);  // Business logic
+        editor.value = JSON.stringify(parsed, null, 2);  // Business + DOM
+        errorDiv.style.display = 'none';  // DOM
+    } catch (error) {
+        errorDiv.textContent = `Invalid JSON: ${error.message}`;  // DOM
+        errorDiv.style.display = 'block';  // DOM
+    }
+}
+```
+
+**Proposed Change:**
+Adopt a layered architecture:
+
+```javascript
+// Business Logic Layer (pure functions/classes)
+class JsonFormatter {
+    static format(jsonString) {
+        const parsed = JSON.parse(jsonString);
+        return JSON.stringify(parsed, null, 2);
+    }
+}
+
+// UI Layer (handles DOM)
+class JsonEditorUI {
+    constructor(editorElement, errorElement) {
+        this.editor = editorElement;
+        this.error = errorElement;
+    }
+
+    formatJson() {
+        try {
+            const formatted = JsonFormatter.format(this.editor.value);
+            this.editor.value = formatted;
+            this.hideError();
+        } catch (error) {
+            this.showError(`Invalid JSON: ${error.message}`);
+        }
+    }
+
+    showError(message) { /* ... */ }
+    hideError() { /* ... */ }
+}
+```
+
+**Advantages:**
+- **Testability**: Pure business logic can be tested without DOM
+- **Reusability**: Business logic can be used in different contexts
+- **Clarity**: Clear separation between "what to do" vs "how to display it"
+- **Maintainability**: UI changes don't affect business logic and vice versa
+- **Performance**: Can optimize business logic separately from rendering
+
+**Implementation Notes:**
+- Identify pure business logic functions (validation, transformation, calculation)
+- Extract them into separate utility classes/modules
+- Create UI wrapper classes that handle DOM manipulation
+- Use dependency injection to connect UI layer with business logic
+
+---
+
+### Refactoring #4: Create a Unified File/Resource Manager
+
+**Current State:**
+Each feature independently handles:
+- File reading (`readFileAsText`, `readFileAsArrayBuffer`)
+- File downloading (`downloadFile`, `downloadBlob`)
+- Filename generation (`generateModifiedFileName`)
+- File info display (`updateFileInfo`, `formatFileSize`)
+
+**Proposed Change:**
+Create a centralized resource manager:
+
+```javascript
+class FileManager {
+    static async readAsText(file) { /* ... */ }
+    static async readAsArrayBuffer(file) { /* ... */ }
+
+    static download(content, fileName, mimeType = 'application/octet-stream') { /* ... */ }
+    static downloadBlob(blob, fileName) { /* ... */ }
+
+    static formatSize(bytes) { /* ... */ }
+    static generateModifiedName(originalName, suffix) { /* ... */ }
+
+    // Could add caching, progress tracking, etc.
+    static async readWithProgress(file, onProgress) { /* ... */ }
+}
+```
+
+**Advantages:**
+- **Consistency**: All file operations work the same way
+- **Enhancement Point**: Easy to add features like progress bars, caching, error recovery
+- **Error Handling**: Centralized error handling for file operations
+- **Browser Compatibility**: Handle browser differences in one place
+- **Performance**: Can add intelligent caching/memoization
+
+**Implementation Notes:**
+- Create FileManager class with static methods for compatibility
+- Migrate existing file utility functions one by one
+- Add new features (progress tracking, better error messages) incrementally
+- Consider adding file type detection and validation
+
+---
+
+### Refactoring #5: Extract Validation into a Dedicated Validation System
+
+**Current State:**
+Validation logic (lines 2614-3250+) is:
+- 600+ lines in global scope
+- Mixed with display logic
+- Hard to extend with new validation rules
+- Global state (`validateFile`, `validateZip`, `validationResults`)
+
+**Proposed Change:**
+Create a validation framework:
+
+```javascript
+class McAddonValidator {
+    #rules = [];
+    #results = { errors: [], warnings: [], passed: false };
+
+    constructor(mcaddon) {
+        this.mcaddon = mcaddon;
+        this.registerDefaultRules();
+    }
+
+    registerRule(rule) {
+        this.#rules.push(rule);
+    }
+
+    async validate() {
+        this.#results = { errors: [], warnings: [], passed: false };
+
+        for (const rule of this.#rules) {
+            await rule.validate(this.mcaddon, this.#results);
+        }
+
+        this.#results.passed = this.#results.errors.length === 0;
+        return this.#results;
+    }
+
+    registerDefaultRules() {
+        this.registerRule(new StructureValidationRule());
+        this.registerRule(new ManifestValidationRule());
+        this.registerRule(new JsonSyntaxValidationRule());
+        this.registerRule(new DisplayNameValidationRule());
+        this.registerRule(new AnomalyDetectionRule());
+    }
+}
+
+class ValidationRule {
+    async validate(mcaddon, results) {
+        throw new Error('Must implement validate()');
+    }
+}
+
+class StructureValidationRule extends ValidationRule {
+    async validate(mcaddon, results) {
+        // Current validateStructure() logic
+    }
+}
+
+// etc. for each rule type
+```
+
+**Advantages:**
+- **Extensibility**: Easy to add new validation rules without modifying existing code
+- **Testability**: Test each validation rule independently
+- **Reusability**: Validation rules can be composed and reused
+- **Configurability**: Enable/disable specific rules, set severity levels
+- **Clarity**: Each rule is self-contained and focused
+- **Plugin Architecture**: Third-party validation rules can be added
+
+**Implementation Notes:**
+- Start with base ValidationRule class
+- Extract each validation function into its own rule class
+- Create validator that orchestrates rule execution
+- Add configuration system for enabling/disabling rules
+- Consider adding rule priorities for execution order
+
+---
+
+## Implementation Priority
+
+The recommended order for implementing these refactorings is:
+
+1. **McAddon Object Model** ✅ - COMPLETED (2026-01-01)
+2. **File/Resource Manager** (#4) - Foundation for other refactorings
+3. **UI Layer Separation** (#3) - Enables better testing
+4. **Feature Classes** (#2) - Builds on McAddon and FileManager
+5. **Validation System** (#5) - Final polish, can use McAddon directly
+
+Each refactoring is **incremental** and can be done without breaking existing functionality. The legacy code can remain functional during the migration period.
