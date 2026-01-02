@@ -1417,3 +1417,135 @@ button.convert-btn:disabled {
 .item-category-header:first-child {
     margin-top: 0;
 }
+
+/* ========== EDIT BLOCKS/ITEMS SCREEN STYLES ========== */
+
+.edit-blocks-items-section {
+    padding: 25px;
+}
+
+.edit-blocks-items-category {
+    margin-bottom: 40px;
+}
+
+.edit-blocks-items-category h3 {
+    color: #2c3e50;
+    font-size: 20px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid #667eea;
+}
+
+.edit-blocks-items-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.edit-blocks-items-table thead {
+    background: #2c3e50;
+    color: white;
+}
+
+.edit-blocks-items-table th {
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+}
+
+.edit-blocks-items-table tbody tr {
+    border-bottom: 1px solid #dee2e6;
+    transition: background 0.2s ease;
+}
+
+.edit-blocks-items-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.edit-blocks-items-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.edit-blocks-items-table td {
+    padding: 12px 15px;
+}
+
+.edit-blocks-items-table input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.2s ease;
+}
+
+.edit-blocks-items-table input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.edit-blocks-items-table input.modified {
+    border-color: #f39c12;
+    background: #fef5e7;
+}
+
+.edit-blocks-items-table input.error {
+    border-color: #e74c3c;
+    background: #fadbd8;
+}
+
+.delete-btn {
+    padding: 8px 15px;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.delete-btn:hover {
+    background: #c0392b;
+    transform: scale(1.05);
+}
+
+.error-message {
+    display: block;
+    color: #e74c3c;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.warning-message {
+    display: block;
+    color: #f39c12;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.delete-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2000;
+}
+
+.delete-modal .modal-content {
+    max-width: 500px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}

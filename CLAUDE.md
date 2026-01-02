@@ -1,163 +1,27 @@
 # Minecraft Recipe Generator - Project Documentation
 
 ## Project Overview
-A web-based tool for creating and managing Minecraft Bedrock Edition recipes and MCADDON files. The application provides multiple features for working with Minecraft content creation, including recipe generation, MCADDON editing, file combination, diffing, validation, applying builtin features to items, and PNG asset management.
-
-## Current Features
-
-### 1. Recipe Maker (Screen 0)
-- Converts text-based recipe definitions to JSON format
-- Supports 3x3 crafting table patterns
-- Two modes:
-  - Convert standalone TXT to JSON
-  - Add recipe to existing MCADDON file
-- **Location**: Lines 907-967 (HTML), Lines 1419-1511 (JavaScript)
-
-### 2. Edit MCADDON Files (Screen 1)
-- Three-step workflow for editing JSON files within MCADDON packages
-- Extract, view, and modify any JSON file
-- Save changes back to MCADDON with download
-- **Location**: Lines 1171-1231 (HTML), Lines 1559-1764 (JavaScript)
-
-### 3. Combine MCADDON Files (Screen 2)
-- Merge two MCADDON files (source into destination)
-- Only adds content not present in destination (non-destructive)
-- Shows detailed merge results
-- **Location**: Lines 1234-1269 (HTML), Lines 1909-2226 (JavaScript)
-
-### 4. Diff MCADDON Files (Screen 3)
-- Compare two versions of MCADDON files
-- Shows hierarchical view of differences
-- Displays: files only in v1, only in v2, and modified files
-- **Location**: Lines 1272-1312 (HTML), Lines 2229-2546 (JavaScript)
-
-### 5. Validate MCADDON (Screen 4)
-- Automatic validation of MCADDON structure
-- Checks for:
-  - Proper JSON formatting
-  - Required manifest structure
-  - Display names in recipes/items/blocks
-  - File type-specific validation
-- **Location**: Lines 1315-1340 (HTML), Lines 2939-3645 (JavaScript)
-
-### 6. Builtin Features (Screen 5)
-- Apply predefined features to items in MCADDON files
-- Currently supports: **Food Effects**
-- Extensible architecture for adding more builtin features
-
-#### Food Effects Feature
-- **Workflow**:
-  1. Select "Food Effects" builtin feature
-  2. Choose MCADDON file
-  3. Select a food item (automatically filtered)
-  4. Add/configure food effects (tag, duration, intensity)
-  5. Submit to apply effects
-  6. Download modified MCADDON
-
-- **Implementation Details**:
-  - Filter function: Finds behavior pack → items directory → items with `minecraft:food` component
-  - Effects appended to existing effects (non-destructive)
-  - JSON structure: `{name: "minecraft:tag", duration: ticks, amplifier: intensity-1}`
-  - Real-time validation with error messages
-  - Duration: positive integer (seconds, converted to ticks automatically: seconds × 20)
-  - Intensity: 1-255 range
-  - Tag: free-form text ("minecraft:" prefix added automatically if not present)
-  - **Format Version**: Automatically changed to 1.10 (vanilla Enchanted Golden Apple format)
-  - Items are split into TWO files: behavior pack (functional) and resource pack (visual)
-  - Creates RP item file if it doesn't exist
-
-- **Location**:
-  - HTML: Lines 1344-1412
-  - CSS: Lines 893-1093
-  - JavaScript State: Lines 1579-1663
-  - JavaScript Functions: Lines 3647-3974
-
-### 7. Edit PNGs (Screen 6) **[NEWLY IMPLEMENTED]**
-- Delete, add, replace, or download PNG files within MCADDON packages
-- Four independent operations (no chaining)
-- Tree-based file browser matching existing UI patterns
-- Non-destructive operations with download
-
-#### Operations
-
-**Delete PNG:**
-- Browse PNG files in hierarchical tree view
-- Select a PNG file to delete
-- Confirm deletion
-- Download modified MCADDON with deleted file removed
-- **Workflow**: Select MCADDON → Choose "Delete PNG" → Browse/select file → Confirm → Download
-
-**Add PNG:**
-- Select PNG file from local file system
-- Browse folders in MCADDON virtual file structure
-- Select destination folder (or root)
-- Confirm to add file with original filename
-- Download modified MCADDON with new file added
-- **Workflow**: Select MCADDON → Choose "Add PNG" → Select local file → Browse/select folder → Confirm → Download
-
-**Replace PNG:**
-- Select PNG file from local file system
-- Browse PNG files in MCADDON
-- Select PNG file to replace
-- Confirm replacement (keeps original path/filename, replaces content)
-- Download modified MCADDON with replaced file
-- **Workflow**: Select MCADDON → Choose "Replace PNG" → Select local file → Browse/select PNG to replace → Confirm → Download
-
-**Download PNG:**
-- Browse PNG files in hierarchical tree view
-- Select a PNG file to extract
-- Confirm download
-- Individual PNG file is downloaded (not MCADDON)
-- **Workflow**: Select MCADDON → Choose "Download PNG" → Browse/select file → Confirm → Download PNG
-
-#### Implementation Details
-- **File Browser**: Reuses existing tree view pattern from Edit MCADDON screen
-  - Expandable/collapsible folders with ▶ icons
-  - File count badges on folders
-  - File size display
-  - Only shows PNG files and their parent folders
-- **No Operation Chaining**: Each operation completes independently and ends with download
-- **Standard File Inputs**: Uses native browser file picker for local file selection
-- **Modified MCADDON Naming**: Adds `_modified` suffix to downloaded MCADDON files
-- **Tree Rendering**: Flexible `renderPngTree()` function supports:
-  - Showing/hiding files (for folder-only selection)
-  - Making folders clickable (for Add operation)
-  - Custom click handlers per operation type
-
-#### State Management
-```javascript
-let pngMcAddonFile = null;        // Selected MCADDON file
-let pngZip = null;                // Loaded JSZip instance
-let pngCurrentOperation = null;   // Current operation: 'delete', 'add', 'replace', 'download'
-let pngFiles = [];                // Array of PNG files in MCADDON
-let pngSelectedPath = null;       // Selected file/folder path
-let pngLocalFile = null;          // Local PNG file (for add/replace)
-let pngLocalFileData = null;      // ArrayBuffer of local file
-let pngModifiedZip = null;        // Modified ZIP for download
-```
-
-- **Location**:
-  - HTML: Lines 1417-1589
-  - CSS: Lines 1095-1171
-  - JavaScript State: Lines 1841-1849
-  - JavaScript Functions: Lines 4563-5020
+A web-based tool for creating and managing Minecraft Bedrock Edition recipes and MCADDON files. The application provides multiple features for working with Minecraft content creation, including recipe generation, MCADDON editing, file combination, diffing, validation, applying builtin features to items, PNG asset management, and block/item editing.
 
 ## Architecture
 
 ### File Structure
-- **Single HTML file**: `minecraft_recipe.html` (~5,025 lines)
-- Self-contained with embedded CSS and JavaScript
-- Uses JSZip library (CDN) for MCADDON manipulation
+The application is split into three separate files:
+- **minecraft_recipe.html** (725 lines): HTML structure and markup
+- **minecraft_recipe.css** (1,551 lines): All styling and visual design
+- **minecraft_recipe.js** (4,899 lines): Application logic and functionality
+- **Total**: 7,175 lines
+- **Dependencies**: JSZip library (CDN) for MCADDON manipulation
 
 ### Screen System
-- Screens managed by `switchScreen(index)` function (Line 1665)
-- 7 screens total (0-6)
+- Screens managed by `switchScreen(index)` function
+- **8 screens total (0-7)**
 - Each screen has dedicated state variables
 - Navigation via vertical nav panel on left
 
 ### State Management Pattern
 ```javascript
-// Each feature has isolated state variables
+// Each feature has isolated state variables with feature-specific prefixes
 // Example from Builtin Features:
 let builtinSelectedFeature = null;
 let builtinMcAddonFile = null;
@@ -177,54 +41,261 @@ let pngSelectedPath = null;
 let pngLocalFile = null;
 let pngLocalFileData = null;
 let pngModifiedZip = null;
+
+// Example from Edit Blocks/Items:
+let editBlocksItemsFile = null;
+let editBlocksItemsZip = null;
+let editBlocksItemsItems = [];
+let editBlocksItemsBlocks = [];
+let editBlocksItemsChanges = [];
 ```
 
 ### Common Utilities
-- `readFileAsArrayBuffer(file)`: Read files for ZIP processing (Line 1514)
-- `downloadFile(content, fileName, mimeType)`: Trigger downloads (Line 1523)
-- `downloadBlob(blob, fileName)`: Download blob objects (Line 1528)
-- `formatFileSize(bytes)`: Human-readable file sizes (Line 1539)
+- `readFileAsArrayBuffer(file)`: Read files for ZIP processing
+- `downloadFile(content, fileName, mimeType)`: Trigger downloads
+- `downloadBlob(blob, fileName)`: Download blob objects
+- `formatFileSize(bytes)`: Human-readable file sizes
 
-## Builtin Features Extension Guide
+## Current Features
 
-### Adding New Builtin Features
-The system is designed for easy extension. To add a new builtin feature:
+### 1. Recipe Maker (Screen 0)
+Converts recipe definitions to JSON format for Minecraft Bedrock Edition.
 
-1. **Add to `builtinFeatures` array** (Line 1590):
+#### Two Input Modes:
+**Text View (Default):**
+- Text-based recipe definitions using 3x3 pattern
+- Simple syntax for defining crafting patterns
+- Direct text-to-JSON conversion
+
+**Grid View:**
+- Visual 3x3 clickable grid interface
+- Each cell has dropdown selection for:
+  - Vanilla items
+  - Items scanned from loaded MCADDON
+  - Blank cells
+- More intuitive for visual recipe design
+
+#### Two Output Modes:
+- **JSON Only**: Convert standalone recipe to JSON file
+- **JSON + MCADDON**: Add recipe to existing MCADDON file
+
+#### Key Features:
+- Supports 3x3 crafting table patterns
+- Toggle between text and grid views
+- Non-destructive MCADDON modification
+- Preview before download
+
+### 2. Edit MCADDON Files (Screen 1)
+Three-step workflow for editing JSON files within MCADDON packages.
+
+#### Workflow:
+1. **Select MCADDON**: Load the package file
+2. **Browse & Select**: Navigate file tree to find JSON file
+3. **Edit**: Modify JSON in text editor
+4. **Save & Download**: Package changes back into MCADDON
+
+#### Features:
+- Tree-based file browser with expandable folders
+- JSON syntax highlighting and validation
+- Non-destructive editing (creates modified copy)
+- Preview file structure before editing
+
+### 3. Combine MCADDON Files (Screen 2)
+Merge two MCADDON files together safely.
+
+#### Workflow:
+1. Select **destination** MCADDON (base file)
+2. Select **source** MCADDON (files to merge in)
+3. Review merge preview
+4. Download combined result
+
+#### Features:
+- Non-destructive merging (only adds missing content)
+- Detailed merge results showing:
+  - Files added from source
+  - Files already present (skipped)
+  - Conflict resolution summary
+- Preserves all existing content in destination
+
+### 4. Diff MCADDON Files (Screen 3)
+Compare two versions of MCADDON files to see changes.
+
+#### Workflow:
+1. Select **Version 1** (older version)
+2. Select **Version 2** (newer version)
+3. Review hierarchical diff results
+
+#### Features:
+- Shows files only in v1 (removed)
+- Shows files only in v2 (added)
+- Shows modified files (changed content)
+- Hierarchical tree view of differences
+- File-level comparison (not line-by-line)
+
+### 5. Validate MCADDON (Screen 4)
+Automatic validation of MCADDON structure and content.
+
+#### Validation Checks:
+- **JSON Formatting**: All JSON files parse correctly
+- **Manifest Structure**: Required manifest.json files present and valid
+- **Display Names**: Recipes, items, and blocks have proper display names
+- **File Type Validation**: Type-specific validation rules
+- **Pack Structure**: Behavior pack and resource pack organization
+
+#### Features:
+- Comprehensive error reporting
+- Warning vs. error classification
+- Specific file and line number references
+- Validation summary with pass/fail status
+
+### 6. Builtin Features (Screen 5)
+Apply predefined feature modifications to items in MCADDON files.
+
+#### Current Builtin Features:
+**Food Effects** - Add potion effects to food items
+
+#### Food Effects Feature
+
+**Workflow:**
+1. Click "Food Effects" button
+2. Select MCADDON file
+3. Choose a food item (auto-filtered to items with `minecraft:food` component)
+4. Add one or more effects using "+ Add Effect" button
+5. Configure each effect:
+   - **Tag**: Effect name (e.g., "regeneration", "speed", "poison")
+   - **Duration**: Seconds (automatically converted to ticks × 20)
+   - **Intensity**: Level 1-255
+6. Submit to apply changes
+7. Download modified MCADDON
+
+**Technical Implementation:**
+- **Format Version**: Automatically converts to 1.10 (vanilla Enchanted Golden Apple format)
+- **File Splitting**: Creates separate BP and RP item files
+  - **BP file**: Functional components (`minecraft:food` + effects, `minecraft:max_stack_size`, etc.)
+  - **RP file**: Visual components (`minecraft:icon`, textures)
+- **Component Cleanup**: Removes incompatible 1.20+ components
+- **Effect Format**: `{name: "minecraft:tag", duration: ticks, amplifier: intensity-1}`
+- **Non-destructive**: Appends to existing effects array
+
+**Why Format 1.10:**
+- Format 1.10 confirmed working for food effects in community testing
+- Matches vanilla Enchanted Golden Apple implementation
+- Format versions 1.16.100+ and 1.20.50+ have bugs with food effects
+
+**Conversion Process:**
+1. Detect original format_version
+2. Split functional vs. visual components
+3. Remove incompatible 1.20+ components (`menu_category`, `minecraft:use_modifiers`, `minecraft:custom_components`)
+4. Convert `minecraft:tags` from object to array format if needed
+5. Create/update both BP and RP item files
+6. Apply effects to BP file only
+
+**User Notifications:**
+```
+Food effects applied successfully!
+
+⚠️ REMOVED INCOMPATIBLE COMPONENTS:
+  • minecraft:use_modifiers
+  • minecraft:custom_components
+
+📋 CHANGES MADE:
+  • Format version changed: 1.21.0 → 1.10
+  • Using vanilla Enchanted Golden Apple format (split BP/RP files)
+  • Items will appear under generic "Items" category in Creative Mode
+  • Updated both BP and RP item files (format 1.10 requires split files)
+
+Click Download to save the modified MCADDON file.
+```
+
+### 7. Edit PNGs (Screen 6)
+Complete PNG asset management system for MCADDON files.
+
+#### Four Operations:
+
+**Delete PNG:**
+- Browse PNG files in tree view
+- Select file to delete
+- Confirm deletion
+- Download modified MCADDON
+
+**Add PNG:**
+- Select PNG from local file system
+- Browse MCADDON folder structure
+- Choose destination folder (or root)
+- Confirm addition with original filename
+- Download modified MCADDON
+
+**Replace PNG:**
+- Select PNG from local file system
+- Browse existing PNG files in MCADDON
+- Choose PNG to replace
+- Confirm replacement (keeps path/filename, replaces content)
+- Download modified MCADDON
+
+**Download PNG:**
+- Browse PNG files in tree view
+- Select PNG to extract
+- Confirm download
+- Individual PNG file downloaded (not MCADDON)
+
+#### Implementation Details:
+- **File Browser**: Tree view with expandable/collapsible folders
+- **File Count Badges**: Shows number of files in each folder
+- **File Size Display**: Human-readable file sizes
+- **PNG-Only Filtering**: Only shows PNG files and their parent folders
+- **No Operation Chaining**: Each operation completes independently
+- **Modified Naming**: Adds `_modified` suffix to MCADDON downloads
+- **Flexible Tree Rendering**: `renderPngTree()` supports:
+  - Show/hide files for folder-only selection
+  - Make folders clickable for Add operation
+  - Custom click handlers per operation type
+
+#### State Management:
 ```javascript
-{
-    id: 'your_feature_id',
-    name: 'Display Name',
-    description: 'What this feature does',
-    filterFunction: async (zip) => {
-        // Return array of items that match your criteria
-        // Each item should have: path, identifier, content, data
-        return items;
-    }
-}
+let pngMcAddonFile = null;        // Selected MCADDON file
+let pngZip = null;                // Loaded JSZip instance
+let pngCurrentOperation = null;   // Current operation: 'delete', 'add', 'replace', 'download'
+let pngFiles = [];                // Array of PNG files in MCADDON
+let pngSelectedPath = null;       // Selected file/folder path
+let pngLocalFile = null;          // Local PNG file (for add/replace)
+let pngLocalFileData = null;      // ArrayBuffer of local file
+let pngModifiedZip = null;        // Modified ZIP for download
 ```
 
-2. **Add HTML container** in screen-builtin section (after Line 1404):
-```html
-<div id="yourFeatureContainer" style="display: none;">
-    <!-- Your feature UI here -->
-</div>
-```
+### 8. Edit Blocks/Items (Screen 7)
+Comprehensive editor for managing blocks and items in MCADDON files.
 
-3. **Add configuration logic** in `selectBuiltinItem()` (Line 3752):
-```javascript
-if (builtinSelectedFeature.id === 'your_feature_id') {
-    document.getElementById('yourFeatureContainer').style.display = 'block';
-    // Initialize your feature UI
-}
-```
+#### Capabilities:
+- **Delete Items/Blocks**: Remove entire item or block (removes from both BP and RP)
+- **Edit Display Names**: Modify user-facing names
+- **Edit Identifiers**: Change internal IDs (updates all references throughout MCADDON)
 
-4. **Add submit logic** in `submitBuiltinFeature()` (Line 3919):
-```javascript
-if (builtinSelectedFeature.id === 'your_feature_id') {
-    // Apply your feature modifications
-}
-```
+#### Workflow:
+1. Select MCADDON file
+2. View alphabetically sorted index of items and blocks
+3. Edit inline:
+   - Display names
+   - Identifier names
+4. Delete items/blocks with confirmation dialog
+5. Apply all changes at once
+6. Download modified MCADDON
+
+#### Features:
+- **Separate Sections**: Items listed first, then Blocks
+- **Inline Editing**: Edit directly in the interface
+- **Batch Changes**: Modify multiple items before saving
+- **Delete Confirmation**: Safety dialog for destructive actions
+- **Identifier Updates**: Automatically updates all references when identifier changes
+- **Non-destructive**: Creates modified copy for download
+
+#### UI Components:
+- File selector
+- Item/Block index with:
+  - Display name (editable)
+  - Identifier (editable)
+  - Delete icon (right side)
+- Save/Export button
+- Download button (appears after save)
 
 ## MCADDON File Structure
 
@@ -242,62 +313,7 @@ if (builtinSelectedFeature.id === 'your_feature_id') {
 - Items: `{behaviorPack}/items/*.json`
 - Recipes: `{behaviorPack}/recipes/*.json`
 - Blocks: `{behaviorPack}/blocks/*.json`
-
-### Format Version Conversion System
-
-The food effects feature uses format version 1.10 with split BP/RP files (the vanilla Enchanted Golden Apple approach):
-
-**Why Format 1.10 is Used:**
-- Format 1.10 is confirmed working for food effects in the community
-- Uses the same approach as Mojang's vanilla Enchanted Golden Apple
-- Format versions 1.16.100+ and 1.20.50+ have bugs/issues with food effects
-
-**Conversion Process (`convertToFormat1_10` function):**
-
-1. **Detection Phase:**
-   - Captures original `format_version`
-   - Identifies functional vs. visual components
-
-2. **File Splitting:**
-   - **Behavior Pack file** gets functional components:
-     - `minecraft:food` (with effects)
-     - `minecraft:max_stack_size`
-     - `minecraft:hand_equipped`
-     - Other gameplay-related components
-   - **Resource Pack file** gets visual components:
-     - `minecraft:icon`
-     - Texture references
-
-3. **Component Handling:**
-   - Removes incompatible 1.20+ components
-   - Converts `minecraft:tags` from object to array format (if needed)
-
-4. **File Creation:**
-   - Updates existing BP item file
-   - Creates or updates RP item file
-   - Both files use same identifier
-
-**User Notification Example:**
-```
-Food effects applied successfully!
-
-⚠️ REMOVED INCOMPATIBLE COMPONENTS:
-  • minecraft:use_modifiers
-  • minecraft:custom_components
-
-📋 CHANGES MADE:
-  • Format version changed: 1.21.0 → 1.10
-  • Using vanilla Enchanted Golden Apple format (split BP/RP files)
-  • Items will appear under generic "Items" category in Creative Mode
-  • Updated both BP and RP item files (format 1.10 requires split files)
-
-Click Download to save the modified MCADDON file.
-```
-
-**Split File Structure:**
-- Behavior pack item: Functional components + effects
-- Resource pack item: Visual components only
-- Both files required for format 1.10 to work properly
+- Textures: `{resourcePack}/textures/**/*.png`
 
 ## Important Patterns
 
@@ -321,40 +337,89 @@ downloadBlob(blob, 'filename.mcaddon');
 ```
 
 ### Validation Pattern
-- Field-level validation on input (real-time)
-- Form-level validation on submit (comprehensive)
-- Visual feedback: error borders + error messages
-- Error messages clear when value becomes valid
+- **Field-level validation**: Real-time on input
+- **Form-level validation**: Comprehensive on submit
+- **Visual feedback**: Error borders + error messages
+- **Error clearing**: Messages clear when value becomes valid
 
 ### Download Button Pattern
 - Initially hidden (`style="display: none;"`)
 - Appears after successful operation
-- Feature-specific (e.g., `downloadCombinedBtn`, `downloadBuiltinBtn`)
+- Feature-specific naming (e.g., `downloadCombinedBtn`, `downloadBuiltinBtn`)
 - Isolated per screen (only one visible at a time)
 
-## Testing Notes
+### Modified File Naming
+- Original: `mypack.mcaddon`
+- Modified: `mypack_modified.mcaddon`
+- Prevents overwriting original files
 
-### Manual Testing Workflow for Builtin Features
+## Extension Guides
+
+### Adding New Builtin Features
+
+The system is designed for easy extension. To add a new builtin feature:
+
+**1. Add to `builtinFeatures` array:**
+```javascript
+{
+    id: 'your_feature_id',
+    name: 'Display Name',
+    description: 'What this feature does',
+    filterFunction: async (zip) => {
+        // Return array of items that match your criteria
+        // Each item should have: path, identifier, content, data
+        return items;
+    }
+}
+```
+
+**2. Add HTML container in screen-builtin section:**
+```html
+<div id="yourFeatureContainer" style="display: none;">
+    <!-- Your feature UI here -->
+</div>
+```
+
+**3. Add configuration logic in `selectBuiltinItem()`:**
+```javascript
+if (builtinSelectedFeature.id === 'your_feature_id') {
+    document.getElementById('yourFeatureContainer').style.display = 'block';
+    // Initialize your feature UI
+}
+```
+
+**4. Add submit logic in `submitBuiltinFeature()`:**
+```javascript
+if (builtinSelectedFeature.id === 'your_feature_id') {
+    // Apply your feature modifications
+}
+```
+
+## Testing Guidelines
+
+### Manual Testing Workflow - Builtin Features (Food Effects)
+
 1. Open `minecraft_recipe.html` in browser
 2. Click "Builtin Features" in nav
 3. Click "Food Effects" button
-4. Select a valid MCADDON file with food items
-5. Select a food item from the filtered list
+4. Select valid MCADDON with food items
+5. Select a food item from filtered list
 6. Click "+ Add Effect"
-7. Fill in:
-   - Tag: e.g., "regeneration", "speed", "poison"
-   - Duration: e.g., 30, 60, 120
-   - Intensity: e.g., 1, 2, 3 (range 1-255)
+7. Fill in effect details:
+   - Tag: "regeneration", "speed", "poison", etc.
+   - Duration: 30, 60, 120 (seconds)
+   - Intensity: 1, 2, 3 (range 1-255)
 8. Test validation:
    - Duration: Try 0, negative, non-numeric
    - Intensity: Try 0, 256, negative
 9. Click Submit
-10. Click Download
-11. Verify modified MCADDON contains updated food item JSON
+10. Verify success message and format conversion notice
+11. Click Download
+12. Extract and verify MCADDON contains:
+    - BP item file (format 1.10, functional components + effects)
+    - RP item file (format 1.10, visual components only)
 
-### Expected Minecraft Item JSON Structure (After Food Effects Applied)
-
-**Behavior Pack File** (`BP/items/item_name.json`):
+**Expected BP File Structure:**
 ```json
 {
   "format_version": "1.10",
@@ -378,7 +443,7 @@ downloadBlob(blob, 'filename.mcaddon');
 }
 ```
 
-**Resource Pack File** (`RP/items/item_name.json`):
+**Expected RP File Structure:**
 ```json
 {
   "format_version": "1.10",
@@ -393,193 +458,252 @@ downloadBlob(blob, 'filename.mcaddon');
 }
 ```
 
-**Note**: Duration is in ticks (600 ticks = 30 seconds). Format version 1.10 uses split BP/RP files (vanilla Enchanted Golden Apple format).
-
-### Manual Testing Workflow for PNG Editor
+### Manual Testing Workflow - PNG Editor
 
 **General Setup:**
 1. Open `minecraft_recipe.html` in browser
 2. Click "Edit PNGs" in nav
-3. Select a valid MCADDON file with PNG files
+3. Select valid MCADDON with PNG files
 
-**Testing Delete PNG:**
-1. Click "Delete PNG" button
-2. Expand folders to locate PNG files
-3. Click on a PNG file to select it
-4. Verify the selected file path is displayed
-5. Click "Confirm Delete" button
-6. Verify success message appears
-7. Click "Download Modified MCADDON" button
-8. Extract and verify the PNG was removed
+**Delete PNG:**
+1. Click "Delete PNG"
+2. Expand folders, click PNG file
+3. Verify selected path displayed
+4. Click "Confirm Delete"
+5. Verify success message
+6. Download and verify removal
 
-**Testing Add PNG:**
-1. Click "Add PNG" button
-2. Select a PNG file from your computer
-3. Verify file info is displayed
-4. Click on a folder to select as destination (or use root)
-5. Verify selected folder path is displayed
-6. Click "Confirm Add" button
-7. Verify success message with target path
-8. Click "Download Modified MCADDON" button
-9. Extract and verify the PNG was added to the correct location
+**Add PNG:**
+1. Click "Add PNG"
+2. Select PNG from computer
+3. Verify file info displayed
+4. Click destination folder (or root)
+5. Verify selected folder path
+6. Click "Confirm Add"
+7. Verify success with target path
+8. Download and verify addition
 
-**Testing Replace PNG:**
-1. Click "Replace PNG" button
-2. Select a PNG file from your computer
-3. Verify file info is displayed
-4. Expand folders and click on a PNG file to replace
-5. Verify selected file path is displayed
-6. Click "Confirm Replace" button
-7. Verify success message appears
-8. Click "Download Modified MCADDON" button
-9. Extract and verify the PNG was replaced (same filename, new content)
+**Replace PNG:**
+1. Click "Replace PNG"
+2. Select PNG from computer
+3. Verify file info displayed
+4. Expand folders, click PNG to replace
+5. Verify selected path
+6. Click "Confirm Replace"
+7. Download and verify replacement
 
-**Testing Download PNG:**
-1. Click "Download PNG" button
-2. Expand folders to locate PNG files
-3. Click on a PNG file to select it
-4. Verify the selected file path is displayed
-5. Click "Confirm Download" button
-6. Verify the PNG file downloads to your computer
-7. Open the downloaded PNG to confirm it's valid
+**Download PNG:**
+1. Click "Download PNG"
+2. Expand folders, click PNG file
+3. Verify selected path
+4. Click "Confirm Download"
+5. Verify PNG downloads correctly
+6. Open PNG to confirm validity
 
-**Cancel Operation Testing:**
-- In any operation, click "Cancel" button
-- Verify it returns to operation selector
-- Verify state is reset
+**Cancel Testing:**
+- Click "Cancel" in any operation
+- Verify return to operation selector
+- Verify state reset
 
-## Recent Changes
+### Manual Testing Workflow - Edit Blocks/Items
 
-### 2025-12-30: Edit PNGs Feature Implementation
-- **Added**: Complete PNG file editing system (Screen 6)
-- **Four Operations**:
-  - **Delete PNG**: Remove PNG files from MCADDON
-  - **Add PNG**: Add local PNG files to any folder in MCADDON
-  - **Replace PNG**: Replace existing PNG files with local files
-  - **Download PNG**: Extract individual PNG files from MCADDON
-
-- **Key Features**:
-  - Tree-based file browser matching existing UI patterns
-  - Expandable/collapsible folder navigation with file counts
-  - No operation chaining - each operation completes independently
-  - Modified MCADDON files saved with `_modified` suffix
-  - Flexible tree rendering for different operation needs
-  - Standard HTML file inputs for local file selection
-
-- **Implementation**:
-  - Reused existing tree view component from Edit MCADDON screen
-  - Added specialized `renderPngTree()` with configurable behavior:
-    - Show/hide files (for folder-only selection in Add operation)
-    - Make folders clickable (for Add operation)
-    - Custom click handlers per operation type
-  - PNG-specific filtering: only shows PNG files and their parent folders
-  - Each operation has isolated UI section with confirm/cancel workflow
-
-- **State Management**:
-  - 8 new state variables for PNG editor functionality
-  - Isolated from other feature states following existing patterns
-  - Clean state reset between operations
-
-- **User Experience**:
-  - Clear step-by-step workflow for each operation
-  - Visual feedback on file selection
-  - Confirmation dialogs before destructive actions
-  - Informative success messages
-
-- Files modified: `minecraft_recipe.html`, `CLAUDE.md`
-- Lines added: ~600 (HTML, CSS, JavaScript)
-- New navigation button, complete UI, and full operation logic
-
-### 2025-12-21: Food Effects Bug Fix (Format 1.10 with Split Files)
-- **Fixed**: Food effects not working in Minecraft
-- **Root Cause**: Format versions 1.16.100+ and 1.20.50+ have issues with food effects
-- **Solution**: Use format version 1.10 with split BP/RP files (vanilla Enchanted Golden Apple approach)
-
-- **New Conversion System**:
-  - Added `convertToFormat1_10()` function that splits items into BP and RP files
-  - Detects original format_version and creates two separate JSON files
-  - **Splits components properly**:
-    - **BP file** gets functional components (`minecraft:food`, `minecraft:max_stack_size`, etc.)
-    - **RP file** gets visual components (`minecraft:icon`)
-  - **Removes incompatible components** that don't work in format 1.10:
-    - `menu_category`, `minecraft:use_modifiers`, `minecraft:custom_components`
-    - Any 1.20+ components
-  - **Converts component formats**:
-    - `minecraft:tags` from 1.20.50+ object format to 1.10 array format
-  - Creates RP item file if it doesn't exist
-  - Provides detailed user feedback about all changes made
-
-- **Enhanced User Notifications**:
-  - Shows original → new format version (1.10)
-  - Lists all removed incompatible components
-  - Explains that files are split into BP and RP
-  - Warns that items appear under generic "Items" category
-
-- **Food Effects Processing**:
-  - Added automatic "minecraft:" prefix to effect names
-  - Convert duration from seconds to ticks (× 20) for proper Minecraft format
-  - Effects added to BP file only (functional component)
-  - RP file contains visual components only
-
-- **New Helper Functions**:
-  - `convertToFormat1_10()`: Splits items into BP/RP format 1.10 structure (Lines 1945-2050)
-  - `findResourcePackItemFile()`: Locate RP items by identifier (Lines 1913-1943)
-
-- Files modified: `minecraft_recipe.html`, `CLAUDE.md`
-- Lines added/modified: ~250+ lines
-
-### 2025-12-20: Builtin Features Implementation
-- Added complete Builtin Features system (Screen 5)
-- Implemented Food Effects as first builtin feature
-- Features:
-  - Extensible architecture for future features
-  - Filter function system for finding applicable items
-  - Dynamic form generation with add/remove
-  - Real-time field validation
-  - Non-destructive effect appending
-  - Modified file download with `_modified.mcaddon` suffix
-- Files modified: `minecraft_recipe.html`
-- Lines added: ~400+ (HTML, CSS, JavaScript)
+1. Open `minecraft_recipe.html` in browser
+2. Click "Edit Blocks/Items" in nav
+3. Select MCADDON file
+4. Verify Items section appears first
+5. Verify Blocks section appears second
+6. Test inline editing:
+   - Edit display name
+   - Edit identifier
+   - Verify changes reflected
+7. Test deletion:
+   - Click delete icon
+   - Verify confirmation dialog
+   - Confirm deletion
+   - Verify item removed from list
+8. Apply multiple changes
+9. Click Save/Export
+10. Verify success message
+11. Download modified MCADDON
+12. Extract and verify:
+    - Identifier changes propagated throughout
+    - Display names updated
+    - Deleted items removed from BP and RP
 
 ## Code Quality Notes
 
 ### CSS Organization
-- Global styles: Lines 9-892
-- Builtin Features styles: Lines 893-1093
-- PNG Editor styles: Lines 1095-1171
 - Well-structured with clear class naming
 - Consistent spacing and transitions
+- Feature-specific sections clearly marked
+- Responsive design patterns
+- Reusable component classes
 
 ### JavaScript Organization
-- Recipe Parser class: Lines 1419-1552
-- Global state: Lines 1554-1663
-- Screen management: Lines 1665-1760
+- Recipe Parser class: Core parsing logic
+- Global state: Feature-isolated variables
+- Screen management: Centralized switching
 - Feature-specific functions organized by screen
-- Clear section headers with `// ========== SECTION ==========`
+- Clear section headers: `// ========== SECTION ==========`
 
 ### Maintainability
-- Feature isolation: Each screen has its own state and functions
-- Reusable utilities: File I/O, ZIP handling, validation
-- Consistent patterns: All features follow same workflow structure
-- Clear naming conventions: Feature prefixes (e.g., `builtin*`, `combine*`, `diff*`, `png*`)
+- **Feature Isolation**: Each screen has own state and functions
+- **Reusable Utilities**: File I/O, ZIP handling, validation
+- **Consistent Patterns**: All features follow same workflow structure
+- **Clear Naming**: Feature prefixes (e.g., `builtin*`, `combine*`, `diff*`, `png*`, `editBlocksItems*`)
+- **State Management**: Isolated state prevents cross-contamination
+- **Error Handling**: Consistent try-catch with user-friendly messages
+
+## Recent Changes
+
+### 2026-01-01: Edit Blocks/Items Feature Implementation
+- **Added**: Complete block and item editing system (Screen 7)
+- **Features**:
+  - Delete entire items/blocks from MCADDON
+  - Edit display names inline
+  - Edit identifiers with automatic reference updates
+  - Alphabetically sorted display (Items first, then Blocks)
+  - Batch editing with single download
+  - Delete confirmation dialogs
+
+- **Implementation**:
+  - New navigation button for Screen 7
+  - State management with `editBlocksItems*` prefix
+  - Inline editing UI with immediate feedback
+  - Identifier tracking and update system
+  - Dual-section display (Items, then Blocks)
+
+- Files modified: `minecraft_recipe.html`, `minecraft_recipe.css`, `minecraft_recipe.js`
+- New screen added to navigation
+
+### 2025-12-XX: File Structure Refactoring
+- **Major Change**: Split single HTML file into three separate files
+  - `minecraft_recipe.html`: Structure (725 lines)
+  - `minecraft_recipe.css`: Styling (1,551 lines)
+  - `minecraft_recipe.js`: Logic (4,899 lines)
+- **Benefits**:
+  - Better code organization
+  - Easier maintenance
+  - Clearer separation of concerns
+  - Improved development workflow
+
+### 2025-12-XX: Grid View Implementation
+- **Added**: Visual grid-based recipe creation (Screen 0)
+- **Features**:
+  - Toggle between Text View and Grid View
+  - 3x3 clickable grid interface
+  - Dropdown selection per cell:
+    - Vanilla items
+    - Items from loaded MCADDON
+    - Blank cells
+  - Same JSON output as Text View
+  - More intuitive visual recipe design
+
+- **Implementation**:
+  - View toggle buttons
+  - Grid UI components
+  - Item selection dropdowns
+  - Grid-to-JSON conversion logic
+  - Maintains compatibility with existing recipe format
+
+### 2025-12-30: Edit PNGs Feature Implementation
+- **Added**: Complete PNG file editing system (Screen 6)
+- **Four Operations**:
+  - Delete PNG: Remove PNG files from MCADDON
+  - Add PNG: Add local PNG files to any folder
+  - Replace PNG: Replace existing PNGs with local files
+  - Download PNG: Extract individual PNGs
+
+- **Key Features**:
+  - Tree-based file browser
+  - Expandable/collapsible folder navigation
+  - File count badges
+  - No operation chaining
+  - Modified MCADDON naming (`_modified` suffix)
+  - Flexible tree rendering
+
+- Files modified: `minecraft_recipe.html`, `minecraft_recipe.css`, `minecraft_recipe.js`
+- Lines added: ~600 total
+
+### 2025-12-21: Food Effects Bug Fix (Format 1.10 with Split Files)
+- **Fixed**: Food effects not working in Minecraft
+- **Root Cause**: Format versions 1.16.100+ and 1.20.50+ have bugs
+- **Solution**: Format 1.10 with split BP/RP files
+
+- **New Conversion System**:
+  - `convertToFormat1_10()` function splits items into BP/RP
+  - Detects original format_version
+  - Splits functional vs. visual components
+  - Removes incompatible 1.20+ components
+  - Converts `minecraft:tags` object → array
+  - Creates/updates both BP and RP files
+
+- **Enhanced User Notifications**:
+  - Shows format version change
+  - Lists removed incompatible components
+  - Explains split file requirement
+  - Warns about Creative Mode category change
+
+- **Food Effects Processing**:
+  - Automatic "minecraft:" prefix
+  - Duration seconds → ticks conversion (× 20)
+  - Effects in BP file only
+  - RP file visual components only
+
+- **Helper Functions**:
+  - `convertToFormat1_10()`: BP/RP splitting
+  - `findResourcePackItemFile()`: RP item location
+
+- Files modified: `minecraft_recipe.html`, `minecraft_recipe.css`, `minecraft_recipe.js`
+- Lines added/modified: ~250+
+
+### 2025-12-20: Builtin Features Implementation
+- **Added**: Complete Builtin Features system (Screen 5)
+- **First Feature**: Food Effects
+- **Architecture**:
+  - Extensible feature system
+  - Filter function pattern
+  - Dynamic form generation
+  - Real-time validation
+  - Non-destructive modifications
+  - Modified file downloads
+
+- Files modified: `minecraft_recipe.html`, `minecraft_recipe.css`, `minecraft_recipe.js`
+- Lines added: ~400+
 
 ## Future Enhancement Opportunities
 
 ### Potential Builtin Features
-- Weapon Enchantments (filter for weapons/tools)
-- Armor Properties (filter for armor items)
-- Block Behaviors (filter for custom blocks)
-- Entity Spawn Eggs (filter for spawn eggs)
-- Potion Effects (filter for potions)
+- **Weapon Enchantments**: Filter for weapons/tools, apply enchantments
+- **Armor Properties**: Filter for armor items, modify protection/durability
+- **Block Behaviors**: Filter for custom blocks, add/modify behaviors
+- **Entity Spawn Eggs**: Filter for spawn eggs, configure entity properties
+- **Potion Effects**: Filter for potions, customize effect combinations
 
 ### PNG Editor Enhancements
-- Batch operations: delete/replace multiple PNGs at once
+- Batch operations: Delete/replace multiple PNGs at once
 - PNG preview thumbnails in file browser
-- Rename PNG files (change filename while keeping in same location)
+- Rename PNG files (change filename, keep location)
 - Move PNGs between folders
-- Image validation (check dimensions, file integrity)
+- Image validation (dimensions, file integrity)
 - Convert image formats (JPG → PNG, etc.)
-- Resize/compress PNGs before adding to MCADDON
+- Resize/compress PNGs before adding
+
+### Recipe Maker Enhancements
+- Recipe templates library
+- Recipe validation against Minecraft rules
+- Custom recipe types (shapeless, furnace, etc.)
+- Recipe preview/visualization
+- Bulk recipe creation
+- Recipe import from existing MCADDON
+
+### Edit Blocks/Items Enhancements
+- Component editor: Modify item/block components directly
+- Bulk operations: Edit multiple items at once
+- Clone items/blocks: Duplicate and modify
+- Template system: Apply common patterns
+- Component validation: Check for errors before save
+- Search/filter: Find items by name or component
 
 ### UI Improvements
 - Multi-item selection for batch operations
@@ -588,10 +712,14 @@ downloadBlob(blob, 'filename.mcaddon');
 - Export/Import feature configurations
 - Keyboard shortcuts
 - Drag-and-drop file uploads
+- Dark mode support
+- Mobile responsive design
 
 ### Technical Improvements
-- Error handling with toast notifications instead of alerts
-- Progress indicators for large file operations
+- Toast notifications instead of alerts
+- Progress indicators for large operations
 - Local storage for recent files/settings
-- Dark mode support
-- Mobile responsive design enhancements
+- WebAssembly for performance-critical operations
+- Service worker for offline support
+- Automated testing suite
+- Error logging and diagnostics

@@ -488,6 +488,17 @@ let pngLocalFile = null;
 let pngLocalFileData = null;
 let pngModifiedZip = null;
 
+// ========== Edit Blocks/Items State ==========
+let editBlocksItemsFile = null;
+let editBlocksItemsZip = null;
+let editBlocksItemsItems = [];
+let editBlocksItemsBlocks = [];
+let editBlocksItemsModifiedZip = null;
+let editBlocksItemsChanges = {};
+let editBlocksItemsPendingDelete = null;
+let editBlocksItemsOriginalData = {};
+let editBlocksItemsLanguageFiles = {}; // { path: { content: string, entries: Map } }
+
 // Builtin Features definitions
 const builtinFeatures = [
     {
@@ -4096,4 +4107,793 @@ async function downloadModifiedPngMcAddon() {
     } catch (error) {
         alert(`Error generating download: ${error.message}`);
     }
+}
+
+// ========== EDIT BLOCKS/ITEMS FUNCTIONS ==========
+
+/**
+ * Handle MCADDON file selection for Edit Blocks/Items
+ */
+async function handleEditBlocksItemsFileSelect() {
+    const input = document.getElementById('editBlocksItemsFile');
+    const file = input.files[0];
+
+    if (!file) return;
+
+    // Update file info
+    const fileInfo = document.getElementById('editBlocksItemsFileInfo');
+    fileInfo.innerHTML = `
+        <strong>Selected:</strong> ${file.name}<br>
+        <strong>Size:</strong> ${formatFileSize(file.size)}
+    `;
+
+    try {
+        // Load MCADDON file
+        editBlocksItemsFile = file;
+        const data = await readFileAsArrayBuffer(file);
+        editBlocksItemsZip = await JSZip.loadAsync(data);
+
+        // Scan for items and blocks
+        await scanBlocksAndItems();
+
+        // Show editor section
+        document.getElementById('edit-blocks-items-file-selector').style.display = 'none';
+        document.getElementById('edit-blocks-items-editor').style.display = 'block';
+
+        // Render items and blocks
+        renderBlocksAndItemsTable();
+
+    } catch (error) {
+        alert(`Error loading MCADDON file: ${error.message}`);
+    }
+}
+
+/**
+ * Parse a language file and extract display name entries
+ */
+function parseLanguageFile(content) {
+    const entries = new Map();
+    const lines = content.split('\n');
+
+    for (const line of lines) {
+        const trimmed = line.trim();
+        // Skip comments and empty lines
+        if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('//')) continue;
+
+        // Parse key=value format
+        const equalIndex = trimmed.indexOf('=');
+        if (equalIndex === -1) continue;
+
+        const key = trimmed.substring(0, equalIndex).trim();
+        const value = trimmed.substring(equalIndex + 1).trim();
+
+        entries.set(key, value);
+    }
+
+    return entries;
+}
+
+/**
+ * Get display name from language files for an identifier
+ */
+function getDisplayNameFromLanguage(identifier, type) {
+    // Try different key formats
+    // For blocks, try both 'block' and 'tile' prefixes (Bedrock uses 'tile' for blocks)
+    const prefixes = type === 'item' ? ['item'] : ['tile', 'block'];
+
+    const keysToTry = [];
+
+    for (const prefix of prefixes) {
+        // Format 1: item.namespace:item_name or tile.namespace:item_name (most common)
+        keysToTry.push(`${prefix}.${identifier}`);
+
+        // Format 2: item.namespace.item_name (colon replaced with dot)
+        keysToTry.push(`${prefix}.${identifier.replace(':', '.')}`);
+
+        // Format 3: item.namespace:item_name.name (some packs use this)
+        keysToTry.push(`${prefix}.${identifier}.name`);
+
+        // Format 4: item.namespace.item_name.name (colon replaced with dot, with .name suffix)
+        keysToTry.push(`${prefix}.${identifier.replace(':', '.')}.name`);
+    }
+
+    // Search all language files
+    for (const [langPath, langData] of Object.entries(editBlocksItemsLanguageFiles)) {
+        for (const key of keysToTry) {
+            if (langData.entries.has(key)) {
+                return langData.entries.get(key);
+            }
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Scan MCADDON for items and blocks
+ */
+async function scanBlocksAndItems() {
+    editBlocksItemsItems = [];
+    editBlocksItemsBlocks = [];
+    editBlocksItemsChanges = {};
+    editBlocksItemsOriginalData = {};
+    editBlocksItemsLanguageFiles = {};
+
+    // Find behavior pack
+    const behaviorPack = await findBehaviorPack(editBlocksItemsZip);
+    if (!behaviorPack) {
+        alert('No behavior pack found in MCADDON file');
+        return;
+    }
+
+    const resourcePack = await findResourcesPack(editBlocksItemsZip);
+
+    // Scan for language files in resource pack
+    if (resourcePack) {
+        for (const [path, zipEntry] of Object.entries(editBlocksItemsZip.files)) {
+            if (zipEntry.dir) continue;
+            const lowerPath = path.toLowerCase();
+
+            // Look for .lang files or .json language files in texts folder
+            if (lowerPath.includes('/texts/')) {
+                if (lowerPath.endsWith('.lang')) {
+                    try {
+                        const content = await zipEntry.async('string');
+                        const entries = parseLanguageFile(content);
+                        editBlocksItemsLanguageFiles[path] = {
+                            content: content,
+                            entries: entries,
+                            format: 'lang'
+                        };
+                    } catch (error) {
+                        console.error(`Error parsing .lang file ${path}:`, error);
+                    }
+                } else if (lowerPath.endsWith('.json')) {
+                    try {
+                        const content = await zipEntry.async('string');
+                        const jsonData = JSON.parse(content);
+                        const entries = new Map(Object.entries(jsonData));
+                        editBlocksItemsLanguageFiles[path] = {
+                            content: content,
+                            entries: entries,
+                            format: 'json'
+                        };
+                    } catch (error) {
+                        console.error(`Error parsing .json language file ${path}:`, error);
+                    }
+                }
+            }
+        }
+    }
+
+    // Scan for items
+    for (const [path, zipEntry] of Object.entries(editBlocksItemsZip.files)) {
+        if (zipEntry.dir) continue;
+
+        const lowerPath = path.toLowerCase();
+        const isItem = lowerPath.includes('/items/') && lowerPath.endsWith('.json');
+        const isBlock = lowerPath.includes('/blocks/') && lowerPath.endsWith('.json');
+
+        if (!isItem && !isBlock) continue;
+
+        // Only process files in behavior pack
+        if (!path.startsWith(behaviorPack)) continue;
+
+        try {
+            const content = await zipEntry.async('string');
+            const data = JSON.parse(content);
+
+            // Extract identifier and display name
+            const itemObj = data['minecraft:item'] || data['minecraft:block'];
+            if (!itemObj || !itemObj.description) continue;
+
+            const identifier = itemObj.description.identifier;
+
+            // Get display name from language files
+            const displayName = getDisplayNameFromLanguage(identifier, isItem ? 'item' : 'block') || '';
+
+            // Find corresponding resource pack file
+            let rpPath = null;
+            if (resourcePack) {
+                const fileName = path.split('/').pop();
+                const rpFolder = isItem ? 'items' : 'blocks';
+                const potentialRpPath = `${resourcePack}/${rpFolder}/${fileName}`;
+                if (editBlocksItemsZip.files[potentialRpPath]) {
+                    rpPath = potentialRpPath;
+                }
+            }
+
+            // Find associated PNG files
+            const pngFiles = await findAssociatedPngFiles(identifier);
+
+            const entry = {
+                identifier,
+                displayName,
+                bpPath: path,
+                rpPath,
+                pngFiles,
+                type: isItem ? 'item' : 'block'
+            };
+
+            // Store original data
+            editBlocksItemsOriginalData[identifier] = {
+                identifier,
+                displayName,
+                bpContent: content,
+                rpContent: rpPath ? await editBlocksItemsZip.files[rpPath].async('string') : null
+            };
+
+            if (isItem) {
+                editBlocksItemsItems.push(entry);
+            } else {
+                editBlocksItemsBlocks.push(entry);
+            }
+        } catch (error) {
+            console.error(`Error processing ${path}:`, error);
+        }
+    }
+
+    // Sort by display name
+    editBlocksItemsItems.sort((a, b) => {
+        const nameA = a.displayName || a.identifier;
+        const nameB = b.displayName || b.identifier;
+        return nameA.localeCompare(nameB);
+    });
+
+    editBlocksItemsBlocks.sort((a, b) => {
+        const nameA = a.displayName || a.identifier;
+        const nameB = b.displayName || b.identifier;
+        return nameA.localeCompare(nameB);
+    });
+}
+
+/**
+ * Find PNG files associated with an item/block
+ */
+async function findAssociatedPngFiles(identifier) {
+    const pngFiles = [];
+    const namePart = identifier.split(':')[1]; // Get the part after namespace
+
+    for (const [path, zipEntry] of Object.entries(editBlocksItemsZip.files)) {
+        if (zipEntry.dir) continue;
+        if (!path.toLowerCase().endsWith('.png')) continue;
+
+        // Check if PNG filename contains the identifier part
+        const fileName = path.split('/').pop().replace('.png', '');
+        if (fileName.includes(namePart)) {
+            pngFiles.push(path);
+        }
+    }
+
+    return pngFiles;
+}
+
+/**
+ * Render the items and blocks table
+ */
+function renderBlocksAndItemsTable() {
+    // Render items
+    const itemsBody = document.getElementById('itemsTableBody');
+    if (editBlocksItemsItems.length === 0) {
+        itemsBody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #7f8c8d;">No items found</td></tr>';
+    } else {
+        itemsBody.innerHTML = editBlocksItemsItems.map(item => createTableRow(item)).join('');
+    }
+
+    // Render blocks
+    const blocksBody = document.getElementById('blocksTableBody');
+    if (editBlocksItemsBlocks.length === 0) {
+        blocksBody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #7f8c8d;">No blocks found</td></tr>';
+    } else {
+        blocksBody.innerHTML = editBlocksItemsBlocks.map(block => createTableRow(block)).join('');
+    }
+
+    // Add event delegation for delete buttons
+    itemsBody.addEventListener('click', handleDeleteButtonClick);
+    blocksBody.addEventListener('click', handleDeleteButtonClick);
+}
+
+/**
+ * Handle delete button clicks via event delegation
+ */
+function handleDeleteButtonClick(event) {
+    if (event.target.classList.contains('delete-btn')) {
+        const identifier = event.target.dataset.deleteIdentifier;
+        if (identifier) {
+            initiateDelete(identifier);
+        }
+    }
+}
+
+/**
+ * Create a table row for an item/block
+ */
+function createTableRow(entry) {
+    const displayName = entry.displayName || '(No display name)';
+    const originalIdentifier = entry.identifier;
+
+    return `
+        <tr data-identifier="${escapeHtml(originalIdentifier)}">
+            <td>
+                <input
+                    type="text"
+                    value="${escapeHtml(displayName)}"
+                    data-field="displayName"
+                    data-identifier="${escapeHtml(originalIdentifier)}"
+                    oninput="handleFieldChange(this)"
+                />
+                <span class="error-message" style="display: none;"></span>
+            </td>
+            <td>
+                <input
+                    type="text"
+                    value="${escapeHtml(originalIdentifier)}"
+                    data-field="identifier"
+                    data-identifier="${escapeHtml(originalIdentifier)}"
+                    oninput="handleFieldChange(this)"
+                />
+                <span class="error-message" style="display: none;"></span>
+                <span class="warning-message" style="display: none;"></span>
+            </td>
+            <td>
+                <button class="delete-btn" data-delete-identifier="${escapeHtml(originalIdentifier)}">
+                    Delete
+                </button>
+            </td>
+        </tr>
+    `;
+}
+
+/**
+ * Handle field change (display name or identifier)
+ */
+function handleFieldChange(input) {
+    const field = input.dataset.field;
+    const originalIdentifier = input.dataset.identifier;
+    const newValue = input.value;
+
+    // Initialize changes tracking for this item if not exists
+    if (!editBlocksItemsChanges[originalIdentifier]) {
+        editBlocksItemsChanges[originalIdentifier] = {};
+    }
+
+    // Track the change
+    editBlocksItemsChanges[originalIdentifier][field] = newValue;
+
+    // Mark as modified
+    input.classList.add('modified');
+
+    // Validate
+    const errorSpan = input.nextElementSibling;
+    const warningSpan = errorSpan ? errorSpan.nextElementSibling : null;
+
+    if (field === 'identifier') {
+        // Check for duplicate identifiers
+        const isDuplicate = checkDuplicateIdentifier(newValue, originalIdentifier);
+
+        if (isDuplicate) {
+            input.classList.add('error');
+            if (errorSpan) {
+                errorSpan.style.display = 'block';
+                errorSpan.textContent = 'Duplicate identifier!';
+            }
+        } else {
+            input.classList.remove('error');
+            if (errorSpan) {
+                errorSpan.style.display = 'none';
+            }
+
+            // Check if identifier is used in other files
+            if (newValue !== originalIdentifier) {
+                if (warningSpan) {
+                    warningSpan.style.display = 'block';
+                    warningSpan.textContent = 'Warning: References in recipes and other files will be updated';
+                }
+            } else {
+                if (warningSpan) {
+                    warningSpan.style.display = 'none';
+                }
+            }
+        }
+    }
+
+    // Show download button if there are changes
+    const hasChanges = Object.keys(editBlocksItemsChanges).some(key =>
+        Object.keys(editBlocksItemsChanges[key]).length > 0
+    );
+
+    if (hasChanges) {
+        document.getElementById('downloadEditedBlocksItemsBtn').style.display = 'block';
+    }
+}
+
+/**
+ * Check if identifier is duplicate
+ */
+function checkDuplicateIdentifier(identifier, excludeOriginal) {
+    // Check in items
+    for (const item of editBlocksItemsItems) {
+        if (item.identifier === excludeOriginal) continue;
+        if (item.identifier === identifier) return true;
+
+        // Check if this item has a pending identifier change to the same value
+        if (editBlocksItemsChanges[item.identifier]?.identifier === identifier) {
+            return true;
+        }
+    }
+
+    // Check in blocks
+    for (const block of editBlocksItemsBlocks) {
+        if (block.identifier === excludeOriginal) continue;
+        if (block.identifier === identifier) return true;
+
+        // Check if this block has a pending identifier change to the same value
+        if (editBlocksItemsChanges[block.identifier]?.identifier === identifier) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Initiate deletion of an item/block
+ */
+function initiateDelete(identifier) {
+    editBlocksItemsPendingDelete = identifier;
+
+    // Find the item/block
+    const item = editBlocksItemsItems.find(i => i.identifier === identifier) ||
+                 editBlocksItemsBlocks.find(b => b.identifier === identifier);
+
+    if (!item) return;
+
+    const displayName = item.displayName || identifier;
+    const message = `Are you sure you want to delete "${displayName}"?\n\n` +
+                   `This will remove:\n` +
+                   `- Behavior pack file\n` +
+                   (item.rpPath ? `- Resource pack file\n` : '') +
+                   (item.pngFiles.length > 0 ? `- ${item.pngFiles.length} associated PNG file(s)\n` : '') +
+                   `\nRecipes using this ${item.type} will NOT be deleted.`;
+
+    document.getElementById('deleteConfirmMessage').textContent = message;
+    document.getElementById('deleteConfirmModal').style.display = 'block';
+}
+
+/**
+ * Confirm deletion
+ */
+function confirmDelete() {
+    if (!editBlocksItemsPendingDelete) return;
+
+    const identifier = editBlocksItemsPendingDelete;
+
+    // Mark as deleted
+    if (!editBlocksItemsChanges[identifier]) {
+        editBlocksItemsChanges[identifier] = {};
+    }
+    editBlocksItemsChanges[identifier]._deleted = true;
+
+    // Remove from display
+    const row = document.querySelector(`tr[data-identifier="${identifier}"]`);
+    if (row) {
+        row.remove();
+    }
+
+    // Close modal
+    document.getElementById('deleteConfirmModal').style.display = 'none';
+    editBlocksItemsPendingDelete = null;
+
+    // Show download button
+    document.getElementById('downloadEditedBlocksItemsBtn').style.display = 'block';
+}
+
+/**
+ * Cancel deletion
+ */
+function cancelDelete() {
+    editBlocksItemsPendingDelete = null;
+    document.getElementById('deleteConfirmModal').style.display = 'none';
+}
+
+/**
+ * Download edited blocks/items MCADDON
+ */
+async function downloadEditedBlocksItems() {
+    try {
+        // Create a copy of the ZIP
+        editBlocksItemsModifiedZip = editBlocksItemsZip;
+
+        // Apply all changes
+        for (const [originalIdentifier, changes] of Object.entries(editBlocksItemsChanges)) {
+            if (changes._deleted) {
+                // Handle deletion
+                await applyDeletion(originalIdentifier);
+            } else {
+                // Handle edits
+                await applyEdits(originalIdentifier, changes);
+            }
+        }
+
+        // Generate and download
+        const blob = await editBlocksItemsModifiedZip.generateAsync({ type: 'blob' });
+        const originalName = editBlocksItemsFile.name;
+        const newName = originalName.replace('.mcaddon', '_modified.mcaddon');
+        downloadBlob(blob, newName);
+
+        alert('Modified MCADDON file downloaded successfully!');
+
+    } catch (error) {
+        alert(`Error applying changes: ${error.message}`);
+        console.error(error);
+    }
+}
+
+/**
+ * Apply deletion of an item/block
+ */
+async function applyDeletion(identifier) {
+    const item = editBlocksItemsItems.find(i => i.identifier === identifier) ||
+                 editBlocksItemsBlocks.find(b => b.identifier === identifier);
+
+    if (!item) return;
+
+    // Delete from language files
+    // For blocks, try both 'tile' and 'block' prefixes (Bedrock uses 'tile' for blocks)
+    const prefixes = item.type === 'item' ? ['item'] : ['tile', 'block'];
+    const keysToDelete = [];
+
+    for (const prefix of prefixes) {
+        keysToDelete.push(`${prefix}.${identifier}`);                              // Format 1
+        keysToDelete.push(`${prefix}.${identifier.replace(':', '.')}`);            // Format 2
+        keysToDelete.push(`${prefix}.${identifier}.name`);                         // Format 3
+        keysToDelete.push(`${prefix}.${identifier.replace(':', '.')}.name`);       // Format 4
+    }
+
+    for (const [langPath, langData] of Object.entries(editBlocksItemsLanguageFiles)) {
+        let modified = false;
+
+        for (const key of keysToDelete) {
+            if (langData.entries.has(key)) {
+                langData.entries.delete(key);
+                modified = true;
+            }
+        }
+
+        if (modified) {
+            regenerateLanguageFile(langPath, langData);
+        }
+    }
+
+    // Delete BP file
+    editBlocksItemsModifiedZip.remove(item.bpPath);
+
+    // Delete RP file if exists
+    if (item.rpPath) {
+        editBlocksItemsModifiedZip.remove(item.rpPath);
+    }
+
+    // Delete associated PNG files
+    for (const pngPath of item.pngFiles) {
+        editBlocksItemsModifiedZip.remove(pngPath);
+    }
+}
+
+/**
+ * Update language files with new display name or identifier
+ */
+function updateLanguageFiles(originalIdentifier, newIdentifier, newDisplayName, itemType) {
+    // For blocks, try both 'tile' and 'block' prefixes (Bedrock uses 'tile' for blocks)
+    const prefixes = itemType === 'item' ? ['item'] : ['tile', 'block'];
+
+    const oldKeys = [];
+    const newKeys = [];
+
+    for (const prefix of prefixes) {
+        // Format 1: item.namespace:item_name or tile.namespace:item_name
+        oldKeys.push(`${prefix}.${originalIdentifier}`);
+        newKeys.push(`${prefix}.${newIdentifier}`);
+
+        // Format 2: item.namespace.item_name (colon replaced with dot)
+        oldKeys.push(`${prefix}.${originalIdentifier.replace(':', '.')}`);
+        newKeys.push(`${prefix}.${newIdentifier.replace(':', '.')}`);
+
+        // Format 3: item.namespace:item_name.name
+        oldKeys.push(`${prefix}.${originalIdentifier}.name`);
+        newKeys.push(`${prefix}.${newIdentifier}.name`);
+
+        // Format 4: item.namespace.item_name.name (colon replaced with dot, with .name suffix)
+        oldKeys.push(`${prefix}.${originalIdentifier.replace(':', '.')}.name`);
+        newKeys.push(`${prefix}.${newIdentifier.replace(':', '.')}.name`);
+    }
+
+    // Update all language files
+    for (const [langPath, langData] of Object.entries(editBlocksItemsLanguageFiles)) {
+        let modified = false;
+        let keyFormat = -1;
+
+        // Find which key format is used
+        for (let i = 0; i < oldKeys.length; i++) {
+            if (langData.entries.has(oldKeys[i])) {
+                keyFormat = i;
+                break;
+            }
+        }
+
+        if (keyFormat !== -1) {
+            const oldKey = oldKeys[keyFormat];
+            const newKey = newKeys[keyFormat];
+
+            // Get current or new display name
+            const displayName = newDisplayName !== undefined ? newDisplayName : langData.entries.get(oldKey);
+
+            if (newIdentifier !== originalIdentifier) {
+                // Identifier changed - remove old key, add new key
+                langData.entries.delete(oldKey);
+                langData.entries.set(newKey, displayName);
+                modified = true;
+            } else if (newDisplayName !== undefined) {
+                // Only display name changed
+                langData.entries.set(oldKey, newDisplayName);
+                modified = true;
+            }
+
+            // Regenerate language file content
+            if (modified) {
+                regenerateLanguageFile(langPath, langData);
+            }
+        } else if (newDisplayName !== undefined && newDisplayName !== '') {
+            // No existing entry - create new one (use format 1 by default)
+            // For items: item.namespace:item_name, for blocks: tile.namespace:item_name
+            const defaultPrefix = itemType === 'item' ? 'item' : 'tile';
+            const newKey = `${defaultPrefix}.${newIdentifier}`;
+            langData.entries.set(newKey, newDisplayName);
+
+            // Regenerate language file content
+            regenerateLanguageFile(langPath, langData);
+        }
+    }
+}
+
+/**
+ * Regenerate language file content from entries map
+ */
+function regenerateLanguageFile(langPath, langData) {
+    if (langData.format === 'json') {
+        // JSON format
+        const obj = {};
+        for (const [key, value] of langData.entries) {
+            obj[key] = value;
+        }
+        const newContent = JSON.stringify(obj, null, 2);
+        editBlocksItemsModifiedZip.file(langPath, newContent);
+    } else {
+        // .lang format
+        const lines = [];
+        for (const [key, value] of langData.entries) {
+            lines.push(`${key}=${value}`);
+        }
+        const newContent = lines.join('\n');
+        editBlocksItemsModifiedZip.file(langPath, newContent);
+    }
+}
+
+/**
+ * Apply edits to an item/block
+ */
+async function applyEdits(originalIdentifier, changes) {
+    const item = editBlocksItemsItems.find(i => i.identifier === originalIdentifier) ||
+                 editBlocksItemsBlocks.find(b => b.identifier === originalIdentifier);
+
+    if (!item) return;
+
+    const newIdentifier = changes.identifier || originalIdentifier;
+    const newDisplayName = changes.displayName !== undefined ? changes.displayName : undefined;
+
+    // Update language files for display name and/or identifier
+    updateLanguageFiles(originalIdentifier, newIdentifier, newDisplayName, item.type);
+
+    // Update BP file (only identifier, not display name since that's in language files)
+    const bpContent = editBlocksItemsOriginalData[originalIdentifier].bpContent;
+    const bpData = JSON.parse(bpContent);
+    const bpKey = item.type === 'item' ? 'minecraft:item' : 'minecraft:block';
+
+    if (bpData[bpKey]) {
+        if (newIdentifier !== originalIdentifier) {
+            bpData[bpKey].description.identifier = newIdentifier;
+        }
+    }
+
+    // Update RP file if exists (only identifier)
+    let rpData = null;
+    if (item.rpPath && editBlocksItemsOriginalData[originalIdentifier].rpContent) {
+        const rpContent = editBlocksItemsOriginalData[originalIdentifier].rpContent;
+        rpData = JSON.parse(rpContent);
+        const rpKey = item.type === 'item' ? 'minecraft:item' : 'minecraft:block';
+
+        if (rpData[rpKey]) {
+            if (newIdentifier !== originalIdentifier) {
+                rpData[rpKey].description.identifier = newIdentifier;
+            }
+        }
+    }
+
+    // If identifier changed, update references in all JSON files
+    if (newIdentifier !== originalIdentifier) {
+        await updateIdentifierReferences(originalIdentifier, newIdentifier);
+
+        // Rename files
+        const newBpPath = item.bpPath.replace(/[^/]+\.json$/, `${newIdentifier.split(':')[1]}.json`);
+        editBlocksItemsModifiedZip.remove(item.bpPath);
+        editBlocksItemsModifiedZip.file(newBpPath, JSON.stringify(bpData, null, 2));
+
+        if (item.rpPath && rpData) {
+            const newRpPath = item.rpPath.replace(/[^/]+\.json$/, `${newIdentifier.split(':')[1]}.json`);
+            editBlocksItemsModifiedZip.remove(item.rpPath);
+            editBlocksItemsModifiedZip.file(newRpPath, JSON.stringify(rpData, null, 2));
+        }
+    } else {
+        // Just update content in place
+        editBlocksItemsModifiedZip.file(item.bpPath, JSON.stringify(bpData, null, 2));
+
+        if (item.rpPath && rpData) {
+            editBlocksItemsModifiedZip.file(item.rpPath, JSON.stringify(rpData, null, 2));
+        }
+    }
+}
+
+/**
+ * Update identifier references in all JSON files
+ */
+async function updateIdentifierReferences(oldIdentifier, newIdentifier) {
+    for (const [path, zipEntry] of Object.entries(editBlocksItemsModifiedZip.files)) {
+        if (zipEntry.dir) continue;
+        if (!path.toLowerCase().endsWith('.json')) continue;
+
+        try {
+            const content = await zipEntry.async('string');
+            let data;
+
+            try {
+                data = JSON.parse(content);
+            } catch (e) {
+                // Skip invalid JSON
+                continue;
+            }
+
+            // Recursively replace all occurrences of the old identifier
+            const updatedData = replaceIdentifierInObject(data, oldIdentifier, newIdentifier);
+
+            // Check if anything changed
+            const updatedContent = JSON.stringify(updatedData, null, 2);
+            if (updatedContent !== JSON.stringify(data, null, 2)) {
+                editBlocksItemsModifiedZip.file(path, updatedContent);
+            }
+        } catch (error) {
+            console.error(`Error processing ${path}:`, error);
+        }
+    }
+}
+
+/**
+ * Recursively replace identifier in an object
+ */
+function replaceIdentifierInObject(obj, oldIdentifier, newIdentifier) {
+    if (typeof obj === 'string') {
+        return obj === oldIdentifier ? newIdentifier : obj;
+    }
+
+    if (Array.isArray(obj)) {
+        return obj.map(item => replaceIdentifierInObject(item, oldIdentifier, newIdentifier));
+    }
+
+    if (obj !== null && typeof obj === 'object') {
+        const result = {};
+        for (const [key, value] of Object.entries(obj)) {
+            result[key] = replaceIdentifierInObject(value, oldIdentifier, newIdentifier);
+        }
+        return result;
+    }
+
+    return obj;
 }
