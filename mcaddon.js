@@ -80,7 +80,7 @@ class McAddon {
         }
 
         for (const [path, zipEntry] of Object.entries(this._zip.files)) {
-            if (zipEntry.dir && path.includes('manifest.json') === false) continue;
+            if (zipEntry.dir && path.includes('manifest.json') === false) {continue;}
 
             const manifestPath = path.endsWith('/') ? path + 'manifest.json' : path;
             if (this._zip.files[manifestPath]) {
@@ -92,7 +92,7 @@ class McAddon {
                         for (const module of manifest.modules) {
                             if (module.type === 'data') {
                                 let behaviorPack = path.endsWith('/') ? path.slice(0, -1) : path.substring(0, path.lastIndexOf('/'));
-                                if (behaviorPack === '') behaviorPack = '.';
+                                if (behaviorPack === '') {behaviorPack = '.';}
                                 this._cache.behaviorPack = behaviorPack;
                                 return behaviorPack;
                             }
@@ -118,7 +118,7 @@ class McAddon {
         }
 
         for (const [path, zipEntry] of Object.entries(this._zip.files)) {
-            if (zipEntry.dir && path.includes('manifest.json') === false) continue;
+            if (zipEntry.dir && path.includes('manifest.json') === false) {continue;}
 
             const manifestPath = path.endsWith('/') ? path + 'manifest.json' : path;
             if (this._zip.files[manifestPath]) {
@@ -130,7 +130,7 @@ class McAddon {
                         for (const module of manifest.modules) {
                             if (module.type === 'resources') {
                                 let resourcesPack = path.endsWith('/') ? path.slice(0, -1) : path.substring(0, path.lastIndexOf('/'));
-                                if (resourcesPack === '') resourcesPack = '.';
+                                if (resourcesPack === '') {resourcesPack = '.';}
                                 this._cache.resourcePack = resourcesPack;
                                 return resourcesPack;
                             }
@@ -165,9 +165,9 @@ class McAddon {
         }
 
         for (const [path, zipEntry] of Object.entries(this._zip.files)) {
-            if (zipEntry.dir) continue;
-            if (!path.toLowerCase().includes('/items/')) continue;
-            if (!path.toLowerCase().endsWith('.json')) continue;
+            if (zipEntry.dir) {continue;}
+            if (!path.toLowerCase().includes('/items/')) {continue;}
+            if (!path.toLowerCase().endsWith('.json')) {continue;}
 
             try {
                 const content = await zipEntry.async('string');
@@ -208,9 +208,9 @@ class McAddon {
         }
 
         for (const [path, zipEntry] of Object.entries(this._zip.files)) {
-            if (zipEntry.dir) continue;
-            if (!path.toLowerCase().includes('/blocks/')) continue;
-            if (!path.toLowerCase().endsWith('.json')) continue;
+            if (zipEntry.dir) {continue;}
+            if (!path.toLowerCase().includes('/blocks/')) {continue;}
+            if (!path.toLowerCase().endsWith('.json')) {continue;}
 
             try {
                 const content = await zipEntry.async('string');
@@ -251,9 +251,9 @@ class McAddon {
         }
 
         for (const [path, zipEntry] of Object.entries(this._zip.files)) {
-            if (zipEntry.dir) continue;
-            if (!path.toLowerCase().includes('/recipes/')) continue;
-            if (!path.toLowerCase().endsWith('.json')) continue;
+            if (zipEntry.dir) {continue;}
+            if (!path.toLowerCase().includes('/recipes/')) {continue;}
+            if (!path.toLowerCase().endsWith('.json')) {continue;}
 
             try {
                 const content = await zipEntry.async('string');
@@ -323,7 +323,7 @@ class McAddon {
 
         for (const [path, entry] of Object.entries(this._zip.files)) {
             if (!entry.dir && path.toLowerCase().endsWith('.json')) {
-                if (pathFilter && !pathFilter(path)) continue;
+                if (pathFilter && !pathFilter(path)) {continue;}
 
                 try {
                     const content = await entry.async('string');
@@ -349,13 +349,13 @@ class McAddon {
      */
     async findResourcePackItemFile(identifier) {
         const resourcesPack = await this.getResourcePack();
-        if (!resourcesPack) return null;
+        if (!resourcesPack) {return null;}
 
         for (const [path, zipEntry] of Object.entries(this._zip.files)) {
-            if (zipEntry.dir) continue;
-            if (!path.toLowerCase().includes('/items/')) continue;
-            if (!path.toLowerCase().endsWith('.json')) continue;
-            if (!path.startsWith(resourcesPack)) continue;
+            if (zipEntry.dir) {continue;}
+            if (!path.toLowerCase().includes('/items/')) {continue;}
+            if (!path.toLowerCase().endsWith('.json')) {continue;}
+            if (!path.startsWith(resourcesPack)) {continue;}
 
             try {
                 const content = await zipEntry.async('string');

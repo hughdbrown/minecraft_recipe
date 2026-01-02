@@ -51,7 +51,7 @@ class RecipeParser {
         // Parse substitutions
         for (let i = 0; i < substitutionLines.length - 1; i++) {
             const line = substitutionLines[i].trim();
-            if (!line) continue;
+            if (!line) {continue;}
 
             const parts = line.split('=');
             if (parts.length !== 2) {
@@ -100,7 +100,7 @@ class RecipeParser {
     }
 
     isValidIdentifier(identifier) {
-        if (!identifier.includes(':')) return false;
+        if (!identifier.includes(':')) {return false;}
         const parts = identifier.split(':');
         return parts.length === 2 && parts[0].trim() && parts[1].trim();
     }
@@ -516,9 +516,9 @@ const builtinFeatures = [
 
             // Search for items with minecraft:food component
             for (const [path, zipEntry] of Object.entries(zip.files)) {
-                if (zipEntry.dir) continue;
-                if (!path.toLowerCase().includes('/items/')) continue;
-                if (!path.toLowerCase().endsWith('.json')) continue;
+                if (zipEntry.dir) {continue;}
+                if (!path.toLowerCase().includes('/items/')) {continue;}
+                if (!path.toLowerCase().endsWith('.json')) {continue;}
 
                 try {
                     const content = await zipEntry.async('string');
@@ -724,8 +724,8 @@ function downloadBlob(blob, fileName) {
 }
 
 function formatFileSize(bytes) {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    if (bytes < 1024) {return bytes + ' B';}
+    if (bytes < 1024 * 1024) {return (bytes / 1024).toFixed(1) + ' KB';}
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
@@ -1115,8 +1115,8 @@ async function handleMcAddonGridSelect() {
         const blocksPath = prefix + 'blocks/';
 
         for (const [path, zipEntry] of Object.entries(zip.files)) {
-            if (zipEntry.dir) continue;
-            if (!path.endsWith('.json')) continue;
+            if (zipEntry.dir) {continue;}
+            if (!path.endsWith('.json')) {continue;}
 
             // Check if it's an item or block
             const isItem = path.startsWith(itemsPath);
@@ -1168,6 +1168,17 @@ async function handleMcAddonGridSelect() {
 }
 
 // ========== MCADDON ZIP UTILITIES ==========
+
+/**
+ * Load an MCADDON file as a JSZip object
+ * @param {File} file - The MCADDON file to load
+ * @returns {Promise<JSZip>} The loaded JSZip object
+ * @deprecated Use McAddon.fromFile(file) instead for the full object model
+ */
+async function loadMcAddonZip(file) {
+    const data = await readFileAsArrayBuffer(file);
+    return await JSZip.loadAsync(data);
+}
 
 /**
  * Find the behavior pack folder in an MCADDON ZIP
@@ -1360,7 +1371,7 @@ function clearResults() {
  */
 function displayStatus(containerId, type, title, message) {
     const container = document.getElementById(containerId);
-    if (!container) return;
+    if (!container) {return;}
 
     container.className = type ? `result ${type} show` : 'result show';
     container.innerHTML = `
@@ -1491,7 +1502,7 @@ function findTopLevelFolders(zip) {
 
     for (const [path, entry] of Object.entries(zip.files)) {
         const pathParts = path.split('/').filter(p => p.length > 0);
-        if (pathParts.length === 0) continue;
+        if (pathParts.length === 0) {continue;}
 
         const topLevelName = pathParts[0];
 
@@ -1651,7 +1662,7 @@ function validateMcAddonStructure(zip, fileName, options = {}) {
 
 async function handleMcAddonEditorSelect() {
     const file = getSelectedFile('mcaddonEditorFile');
-    if (!file) return;
+    if (!file) {return;}
 
     editorMcAddonFile = file;
     updateFileInfo('mcaddonEditorInfo', file);
@@ -2033,10 +2044,10 @@ async function mergeSectionFiles(sourceZip, destZip, sourceSectionPath, destSect
 
     // Process each file in source section
     for (const [sourcePath, sourceEntry] of Object.entries(sourceZip.files)) {
-        if (sourceEntry.dir) continue;
+        if (sourceEntry.dir) {continue;}
 
         // Check if this file is within the source section
-        if (!sourcePath.startsWith(sourceSectionPath + '/')) continue;
+        if (!sourcePath.startsWith(sourceSectionPath + '/')) {continue;}
 
         // Get relative path within section
         const relativePath = sourcePath.substring(sourceSectionPath.length + 1);
@@ -2198,7 +2209,7 @@ async function combineMcAddonFiles() {
  * Download the combined MCADDON file
  */
 async function downloadCombinedMcAddon() {
-    if (!combinedZip) return;
+    if (!combinedZip) {return;}
 
     try {
         await downloadMcAddon(combinedZip, combineDestFile.name, '_combined', 'combineResult');
@@ -2241,7 +2252,7 @@ function handleDiffFileSelect(type) {
  * Compare two MCADDON files
  */
 async function diffMcAddonFiles() {
-    if (!diffFile1 || !diffFile2) return;
+    if (!diffFile1 || !diffFile2) {return;}
 
     const resultDiv = document.getElementById('diffResult');
     const diffDisplay = document.getElementById('diffDisplay');
@@ -2522,7 +2533,7 @@ let validationResults = {
  */
 async function handleValidateFileSelect() {
     const file = getSelectedFile('validateFile');
-    if (!file) return;
+    if (!file) {return;}
 
     validateFile = file;
     updateFileInfo('validateFileInfo', file);
@@ -2535,7 +2546,7 @@ async function handleValidateFileSelect() {
  * Main validation function
  */
 async function validateMcAddonFile() {
-    if (!validateFile) return;
+    if (!validateFile) {return;}
 
     const resultsDiv = document.getElementById('validationResults');
     const summaryDiv = document.getElementById('validationSummary');
@@ -2887,13 +2898,13 @@ async function validateDisplayNames() {
                 // Extract item identifiers
                 if (json['minecraft:item'] && json['minecraft:item'].description) {
                     const id = json['minecraft:item'].description.identifier;
-                    if (id) identifiers.add(id);
+                    if (id) {identifiers.add(id);}
                 }
 
                 // Extract block identifiers
                 if (json['minecraft:block'] && json['minecraft:block'].description) {
                     const id = json['minecraft:block'].description.identifier;
-                    if (id) identifiers.add(id);
+                    if (id) {identifiers.add(id);}
                 }
             } catch (e) {
                 // Skip invalid JSON
@@ -3188,7 +3199,7 @@ function selectBuiltinFeature(feature) {
 
 async function handleBuiltinMcAddonSelect() {
     const file = getSelectedFile('builtinMcAddonFile');
-    if (!file) return;
+    if (!file) {return;}
 
     builtinMcAddonFile = file;
     updateFileInfo('builtinFileInfo', file);
@@ -3552,7 +3563,7 @@ async function handlePngMcAddonSelect() {
     const fileInfo = document.getElementById('pngFileInfo');
     const file = fileInput.files[0];
 
-    if (!file) return;
+    if (!file) {return;}
 
     try {
         pngMcAddonFile = file;
@@ -3752,7 +3763,7 @@ function buildPngTreeForDelete() {
 }
 
 function selectPngForDelete(path, isFolder) {
-    if (isFolder) return; // Only files can be selected for deletion
+    if (isFolder) {return;} // Only files can be selected for deletion
 
     pngSelectedPath = path;
     document.getElementById('deleteSelectedPath').textContent = path;
@@ -3792,7 +3803,7 @@ async function handleAddPngLocalSelect() {
     const fileInfo = document.getElementById('addPngLocalInfo');
     const file = fileInput.files[0];
 
-    if (!file) return;
+    if (!file) {return;}
 
     try {
         pngLocalFile = file;
@@ -3859,7 +3870,7 @@ async function handleReplacePngLocalSelect() {
     const fileInfo = document.getElementById('replacePngLocalInfo');
     const file = fileInput.files[0];
 
-    if (!file) return;
+    if (!file) {return;}
 
     try {
         pngLocalFile = file;
@@ -3887,7 +3898,7 @@ function buildPngTreeForReplace() {
 }
 
 function selectPngForReplace(path, isFolder) {
-    if (isFolder) return; // Only files can be selected for replacement
+    if (isFolder) {return;} // Only files can be selected for replacement
 
     pngSelectedPath = path;
     document.getElementById('replaceSelectedPath').textContent = path;
@@ -3938,7 +3949,7 @@ function buildPngTreeForDownload() {
 }
 
 function selectPngForDownload(path, isFolder) {
-    if (isFolder) return; // Only files can be selected for download
+    if (isFolder) {return;} // Only files can be selected for download
 
     pngSelectedPath = path;
     document.getElementById('downloadSelectedPath').textContent = path;
@@ -4013,7 +4024,7 @@ async function handleEditBlocksItemsFileSelect() {
     const input = document.getElementById('editBlocksItemsFile');
     const file = input.files[0];
 
-    if (!file) return;
+    if (!file) {return;}
 
     // Update file info
     const fileInfo = document.getElementById('editBlocksItemsFileInfo');
@@ -4053,11 +4064,11 @@ function parseLanguageFile(content) {
     for (const line of lines) {
         const trimmed = line.trim();
         // Skip comments and empty lines
-        if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('//')) continue;
+        if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('//')) {continue;}
 
         // Parse key=value format
         const equalIndex = trimmed.indexOf('=');
-        if (equalIndex === -1) continue;
+        if (equalIndex === -1) {continue;}
 
         const key = trimmed.substring(0, equalIndex).trim();
         const value = trimmed.substring(equalIndex + 1).trim();
@@ -4126,7 +4137,7 @@ async function scanBlocksAndItems() {
     // Scan for language files in resource pack
     if (resourcePack) {
         for (const [path, zipEntry] of Object.entries(editBlocksItemsZip.files)) {
-            if (zipEntry.dir) continue;
+            if (zipEntry.dir) {continue;}
             const lowerPath = path.toLowerCase();
 
             // Look for .lang files or .json language files in texts folder
@@ -4163,16 +4174,16 @@ async function scanBlocksAndItems() {
 
     // Scan for items
     for (const [path, zipEntry] of Object.entries(editBlocksItemsZip.files)) {
-        if (zipEntry.dir) continue;
+        if (zipEntry.dir) {continue;}
 
         const lowerPath = path.toLowerCase();
         const isItem = lowerPath.includes('/items/') && lowerPath.endsWith('.json');
         const isBlock = lowerPath.includes('/blocks/') && lowerPath.endsWith('.json');
 
-        if (!isItem && !isBlock) continue;
+        if (!isItem && !isBlock) {continue;}
 
         // Only process files in behavior pack
-        if (!path.startsWith(behaviorPack)) continue;
+        if (!path.startsWith(behaviorPack)) {continue;}
 
         try {
             const content = await zipEntry.async('string');
@@ -4180,7 +4191,7 @@ async function scanBlocksAndItems() {
 
             // Extract identifier and display name
             const itemObj = data['minecraft:item'] || data['minecraft:block'];
-            if (!itemObj || !itemObj.description) continue;
+            if (!itemObj || !itemObj.description) {continue;}
 
             const identifier = itemObj.description.identifier;
 
@@ -4250,8 +4261,8 @@ async function findAssociatedPngFiles(identifier) {
     const namePart = identifier.split(':')[1]; // Get the part after namespace
 
     for (const [path, zipEntry] of Object.entries(editBlocksItemsZip.files)) {
-        if (zipEntry.dir) continue;
-        if (!path.toLowerCase().endsWith('.png')) continue;
+        if (zipEntry.dir) {continue;}
+        if (!path.toLowerCase().endsWith('.png')) {continue;}
 
         // Check if PNG filename contains the identifier part
         const fileName = path.split('/').pop().replace('.png', '');
@@ -4408,8 +4419,8 @@ function handleFieldChange(input) {
 function checkDuplicateIdentifier(identifier, excludeOriginal) {
     // Check in items
     for (const item of editBlocksItemsItems) {
-        if (item.identifier === excludeOriginal) continue;
-        if (item.identifier === identifier) return true;
+        if (item.identifier === excludeOriginal) {continue;}
+        if (item.identifier === identifier) {return true;}
 
         // Check if this item has a pending identifier change to the same value
         if (editBlocksItemsChanges[item.identifier]?.identifier === identifier) {
@@ -4419,8 +4430,8 @@ function checkDuplicateIdentifier(identifier, excludeOriginal) {
 
     // Check in blocks
     for (const block of editBlocksItemsBlocks) {
-        if (block.identifier === excludeOriginal) continue;
-        if (block.identifier === identifier) return true;
+        if (block.identifier === excludeOriginal) {continue;}
+        if (block.identifier === identifier) {return true;}
 
         // Check if this block has a pending identifier change to the same value
         if (editBlocksItemsChanges[block.identifier]?.identifier === identifier) {
@@ -4441,7 +4452,7 @@ function initiateDelete(identifier) {
     const item = editBlocksItemsItems.find(i => i.identifier === identifier) ||
                  editBlocksItemsBlocks.find(b => b.identifier === identifier);
 
-    if (!item) return;
+    if (!item) {return;}
 
     const displayName = item.displayName || identifier;
     const message = `Are you sure you want to delete "${displayName}"?\n\n` +
@@ -4459,7 +4470,7 @@ function initiateDelete(identifier) {
  * Confirm deletion
  */
 function confirmDelete() {
-    if (!editBlocksItemsPendingDelete) return;
+    if (!editBlocksItemsPendingDelete) {return;}
 
     const identifier = editBlocksItemsPendingDelete;
 
@@ -4531,7 +4542,7 @@ async function applyDeletion(identifier) {
     const item = editBlocksItemsItems.find(i => i.identifier === identifier) ||
                  editBlocksItemsBlocks.find(b => b.identifier === identifier);
 
-    if (!item) return;
+    if (!item) {return;}
 
     // Delete from language files
     // For blocks, try both 'tile' and 'block' prefixes (Bedrock uses 'tile' for blocks)
@@ -4680,7 +4691,7 @@ async function applyEdits(originalIdentifier, changes) {
     const item = editBlocksItemsItems.find(i => i.identifier === originalIdentifier) ||
                  editBlocksItemsBlocks.find(b => b.identifier === originalIdentifier);
 
-    if (!item) return;
+    if (!item) {return;}
 
     const newIdentifier = changes.identifier || originalIdentifier;
     const newDisplayName = changes.displayName !== undefined ? changes.displayName : undefined;
@@ -4742,8 +4753,8 @@ async function applyEdits(originalIdentifier, changes) {
  */
 async function updateIdentifierReferences(oldIdentifier, newIdentifier) {
     for (const [path, zipEntry] of Object.entries(editBlocksItemsModifiedZip.files)) {
-        if (zipEntry.dir) continue;
-        if (!path.toLowerCase().endsWith('.json')) continue;
+        if (zipEntry.dir) {continue;}
+        if (!path.toLowerCase().endsWith('.json')) {continue;}
 
         try {
             const content = await zipEntry.async('string');
